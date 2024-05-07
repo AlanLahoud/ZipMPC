@@ -120,7 +120,7 @@ class CasadiControl():
 
         #solver parameters
         options = {}
-        options['ipopt.max_iter'] = 20000
+        options['ipopt.max_iter'] = 1000
         options['verbose'] = False
 
         beta = np.arctan(l_r/(l_r+l_f)*np.tan(u_sym[1,0:N]))
