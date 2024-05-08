@@ -89,6 +89,7 @@ class CasadiControl():
         print(sigma[:10])
         print(curv_mask[:10])
         print(curv[:10]) '''
+        print("curv start")
 
         num_sf = self.sigma_f.size()
         num_s = sigma.size()
@@ -103,24 +104,28 @@ class CasadiControl():
         sigma_shifted = reshape(sigma,num_s[1],1)- sigma_f_mat_np
         curv_unscaled = self.sigmoid(5*sigma_shifted)
         curv = reshape((curv_unscaled@(curv_f_np.reshape(-1,1))),1,num_s[1])
-
+        print("curv end")
         return curv
 
-    def mpc_casadi(self,q,p,x0,horizon,dc,dx,du,track_width):
+    def mpc_casadi(self,q,p,x0,horizon,df,dc,dx,du,track_width,v_max):
+
+        # with: dx, du: number of states/inputs passed from the dynamics
+        # dc: number of constraints
+        # df: number of states that we do not use
 
         Ts = 0.05
         N=horizon
         l_r=0.2
         l_f=0.2
 
-        dx = dx - dc
+        dx = dx - dc - df
 
         x_sym = SX.sym('x_sym',dx,N+1)
         u_sym = SX.sym('u_sym',du,N)
 
         #solver parameters
         options = {}
-        options['ipopt.max_iter'] = 1000
+        options['ipopt.max_iter'] = 20000
         options['verbose'] = False
 
         beta = np.arctan(l_r/(l_r+l_f)*np.tan(u_sym[1,0:N]))
@@ -132,7 +137,7 @@ class CasadiControl():
         # think about how to integrate the curvature function
 
         # define symbolic variables for cost parameters
-        feat = vertcat(x_sym[:,0:N],fmax(np.zeros([1,N]),(-x_sym[1,0:N]-track_width)),fmax(np.zeros([1,N]),(x_sym[1,0:N]-track_width)),u_sym[:,0:N])
+        feat = vertcat(x_sym[0,0:N]-x0[0,0],x_sym[1:,0:N],fmax(np.zeros([1,N]),(-x_sym[1,0:N]-track_width)),fmax(np.zeros([1,N]),(x_sym[1,0:N]-track_width)),fmax(np.zeros([1,N]),(-x_sym[3,0:N] + 0)),fmax(np.zeros([1,N]),(x_sym[3,0:N]-v_max)),u_sym[:,0:N])
         q_sym = SX.sym('q_sym',dx+dc+du)
         p_sym = SX.sym('q_sym',dx+dc+du)
         Q_sym = diag(q_sym)
@@ -160,6 +165,7 @@ class CasadiControl():
         solver_input['ubg'] = ubg
 
         # solve optimization problem
+        print("solve optimization problem")
         solver_output = solver(**solver_input)
 
         # process ouput
@@ -173,16 +179,20 @@ class CasadiControl():
 
         # print solution
         return sol_evalf
-        
-        
-    def mpc_casadi_with_constraints(self,q,p,x0,horizon,dc,dx,du,track_width):
+
+
+    def mpc_casadi_with_constraints(self,q,p,x0,horizon,df,dc,dx,du,track_width,v_max):
+
+        # with: dx, du: number of states/inputs passed from the dynamics
+        # dc: number of constraints
+        # df: number of states that we do not use
 
         Ts = 0.05
         N=horizon
         l_r=0.2
         l_f=0.2
 
-        dx = dx - dc
+        dx = dx - dc - df
 
         x_sym = SX.sym('x_sym',dx,N+1)
         u_sym = SX.sym('u_sym',du,N)
@@ -201,7 +211,7 @@ class CasadiControl():
         # think about how to integrate the curvature function
 
         # define symbolic variables for cost parameters
-        feat = vertcat(x_sym[:,0:N],u_sym[:,0:N])
+        feat = vertcat(x_sym[0,0:N]-x0[0,0],x_sym[1:,0:N],u_sym[:,0:N])
         q_sym = SX.sym('q_sym',dx+du)
         p_sym = SX.sym('q_sym',dx+du)
         Q_sym = diag(q_sym)
@@ -209,9 +219,9 @@ class CasadiControl():
         l = sum2(transpose(diag(transpose(feat)@Q_sym@feat)) + transpose(p_sym)@feat)
         dl = substitute(substitute(l,q_sym,q),p_sym,p)
 
-        const = vertcat(transpose(dyn1),transpose(dyn2),transpose(dyn3),transpose(dyn4),transpose(u_sym[0,0:N]),transpose(u_sym[1,0:N]),transpose(x_sym[1,0:N+1]))
-        lbg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),-2*np.ones(N),-1*np.ones(N),-track_width*np.ones(N+1)]
-        ubg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),2*np.ones(N),1*np.ones(N),track_width*np.ones(N+1)]
+        const = vertcat(transpose(dyn1),transpose(dyn2),transpose(dyn3),transpose(dyn4),transpose(u_sym[0,0:N]),transpose(u_sym[1,0:N]),transpose(x_sym[1,0:N+1]),transpose(x_sym[3,0:N+1]))
+        lbg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),-2*np.ones(N),-1*np.ones(N),-track_width*np.ones(N+1),0*np.ones(N+1)]
+        ubg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),2*np.ones(N),1*np.ones(N),track_width*np.ones(N+1),v_max*np.ones(N+1)]
         lbx = -np.inf * np.ones(dx*(N+1)+du*N)
         ubx = np.inf * np.ones(dx*(N+1)+du*N)
 
@@ -239,6 +249,8 @@ class CasadiControl():
         #print(u)
         #print(x)
         u_applied = u[0:1]
+
+        #print(sol.solveroutput.info.lambda)
 
         # print solution
         return sol_evalf
