@@ -28,7 +28,7 @@ class FrenetKinBicycleDx(nn.Module):
         super().__init__()
 
         # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_lb, d_ub (2) + v_lb, v_ub (2)
-        self.n_state = 4+2+2+2
+        self.n_state = 4+2+2+1
         print(self.n_state)          # here add amount of states plus amount of exact penalty terms
         # control: a, delta
         self.n_ctrl = 2
@@ -136,7 +136,7 @@ class FrenetKinBicycleDx(nn.Module):
 
         a, delta = torch.unbind(u, dim=1)
 
-        sigma, d, phi, v, sigma_0, sigma_diff, d_lb, d_ub, v_lb, v_ub = torch.unbind(state, dim=1)
+        sigma, d, phi, v, sigma_0, sigma_diff, d_lb, d_ub, v_ub = torch.unbind(state, dim=1)
         beta = torch.atan(l_r/(l_r+l_f)*torch.tan(delta))
 
         dsigma = v*(torch.cos(phi+beta)/(1.-self.curv(sigma)*d))
@@ -154,10 +154,10 @@ class FrenetKinBicycleDx(nn.Module):
         sigma_diff = sigma - sigma_0
         d_lb = softplus_op(-d - 0.5*self.track_width)
         d_ub = softplus_op(d - 0.5*self.track_width)
-        v_lb = softplus_op(-v + 0)
+        #v_lb = softplus_op(-v + 0)
         v_ub = softplus_op(v - self.v_max)
 
-        state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_lb, d_ub, v_lb, v_ub), 1)
+        state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_lb, d_ub, v_ub), 1)
 
         return state
 
@@ -166,7 +166,7 @@ class FrenetKinBicycleDx(nn.Module):
     def get_frame(self, state, ax=None):
         state = util.get_data_maybe(state.view(-1))
         assert len(state) == 10
-        sigma, d, phi, v, sigma_0, sigma_diff, d_lb, d_ub, v_lb, v_ub = torch.unbind(state, dim=1)
+        sigma, d, phi, v, sigma_0, sigma_diff, d_lb, d_ub, v_ub = torch.unbind(state, dim=1)
         l_r,l_f = torch.unbind(self.params)
 
         if ax is None:
