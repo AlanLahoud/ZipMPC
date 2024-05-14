@@ -27,8 +27,8 @@ class FrenetKinBicycleDx(nn.Module):
     def __init__(self, track_coordinates=None, params=None):
         super().__init__()
 
-        # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_lb, d_ub (2) + v_lb, v_ub (2)
-        self.n_state = 4+2+2+1
+        # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1)
+        self.n_state = 4+2+1+1
         print(self.n_state)          # here add amount of states plus amount of exact penalty terms
         # control: a, delta
         self.n_ctrl = 2
@@ -123,6 +123,18 @@ class FrenetKinBicycleDx(nn.Module):
 
         return curv.reshape(-1)
 
+    
+    def penalty_d(self, d, factor=10000.):  
+        overshoot_pos = (d - 0.5*self.track_width*0.75).clamp(min=0)
+        overshoot_neg = (-d - 0.5*self.track_width*0.75).clamp(min=0)
+        penalty_pos = torch.exp(overshoot_pos) - 1
+        penalty_neg = torch.exp(overshoot_neg) - 1 
+        return factor*(penalty_pos + penalty_neg)
+    
+    def penalty_v(self, v, factor=10000.):  
+        penalty_pos = (v - self.v_max*0.95).clamp(min=0) ** 2
+        return factor*penalty_pos
+    
     def forward(self, state, u):
         softplus_op = torch.nn.Softplus(20)
         squeeze = state.ndimension() == 1
@@ -136,7 +148,7 @@ class FrenetKinBicycleDx(nn.Module):
 
         a, delta = torch.unbind(u, dim=1)
 
-        sigma, d, phi, v, sigma_0, sigma_diff, d_lb, d_ub, v_ub = torch.unbind(state, dim=1)
+        sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
         beta = torch.atan(l_r/(l_r+l_f)*torch.tan(delta))
 
         dsigma = v*(torch.cos(phi+beta)/(1.-self.curv(sigma)*d))
@@ -152,12 +164,17 @@ class FrenetKinBicycleDx(nn.Module):
         v = v + self.dt * dv
         sigma_0 = sigma_0                   # we need to carry it on
         sigma_diff = sigma - sigma_0
-        d_lb = softplus_op(-d - 0.5*self.track_width)
-        d_ub = softplus_op(d - 0.5*self.track_width)
+        
+        d_pen = self.penalty_d(d)
+        
+        v_ub = self.penalty_v(v)
+        
+        #d_lb = softplus_op(-d - 0.5*self.track_width)
+        #d_ub = softplus_op(d - 0.5*self.track_width)
         #v_lb = softplus_op(-v + 0)
-        v_ub = softplus_op(v - self.v_max)
+        #v_ub = softplus_op(v - self.v_max)
 
-        state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_lb, d_ub, v_ub), 1)
+        state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), 1)
 
         return state
 
@@ -166,7 +183,7 @@ class FrenetKinBicycleDx(nn.Module):
     def get_frame(self, state, ax=None):
         state = util.get_data_maybe(state.view(-1))
         assert len(state) == 10
-        sigma, d, phi, v, sigma_0, sigma_diff, d_lb, d_ub, v_ub = torch.unbind(state, dim=1)
+        sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
         l_r,l_f = torch.unbind(self.params)
 
         if ax is None:
