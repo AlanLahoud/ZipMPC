@@ -109,7 +109,7 @@ class FrenetKinBicycleDx(nn.Module):
 
 
         sigma_shifted = sigma.reshape(-1,1) - sigma_f_mat
-        curv_unscaled = torch.sigmoid(50*sigma_shifted)
+        curv_unscaled = torch.sigmoid(5000*sigma_shifted)
         curv = (curv_unscaled@(self.curv_f.reshape(-1,1))).type(torch.float)
 
         '''
@@ -124,14 +124,14 @@ class FrenetKinBicycleDx(nn.Module):
         return curv.reshape(-1)
 
     
-    def penalty_d(self, d, factor=10000.):  
+    def penalty_d(self, d, factor=100000.):  
         overshoot_pos = (d - 0.5*self.track_width*0.75).clamp(min=0)
         overshoot_neg = (-d - 0.5*self.track_width*0.75).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
         penalty_neg = torch.exp(overshoot_neg) - 1 
         return factor*(penalty_pos + penalty_neg)
     
-    def penalty_v(self, v, factor=10000.):  
+    def penalty_v(self, v, factor=100000.):  
         penalty_pos = (v - self.v_max*0.95).clamp(min=0) ** 2
         return factor*penalty_pos
     
