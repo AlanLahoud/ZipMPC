@@ -24,11 +24,11 @@ plt.style.use('bmh')
 #      color_scheme='Linux', call_pdb=1)
 
 class FrenetKinBicycleDx(nn.Module):
-    def __init__(self, track_coordinates=None, params=None):
+    def __init__(self, track_coordinates, params):
         super().__init__()
 
-        # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1)
-        self.n_state = 4+2+1+1
+        # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1) + ac_ub (1)
+        self.n_state = 4+2+1+1+1
         print(self.n_state)          # here add amount of states plus amount of exact penalty terms
         # control: a, delta
         self.n_ctrl = 2
@@ -48,27 +48,41 @@ class FrenetKinBicycleDx(nn.Module):
         self.sigma_f = self.track_sigma[self.mask]
         self.curv_f = self.track_curv_diff[self.mask]
 
+        self.params = params
+        
+        self.l_r = params[0]
+        self.l_f = params[1]
+        
+        self.track_width = params[2]
+        
+        self.delta_threshold_rad = np.pi
+        self.v_max = params[3]
+        self.ac_max = params[4]
+        self.dt = params[5] #0.04
 
+        
         # model parameters: l_r, l_f (beta and curv(sigma) are calculated in the dynamics)
-        if params is None:
-            # l_r, l_f
-            self.params = Variable(torch.Tensor((0.2, 0.2)))
-        else:
-            self.params = params
-            assert len(self.params) == 2
+        #if params is None:
+        #    # l_r, l_f
+        #    self.params = Variable(torch.Tensor((0.2, 0.2)))
+        #else:
+        #    self.params = params
+        #    assert len(self.params) == 2
 
-            self.track_width = 4 # here we need to check how we do that as our d is not with respect to center line
+            #self.track_width = 4 # here we need to check how we do that as our d is not with respect to center line
 
-            self.delta_threshold_rad = np.pi  #12 * 2 * np.pi / 360
-            self.v_max = 2
-            self.max_acceleration = 2
+            #self.delta_threshold_rad = np.pi  #12 * 2 * np.pi / 360
+            #self.v_max = 2
+            #self.ac_max = ((0.7*self.v_max)**2)*3.33
+            
+            #self.max_acceleration = 2
 
-            self.dt = 0.05   # name T in document
+            #self.dt = 0.05   # name T in document
 
-            self.track_width = 0.5
+            #self.track_width = 0.5
 
-            self.lower = -self.track_width/2
-            self.upper = self.track_width/2
+            #self.lower = -self.track_width/2
+            #self.upper = self.track_width/2
 
             # Still need to think about how I do this here
 
@@ -79,9 +93,9 @@ class FrenetKinBicycleDx(nn.Module):
             #self.ctrl_penalty = 0.001
 
             ###############################################
-            self.mpc_eps = 1e-4
-            self.linesearch_decay = 0.5
-            self.max_linesearch_iter = 2
+            #self.mpc_eps = 1e-4
+            #self.linesearch_decay = 0.5
+            #self.max_linesearch_iter = 2
 
     def curv(self, sigma):
         '''
@@ -109,7 +123,7 @@ class FrenetKinBicycleDx(nn.Module):
 
 
         sigma_shifted = sigma.reshape(-1,1) - sigma_f_mat
-        curv_unscaled = torch.sigmoid(5000*sigma_shifted)
+        curv_unscaled = torch.sigmoid(10*sigma_shifted)
         curv = (curv_unscaled@(self.curv_f.reshape(-1,1))).type(torch.float)
 
         '''
@@ -135,6 +149,10 @@ class FrenetKinBicycleDx(nn.Module):
         penalty_pos = (v - self.v_max*0.95).clamp(min=0) ** 2
         return factor*penalty_pos
     
+    def penalty_ac(self, ac, factor=1000.):  
+        penalty = (ac - self.ac_max).clamp(min=0) ** 2
+        return factor*penalty
+    
     def forward(self, state, u):
         softplus_op = torch.nn.Softplus(20)
         squeeze = state.ndimension() == 1
@@ -144,19 +162,17 @@ class FrenetKinBicycleDx(nn.Module):
         if state.is_cuda and not self.params.is_cuda:
             self.params = self.params.cuda()
 
-        l_r,l_f = torch.unbind(self.params)
 
         a, delta = torch.unbind(u, dim=1)
 
-        sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
-        beta = torch.atan(l_r/(l_r+l_f)*torch.tan(delta))
+        sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub, ac_ub = torch.unbind(state, dim=1)
+        beta = torch.atan(self.l_r/(self.l_r+self.l_f)*torch.tan(delta))       
+        k = self.curv(sigma)
 
-        dsigma = v*(torch.cos(phi+beta)/(1.-self.curv(sigma)*d))
-        dd = v*torch.sin(phi)+beta
-        dphi = v/l_f*torch.sin(beta)-self.curv(sigma)*v*(torch.cos(phi+beta)/(1-self.curv(sigma)*d))
+        dsigma = v*(torch.cos(phi+beta)/(1.-k*d))
+        dd = v*torch.sin(phi+beta)
+        dphi = v/self.l_f*torch.sin(beta)-k*v*(torch.cos(phi+beta)/(1-k*d))
         dv = a
-        #print(sigma)
-        #print(self.curv(sigma))
 
         sigma = sigma + self.dt * dsigma
         d = d + self.dt * dd
@@ -165,21 +181,26 @@ class FrenetKinBicycleDx(nn.Module):
         sigma_0 = sigma_0                   # we need to carry it on
         sigma_diff = sigma - sigma_0
         
-        d_pen = self.penalty_d(d)
-        
+        #Ackerman theory
+        # http://www.ingveh.ulg.ac.be/uploads/education/MECA0525/11_MECA0525_VEHDYN1_SSTURN_2021-2022.pdf
+        ac = v**2 * delta / (self.l_r+self.l_f)
+                
+        d_pen = self.penalty_d(d)        
         v_ub = self.penalty_v(v)
+        ac_ub = self.penalty_ac(ac)
         
         #d_lb = softplus_op(-d - 0.5*self.track_width)
         #d_ub = softplus_op(d - 0.5*self.track_width)
         #v_lb = softplus_op(-v + 0)
         #v_ub = softplus_op(v - self.v_max)
 
-        state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), 1)
+        state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub, ac_ub), 1)
 
         return state
 
 
     # This function is for plotting
+    #WE ARE NOT USING THIS
     def get_frame(self, state, ax=None):
         state = util.get_data_maybe(state.view(-1))
         assert len(state) == 10
