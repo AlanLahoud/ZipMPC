@@ -25,11 +25,12 @@ import os
 #      color_scheme='Linux', call_pdb=1)
 
 class CasadiControl():
-    def __init__(self, track_coordinates=None, params=None):
+    def __init__(self, track_coordinates, params):
         super().__init__()
-
-        # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_lb, d_ub (2) + d_pen (1) + v_ub (1)
-        self.n_state = 4 + 2 + 1 +1         # here add amount of states plus amount of exact penalty terms
+        
+        # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1) + ac_ub (1)
+        self.n_state = 4+2+1+1+1
+        print(self.n_state)          # here add amount of states plus amount of exact penalty terms
         # control: a, delta
         self.n_ctrl = 2
 
@@ -48,25 +49,19 @@ class CasadiControl():
         self.sigma_f = self.track_sigma[self.mask]
         self.curv_f = self.track_curv_diff[self.mask]
 
-
-        # model parameters: l_r, l_f (beta and curv(sigma) are calculated in the dynamics)
-        if params is None:
-            # l_r, l_f
-            self.params = Variable(torch.Tensor((0.2, 0.2)))
-        else:
-            self.params = params
-            assert len(self.params) == 2
-
-        self.delta_threshold_rad = np.pi  #12 * 2 * np.pi / 360
-        self.v_max = 2
-        self.max_acceleration = 2
-
-        self.dt = 0.05   # name T in document
-
-        self.track_width = 0.5
-
-        self.lower = -self.track_width/2
-        self.upper = self.track_width/2
+        self.params = params
+        
+        self.l_r = params[0]
+        self.l_f = params[1]
+        
+        self.track_width = params[2]
+        
+        self.delta_threshold_rad = np.pi
+        self.v_max = params[3]
+        self.ac_max = params[4]
+        self.dt = params[5] #0.04
+        
+        
 
     def sigmoid(self, x):
       	return 1 / (1 + exp(-x))
@@ -115,7 +110,7 @@ class CasadiControl():
         return factor*(penalty_pos + penalty_neg)
 
     def penalty_v(self, v, factor=100000.):
-        penalty_pos = np.clip((v - self.v_max*0.95),0,None) ** 2
+        penalty_pos = np.clip((v - self.v_max),0,None) ** 2
         return factor*penalty_pos
 
     def mpc_casadi(self,q,p,x0,horizon,df,dc,dx,du):
@@ -153,7 +148,13 @@ class CasadiControl():
         # think about how to integrate the curvature function
 
         # define symbolic variables for cost parameters
-        feat = vertcat(x_sym[0,0:N]-x0[0,0],x_sym[1:,0:N],self.penalty_d(x_sym[1,0:N]),fmax(np.zeros([1,N]),(x_sym[1,0:N]-track_width)),self.penalty_v(x_sym[3,0:N]),u_sym[:,0:N])
+        feat = vertcat(x_sym[0,0:N]-x0[0,0],
+                       x_sym[1:,0:N],
+                       self.penalty_d(x_sym[1,0:N]),
+                       fmax(np.zeros([1,N]),
+                            (x_sym[1,0:N]-track_width)),
+                       self.penalty_v(x_sym[3,0:N]),
+                       u_sym[:,0:N])
         q_sym = SX.sym('q_sym',dx+dc+du)
         p_sym = SX.sym('q_sym',dx+dc+du)
         Q_sym = diag(q_sym)
@@ -202,8 +203,8 @@ class CasadiControl():
         # with: dx, du: number of states/inputs passed from the dynamics
         # dc: number of constraints
         # df: number of states that we do not use
-        q_used = np.hstack([q[5],q[1:4],q[8:]])
-        p_used = np.hstack([p[5],p[1:4],p[8:]])
+        q_used = np.hstack([q[5],q[1:4],q[9:]])
+        p_used = np.hstack([p[5],p[1:4],p[9:]])
 
         # here the q and the p scale the following
         # feature vector [sigma-sigma_0, d, phi, v, penalty_d,penalty_v,a,delta]
@@ -240,9 +241,34 @@ class CasadiControl():
         l = sum2(transpose(diag(transpose(feat)@Q_sym@feat)) + transpose(p_sym)@feat)
         dl = substitute(substitute(l,q_sym,q_used),p_sym,p_used)
 
-        const = vertcat(transpose(dyn1),transpose(dyn2),transpose(dyn3),transpose(dyn4),transpose(u_sym[0,0:N]),transpose(u_sym[1,0:N]),transpose(x_sym[1,0:N+1]),transpose(x_sym[3,0:N+1]))
-        lbg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),-2*np.ones(N),-1*np.ones(N),-0.5*self.track_width*0.75*np.ones(N+1),-0.1*np.ones(N+1)]
-        ubg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),2*np.ones(N),1*np.ones(N),0.5*self.track_width*0.75*np.ones(N+1),self.v_max*0.95*np.ones(N+1)]
+        const = vertcat(
+            transpose(dyn1),
+            transpose(dyn2),
+            transpose(dyn3),
+            transpose(dyn4),
+            transpose(u_sym[0,0:N]),
+            transpose(u_sym[1,0:N]),
+            transpose(x_sym[1,0:N+1]),
+            transpose(x_sym[3,0:N+1]))
+        
+        lbg = np.r_[np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    -2*np.ones(N),
+                    -1*np.ones(N),
+                    -0.5*self.track_width*0.75*np.ones(N+1),
+                    -0.1*np.ones(N+1)]
+        
+        ubg = np.r_[np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    2*np.ones(N),
+                    1*np.ones(N),
+                    0.5*self.track_width*0.75*np.ones(N+1),
+                    self.v_max*np.ones(N+1)]
+        
         lbx = -np.inf * np.ones(dx*(N+1)+du*N)
         ubx = np.inf * np.ones(dx*(N+1)+du*N)
 
