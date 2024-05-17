@@ -61,6 +61,8 @@ class CasadiControl():
         self.ac_max = params[4]
         self.dt = params[5] #0.04
         
+        self.a_max = params[6]
+        self.delta_max = params[7]
         
 
     def sigmoid(self, x):
@@ -255,8 +257,8 @@ class CasadiControl():
                     np.zeros(N+1),
                     np.zeros(N+1),
                     np.zeros(N+1),
-                    -2*np.ones(N),
-                    -1*np.ones(N),
+                    -self.a_max*np.ones(N),
+                    -self.delta_max*np.ones(N),
                     -0.5*self.track_width*0.75*np.ones(N+1),
                     -0.1*np.ones(N+1)]
         
@@ -264,8 +266,8 @@ class CasadiControl():
                     np.zeros(N+1),
                     np.zeros(N+1),
                     np.zeros(N+1),
-                    2*np.ones(N),
-                    1*np.ones(N),
+                    self.a_max*np.ones(N),
+                    self.delta_max*np.ones(N),
                     0.5*self.track_width*0.75*np.ones(N+1),
                     self.v_max*np.ones(N+1)]
         
@@ -301,3 +303,115 @@ class CasadiControl():
 
         # print solution
         return sol_evalf
+    
+    
+    
+    
+    def mpc_casadi_with_constraints_2(self, q, p, x0, horizon, df, dc, dx, du):
+        Ts = self.dt
+        N = horizon
+        l_r = 0.2
+        l_f = 0.2
+
+        dx = dx - dc - df
+
+        x_sym = SX.sym('x_sym', dx, N + 1)
+        u_sym = SX.sym('u_sym', du, N)
+
+        # Solver parameters
+        options = {}
+        options['ipopt.max_iter'] = 20000
+        options['verbose'] = False
+
+        beta = np.arctan(l_r / (l_r + l_f) * np.tan(u_sym[1, 0:N]))
+
+        dyn1 = horzcat(
+            (x_sym[0, 0] - x0[0, 0]),
+            (x_sym[0, 1:N + 1] - x_sym[0, 0:N] - Ts * (x_sym[3, 0:N] * (np.cos(x_sym[2, 0:N] + beta) / (1. - self.curv_casadi(x_sym[0, 0:N]) * x_sym[1, 0:N]))))
+        )
+        dyn2 = horzcat(
+            (x_sym[1, 0] - x0[0, 1]),
+            (x_sym[1, 1:N + 1] - x_sym[1, 0:N] - Ts * (x_sym[3, 0:N] * np.sin(x_sym[2, 0:N] + beta)))
+        )
+        dyn3 = horzcat(
+            (x_sym[2, 0] - x0[0, 2]),
+            (x_sym[2, 1:N + 1] - x_sym[2, 0:N] - Ts * (x_sym[3, 0:N] * (1 / l_f) * np.sin(beta) - self.curv_casadi(x_sym[0, 0:N]) * x_sym[3, 0:N] * (np.cos(x_sym[2, 0:N] + beta) / (1 - self.curv_casadi(x_sym[0, 0:N]) * x_sym[1, 0:N]))))
+        )
+        dyn4 = horzcat(
+            (x_sym[3, 0] - x0[0, 3]),
+            (x_sym[3, 1:N + 1] - x_sym[3, 0:N] - Ts * (u_sym[0, 0:N]))
+        )
+
+        # Define the objective function
+        feat = vertcat(x_sym[0, 0:N] - x0[0, 0], x_sym[1:, 0:N], u_sym[:, 0:N])
+        q_sym = SX.sym('q_sym', dx + du)
+        p_sym = SX.sym('p_sym', dx + du)
+
+        # Simplify the cost to only use q[5] and p[5]
+        q_used = np.zeros(dx + du)
+        p_used = np.zeros(dx + du)
+        q_used[5] = q[5]
+        p_used[5] = p[5]
+
+        Q_sym = diag(q_sym)
+        l = sum2(transpose(diag(transpose(feat) @ Q_sym @ feat)) + transpose(p_sym) @ feat)
+        dl = substitute(substitute(l, q_sym, q_used), p_sym, p_used)
+
+        const = vertcat(
+            transpose(dyn1),
+            transpose(dyn2),
+            transpose(dyn3),
+            transpose(dyn4),
+            transpose(u_sym[0, 0:N]),
+            transpose(u_sym[1, 0:N]),
+            transpose(x_sym[1, 0:N + 1]),
+            transpose(x_sym[3, 0:N + 1])
+        )
+
+        lbg = np.r_[np.zeros(N + 1),
+                    np.zeros(N + 1),
+                    np.zeros(N + 1),
+                    np.zeros(N + 1),
+                    -self.a_max * np.ones(N),
+                    -self.delta_max * np.ones(N),
+                    -0.5 * self.track_width * 0.75 * np.ones(N + 1),
+                    -0.1 * np.ones(N + 1)]
+
+        ubg = np.r_[np.zeros(N + 1),
+                    np.zeros(N + 1),
+                    np.zeros(N + 1),
+                    np.zeros(N + 1),
+                    self.a_max * np.ones(N),
+                    self.delta_max * np.ones(N),
+                    0.5 * self.track_width * 0.75 * np.ones(N + 1),
+                    self.v_max * np.ones(N + 1)]
+
+        lbx = -np.inf * np.ones(dx * (N + 1) + du * N)
+        ubx = np.inf * np.ones(dx * (N + 1) + du * N)
+
+        x = vertcat(reshape(x_sym[:, 0:N + 1], (dx * (N + 1), 1)), reshape(u_sym[:, 0:N], (du * N, 1)))
+
+        # Define solver
+        nlp = {'x': x, 'f': dl, 'g': const}
+        solver = nlpsol('solver', 'ipopt', nlp, options)
+
+        # Create solver input
+        solver_input = {}
+        solver_input['lbx'] = lbx
+        solver_input['ubx'] = ubx
+        solver_input['lbg'] = lbg
+        solver_input['ubg'] = ubg
+
+        # Solve optimization problem
+        solver_output = solver(**solver_input)
+
+        # Process output
+        sol = solver_output['x']
+        sol_evalf = np.squeeze(evalf(sol))
+        u = sol_evalf[-du * N:]
+        x = sol_evalf[:-du * N]
+        u_applied = u[0:1]
+
+        # Print solution
+        return sol_evalf
+
