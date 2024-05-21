@@ -27,7 +27,7 @@ import os
 class CasadiControl():
     def __init__(self, track_coordinates, params):
         super().__init__()
-        
+
         # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1) + ac_ub (1)
         self.n_state = 4+2+1+1+1
         print(self.n_state)          # here add amount of states plus amount of exact penalty terms
@@ -50,20 +50,20 @@ class CasadiControl():
         self.curv_f = self.track_curv_diff[self.mask]
 
         self.params = params
-        
+
         self.l_r = params[0]
         self.l_f = params[1]
-        
+
         self.track_width = params[2]
-        
+
         self.delta_threshold_rad = np.pi
         self.v_max = params[3]
         self.ac_max = params[4]
         self.dt = params[5] #0.04
-        
+
         self.a_max = params[6]
         self.delta_max = params[7]
-        
+
 
     def sigmoid(self, x):
       	return 1 / (1 + exp(-x))
@@ -252,7 +252,7 @@ class CasadiControl():
             transpose(u_sym[1,0:N]),
             transpose(x_sym[1,0:N+1]),
             transpose(x_sym[3,0:N+1]))
-        
+
         lbg = np.r_[np.zeros(N+1),
                     np.zeros(N+1),
                     np.zeros(N+1),
@@ -261,7 +261,7 @@ class CasadiControl():
                     -self.delta_max*np.ones(N),
                     -0.5*self.track_width*0.75*np.ones(N+1),
                     -0.1*np.ones(N+1)]
-        
+
         ubg = np.r_[np.zeros(N+1),
                     np.zeros(N+1),
                     np.zeros(N+1),
@@ -270,7 +270,7 @@ class CasadiControl():
                     self.delta_max*np.ones(N),
                     0.5*self.track_width*0.75*np.ones(N+1),
                     self.v_max*np.ones(N+1)]
-        
+
         lbx = -np.inf * np.ones(dx*(N+1)+du*N)
         ubx = np.inf * np.ones(dx*(N+1)+du*N)
 
@@ -303,10 +303,10 @@ class CasadiControl():
 
         # print solution
         return sol_evalf
-    
-    
-    
-    
+
+
+
+
     def mpc_casadi_with_constraints_2(self, q, p, x0, horizon, df, dc, dx, du):
         Ts = self.dt
         N = horizon
@@ -415,3 +415,99 @@ class CasadiControl():
         # Print solution
         return sol_evalf
 
+    def mpc_casadi_with_constraints_paj(self,q,p,x0,horizon,df,dc,dx,du):
+
+        # with: dx, du: number of states/inputs passed from the dynamics
+        # dc: number of constraints
+        # df: number of states that we do not use
+        q_used = np.hstack([q[7],q[1:6],q[10:]])
+        p_used = np.hstack([p[7],p[1:6],p[10:]])
+
+        # here the q and the p scale the following
+        # feature vector [sigma-sigma_0, d, phi, v, penalty_d,penalty_v,a,delta]
+
+        Ts = self.dt
+        N=horizon
+        l_r=0.2
+        l_f=0.2
+
+        # set them like in learned dynamics
+        m = 0.5
+        g = 9.81
+        mu = 0.5
+        I_z = m*l_r*l_f  # this should be an approximation
+
+        B = 10.0
+        C = 1.9
+        D = 1.0
+
+        dx = dx - dc - df
+
+        x_sym = SX.sym('x_sym',dx,N+1)
+        u_sym = SX.sym('u_sym',du,N)
+
+        a_f = np.arctan((x_sym[5,0:N]  + l_f*x_sym[3,0:N])/np.absolute(x_sym[4,0:N]))-u_sym[1,0:N]
+        a_r = np.arctan((x_sym[5,0:N]  - l_f*x_sym[3,0:N])/np.absolute(x_sym[4,0:N]))
+
+        F_yf = -0.5*m*g*mu*(D*np.sin(C*np.arctan(B*a_f)))
+        F_yr = -0.5*m*g*mu*(D*np.sin(C*np.arctan(B*a_r)))
+
+        #solver parameters
+        options = {}
+        options['ipopt.max_iter'] = 20000
+        options['verbose'] = False
+
+        beta = np.arctan(l_r/(l_r+l_f)*np.tan(u_sym[1,0:N]))
+
+        dyn1 = horzcat((x_sym[0,0] - x0[0,0]), (x_sym[0,1:N+1] - x_sym[0,0:N] - Ts*((x_sym[4,0:N]*np.cos(x_sym[2,0:N])-x_sym[5,0:N]*np.sin(x_sym[2,0:N]))/(1.-self.curv_casadi(x_sym[0,0:N])*x_sym[1,0:N]))))
+        dyn2 = horzcat((x_sym[1,0] - x0[0,1]), (x_sym[1,1:N+1] - x_sym[1,0:N] - Ts*(x_sym[4,0:N]*np.cos(x_sym[2,0:N])+x_sym[5,0:N]*np.sin(x_sym[2,0:N]))))
+        dyn3 = horzcat((x_sym[2,0] - x0[0,2]), (x_sym[2,1:N+1] - x_sym[2,0:N] - Ts*(x_sym[3,0:N] - self.curv_casadi(x_sym[0,0:N])*(x_sym[4,0:N]*np.cos(x_sym[2,0:N])-x_sym[5,0:N]*np.sin(x_sym[2,0:N]))/(1-self.curv_casadi(x_sym[0,0:N])*x_sym[1,0:N]))))
+        dyn4 = horzcat((x_sym[3,0] - x0[0,3]), (x_sym[3,1:N+1] - x_sym[3,0:N] - Ts*(1/I_z*(l_f*F_yf -l_r*F_yr))))
+        dyn5 = horzcat((x_sym[4,0] - x0[0,4]), (x_sym[4,1:N+1] - x_sym[4,0:N] - Ts*(u_sym[0,0:N]+x_sym[3,0:N]*x_sym[5,0:N])))
+        dyn6 = horzcat((x_sym[5,0] - x0[0,5]), (x_sym[5,1:N+1] - x_sym[5,0:N] - Ts*(1/m*(F_yf*np.cos(u_sym[1,0:N])+F_yr)-x_sym[3,0:N]*x_sym[4,0:N])))
+        # think about how to integrate the curvature function
+
+        # define symbolic variables for cost parameters
+        feat = vertcat(x_sym[0,0:N]-x0[0,0],x_sym[1:,0:N],u_sym[:,0:N])
+        q_sym = SX.sym('q_sym',dx+du)
+        p_sym = SX.sym('q_sym',dx+du)
+        Q_sym = diag(q_sym)
+
+        l = sum2(transpose(diag(transpose(feat)@Q_sym@feat)) + transpose(p_sym)@feat)
+        dl = substitute(substitute(l,q_sym,q_used),p_sym,p_used)
+
+        const = vertcat(transpose(dyn1),transpose(dyn2),transpose(dyn3),transpose(dyn4),transpose(dyn5),transpose(dyn6),transpose(u_sym[0,0:N]),transpose(u_sym[1,0:N]),transpose(x_sym[1,0:N+1]),transpose(x_sym[4,0:N+1]))
+        lbg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),-2*np.ones(N),-1*np.ones(N),-0.5*self.track_width*0.75*np.ones(N+1),-0.1*np.ones(N+1)]
+        ubg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),2*np.ones(N),1*np.ones(N),0.5*self.track_width*0.75*np.ones(N+1),self.v_max*0.95*np.ones(N+1)]
+        lbx = -np.inf * np.ones(dx*(N+1)+du*N)
+        ubx = np.inf * np.ones(dx*(N+1)+du*N)
+
+        x = vertcat(reshape(x_sym[:,0:N+1],(dx*(N+1),1)),reshape(u_sym[:,0:N],(du*N,1)))
+
+        # define solver
+        nlp = {'x':x,'f':dl, 'g':const}
+        solver = nlpsol('solver','ipopt', nlp, options)
+
+        # create solver input
+        solver_input = {}
+        solver_input['lbx'] = lbx
+        solver_input['ubx'] = ubx
+        solver_input['lbg'] = lbg
+        solver_input['ubg'] = ubg
+
+        # solve optimization problem
+        solver_output = solver(**solver_input)
+
+        # process ouput
+        sol = solver_output['x']
+        sol_evalf = np.squeeze(evalf(sol))
+        u = sol_evalf[-du*N:]
+        x = sol_evalf[:-du*N]
+        #print(u)
+        #print(x)
+        u_applied = u[0:1]
+
+        #print(sol.solveroutput.info.lambda)
+
+        # print solution
+        return sol_evalf
