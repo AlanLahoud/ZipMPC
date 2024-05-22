@@ -446,8 +446,8 @@ class CasadiControl():
         x_sym = SX.sym('x_sym',dx,N+1)
         u_sym = SX.sym('u_sym',du,N)
 
-        a_f = np.arctan((x_sym[5,0:N]  + l_f*x_sym[3,0:N])/np.absolute(x_sym[4,0:N]))-u_sym[1,0:N]
-        a_r = np.arctan((x_sym[5,0:N]  - l_f*x_sym[3,0:N])/np.absolute(x_sym[4,0:N]))
+        a_f = np.arctan((x_sym[5,0:N]  + l_f*x_sym[3,0:N])/x_sym[4,0:N])-u_sym[1,0:N]
+        a_r = np.arctan((x_sym[5,0:N]  - l_f*x_sym[3,0:N])/x_sym[4,0:N])
 
         F_yf = -0.5*m*g*mu*(D*np.sin(C*np.arctan(B*a_f)))
         F_yr = -0.5*m*g*mu*(D*np.sin(C*np.arctan(B*a_r)))

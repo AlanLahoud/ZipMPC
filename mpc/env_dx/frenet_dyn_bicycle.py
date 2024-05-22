@@ -60,6 +60,29 @@ class FrenetDynBicycleDx(nn.Module):
         self.ac_max = params[4]
         self.dt = params[5] #0.04
 
+        # # model parameters: l_r, l_f (beta and curv(sigma) are calculated in the dynamics)
+        # if params is None:
+        #     # l_r, l_f
+        #     self.params = Variable(torch.Tensor((0.2, 0.2)))
+        # else:
+        #     self.params = params
+        #     assert len(self.params) == 2
+        #
+        #     self.delta_threshold_rad = np.pi  #12 * 2 * np.pi / 360
+        #     self.v_max = 2
+        #     self.max_acceleration = 2
+        #
+        #     self.dt = 0.05   # name T in document
+        #
+        #     self.track_width = 0.5
+        #
+        #     self.lower = -self.track_width/2
+        #     self.upper = self.track_width/2
+        #
+        #     self.mpc_eps = 1e-4
+        #     self.linesearch_decay = 0.5
+        #     self.max_linesearch_iter = 2
+
     def curv(self, sigma):
         '''
         This function can stay the same
@@ -101,15 +124,16 @@ class FrenetDynBicycleDx(nn.Module):
         if state.is_cuda and not self.params.is_cuda:
             self.params = self.params.cuda()
 
-        l_r,l_f = torch.unbind(self.params)
+        l_r = self.l_r
+        l_f = self.l_f
 
         a, delta = torch.unbind(u, dim=1)
 
         sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
         #fP(α) = D sin(C arctan(Bα)) B = 10.0, C = 1.9, D = 1.0
         # αf = arctan( vy + lf ˙ψ|vx|)− δf
-        a_f = torch.atan((v_y + l_f*r)/torch.abs(v_x))-delta
-        a_r = torch.atan((v_y - l_f*r)/torch.abs(v_x))
+        a_f = torch.atan((v_y + l_f*r)/v_x)-delta
+        a_r = torch.atan((v_y - l_f*r)/v_x)
 
         m = 0.5
         g = 9.81
