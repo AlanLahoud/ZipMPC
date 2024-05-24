@@ -128,29 +128,30 @@ class FrenetDynBicycleDx(nn.Module):
         l_f = self.l_f
 
         a, delta = torch.unbind(u, dim=1)
+        #print(delta)
 
         sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
         #fP(α) = D sin(C arctan(Bα)) B = 10.0, C = 1.9, D = 1.0
         # αf = arctan( vy + lf ˙ψ|vx|)− δf
-        a_f = torch.atan((v_y + l_f*r)/v_x)-delta
-        a_r = torch.atan((v_y - l_f*r)/v_x)
+        a_f = torch.atan((v_y + l_f*r)/torch.abs(v_x)-delta)
+        a_r = torch.atan((v_y - l_r*r)/torch.abs(v_x))
 
-        m = 0.5
+        m = 1.5
         g = 9.81
-        mu = 0.5
+        mu = 0.85
         I_z = m*l_r*l_f # this should be an approximation
 
-        B = 10.0
-        C = 1.9
+        B = 6.0
+        C = 1.6
         D = 1.0
 
         F_yf = -0.5*m*g*mu*(D*torch.sin(C*torch.atan(B*a_f)))
         F_yr = -0.5*m*g*mu*(D*torch.sin(C*torch.atan(B*a_r)))
 
         dsigma = (v_x*torch.cos(phi)-v_y*torch.sin(phi))/(1.-self.curv(sigma)*d)
-        dd = v_x*torch.cos(phi)+v_y*torch.sin(phi)
+        dd = v_x*torch.sin(phi)+v_y*torch.cos(phi)
         dphi = r-self.curv(sigma)*((v_x*torch.cos(phi)-v_y*torch.sin(phi))/(1.-self.curv(sigma)*d))
-        dr = 1/I_z*(l_f*F_yf -l_r*F_yr)
+        dr = 1/I_z*(l_f*F_yf*torch.cos(delta) -l_r*F_yr)
         dv_x = a + r*v_y
         dv_y = 1/m*(F_yf*torch.cos(delta)+F_yr)-r*v_x
         #print(sigma)
