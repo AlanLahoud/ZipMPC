@@ -415,7 +415,7 @@ class CasadiControl():
         # Print solution
         return sol_evalf
 
-    def mpc_casadi_with_constraints_paj(self,q,p,x0,horizon,df,dc,dx,du):
+    def mpc_casadi_with_constraints_paj(self,q,p,x0,horizon,df,dc,dx,du,x_warmstart):
 
         # with: dx, du: number of states/inputs passed from the dynamics
         # dc: number of constraints
@@ -432,13 +432,13 @@ class CasadiControl():
         l_f=0.2
 
         # set them like in learned dynamics
-        m = 0.5
+        m = 1.5
         g = 9.81
-        mu = 0.5
-        I_z = m*l_r*l_f  # this should be an approximation
+        mu = 0.85
+        I_z = m*l_r*l_f # this should be an approximation
 
-        B = 10.0
-        C = 1.9
+        B = 6.0
+        C = 1.6
         D = 1.0
 
         dx = dx - dc - df
@@ -446,15 +446,15 @@ class CasadiControl():
         x_sym = SX.sym('x_sym',dx,N+1)
         u_sym = SX.sym('u_sym',du,N)
 
-        a_f = np.arctan((x_sym[5,0:N]  + l_f*x_sym[3,0:N])/x_sym[4,0:N])-u_sym[1,0:N]
-        a_r = np.arctan((x_sym[5,0:N]  - l_f*x_sym[3,0:N])/x_sym[4,0:N])
+        a_f = np.arctan((x_sym[5,0:N]  + l_f*x_sym[3,0:N])/(fabs(x_sym[4,0:N])+0.01))-u_sym[1,0:N]
+        a_r = np.arctan((x_sym[5,0:N]  - l_f*x_sym[3,0:N])/(fabs(x_sym[4,0:N])+0.01))
 
         F_yf = -0.5*m*g*mu*(D*np.sin(C*np.arctan(B*a_f)))
         F_yr = -0.5*m*g*mu*(D*np.sin(C*np.arctan(B*a_r)))
 
         #solver parameters
         options = {}
-        options['ipopt.max_iter'] = 20000
+        options['ipopt.max_iter'] = 200
         options['verbose'] = False
 
         beta = np.arctan(l_r/(l_r+l_f)*np.tan(u_sym[1,0:N]))
@@ -470,7 +470,7 @@ class CasadiControl():
         # define symbolic variables for cost parameters
         feat = vertcat(x_sym[0,0:N]-x0[0,0],x_sym[1:,0:N],u_sym[:,0:N])
         q_sym = SX.sym('q_sym',dx+du)
-        p_sym = SX.sym('q_sym',dx+du)
+        p_sym = SX.sym('p_sym',dx+du)
         Q_sym = diag(q_sym)
 
         l = sum2(transpose(diag(transpose(feat)@Q_sym@feat)) + transpose(p_sym)@feat)
@@ -483,6 +483,7 @@ class CasadiControl():
         ubx = np.inf * np.ones(dx*(N+1)+du*N)
 
         x = vertcat(reshape(x_sym[:,0:N+1],(dx*(N+1),1)),reshape(u_sym[:,0:N],(du*N,1)))
+        w_ws = np.vstack([np.reshape(x_warmstart[:dx,0:N+1],(dx*(N+1),1)),np.reshape(x_warmstart[dx+dc+df:,0:N],(du*(N),1))])
 
         # define solver
         nlp = {'x':x,'f':dl, 'g':const}
@@ -494,6 +495,9 @@ class CasadiControl():
         solver_input['ubx'] = ubx
         solver_input['lbg'] = lbg
         solver_input['ubg'] = ubg
+
+        # add initial guess to solver
+        solver_input['x0'] = w_ws
 
         # solve optimization problem
         solver_output = solver(**solver_input)
