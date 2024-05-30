@@ -205,8 +205,8 @@ class CasadiControl():
         # with: dx, du: number of states/inputs passed from the dynamics
         # dc: number of constraints
         # df: number of states that we do not use
-        q_used = np.hstack([q[5],q[1:4],q[9:]])
-        p_used = np.hstack([p[5],p[1:4],p[9:]])
+        q_used = np.hstack([q[5],q[1:4],q[8:]])
+        p_used = np.hstack([p[5],p[1:4],p[8:]])
 
         # here the q and the p scale the following
         # feature vector [sigma-sigma_0, d, phi, v, penalty_d,penalty_v,a,delta]
@@ -556,12 +556,41 @@ class CasadiControl():
         options['ipopt.max_iter'] = 20000
         options['verbose'] = False
 
-        dyn1 = horzcat((x_sym[0,0] - x0[0,0]), (x_sym[0,1:N+1] - x_sym[0,0:N] - Ts*((x_sym[4,0:N]*cos(x_sym[2,0:N])-x_sym[5,0:N]*sin(x_sym[2,0:N]))/(1.-self.curv_casadi(x_sym[0,0:N])*x_sym[1,0:N]))))
-        dyn2 = horzcat((x_sym[1,0] - x0[0,1]), (x_sym[1,1:N+1] - x_sym[1,0:N] - Ts*(x_sym[4,0:N]*sin(x_sym[2,0:N])+x_sym[5,0:N]*cos(x_sym[2,0:N]))))
-        dyn3 = horzcat((x_sym[2,0] - x0[0,2]), (x_sym[2,1:N+1] - x_sym[2,0:N] - Ts*(x_sym[3,0:N] - self.curv_casadi(x_sym[0,0:N])*(x_sym[4,0:N]*cos(x_sym[2,0:N])-x_sym[5,0:N]*sin(x_sym[2,0:N]))/(1-self.curv_casadi(x_sym[0,0:N])*x_sym[1,0:N]))))
-        dyn4 = horzcat((x_sym[3,0] - x0[0,3]), (x_sym[3,1:N+1] - x_sym[3,0:N] - Ts*(1/I_z*(l_f*F_yf -l_r*F_yr))))
-        dyn5 = horzcat((x_sym[4,0] - x0[0,4]), (x_sym[4,1:N+1] - x_sym[4,0:N] - Ts*(u_sym[0,0:N]+x_sym[3,0:N]*x_sym[5,0:N])))
-        dyn6 = horzcat((x_sym[5,0] - x0[0,5]), (x_sym[5,1:N+1] - x_sym[5,0:N] - Ts*(1/m*(F_yf+F_yr)-x_sym[3,0:N]*x_sym[4,0:N])))
+        dyn1 = horzcat(
+            (x_sym[0,0] - x0[0,0]), 
+            (x_sym[0,1:N+1] - x_sym[0,0:N] - \
+             Ts*((x_sym[4,0:N]*cos(x_sym[2,0:N])-x_sym[5,0:N]*sin(
+                x_sym[2,0:N]))/(1.-self.curv_casadi(x_sym[0,0:N])*x_sym[1,0:N]))))
+        
+        dyn2 = horzcat(
+            (x_sym[1,0] - x0[0,1]), 
+            (x_sym[1,1:N+1] - x_sym[1,0:N] - \
+             Ts*(x_sym[4,0:N]*sin(x_sym[2,0:N])+x_sym[5,0:N]*cos(
+                x_sym[2,0:N]))))
+        
+        dyn3 = horzcat(
+            (x_sym[2,0] - x0[0,2]), 
+            (x_sym[2,1:N+1] - x_sym[2,0:N] - \
+             Ts*(x_sym[3,0:N] - self.curv_casadi(
+                x_sym[0,0:N])*(x_sym[4,0:N]*cos(
+                x_sym[2,0:N])-x_sym[5,0:N]*sin(x_sym[2,0:N]))/(1-self.curv_casadi(
+                x_sym[0,0:N])*x_sym[1,0:N]))))
+        
+        dyn4 = horzcat(
+            (x_sym[3,0] - x0[0,3]), 
+            (x_sym[3,1:N+1] - x_sym[3,0:N] - \
+             Ts*(1/I_z*(l_f*F_yf -l_r*F_yr))))
+        
+        dyn5 = horzcat(
+            (x_sym[4,0] - x0[0,4]), 
+            (x_sym[4,1:N+1] - x_sym[4,0:N] - \
+             Ts*(u_sym[0,0:N]+x_sym[3,0:N]*x_sym[5,0:N])))
+        
+        dyn6 = horzcat(
+            (x_sym[5,0] - x0[0,5]), 
+            (x_sym[5,1:N+1] - x_sym[5,0:N] - \
+             Ts*(1/m*(F_yf+F_yr)-x_sym[3,0:N]*x_sym[4,0:N])))
+        
         # think about how to integrate the curvature function
 
         # define symbolic variables for cost parameters

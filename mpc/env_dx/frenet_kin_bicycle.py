@@ -27,8 +27,8 @@ class FrenetKinBicycleDx(nn.Module):
     def __init__(self, track_coordinates, params):
         super().__init__()
 
-        # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1) + ac_ub (1)
-        self.n_state = 4+2+1+1+1
+        # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1)
+        self.n_state = 4+2+1+1
         print(self.n_state)          # here add amount of states plus amount of exact penalty terms
         # control: a, delta
         self.n_ctrl = 2
@@ -57,7 +57,7 @@ class FrenetKinBicycleDx(nn.Module):
         
         self.delta_threshold_rad = np.pi
         self.v_max = params[3]
-        self.ac_max = params[4]
+        #self.ac_max = params[4]
         self.dt = params[5] #0.04
 
         
@@ -138,20 +138,23 @@ class FrenetKinBicycleDx(nn.Module):
         return curv.reshape(-1)
 
     
-    def penalty_d(self, d, factor=100000.):  
-        overshoot_pos = (d - 0.5*self.track_width*0.75).clamp(min=0)
-        overshoot_neg = (-d - 0.5*self.track_width*0.75).clamp(min=0)
+    def penalty_d(self, d, factor=10000.):  
+        overshoot_pos = (d - 0.4*self.track_width).clamp(min=0)
+        overshoot_neg = (-d - 0.4*self.track_width).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
         penalty_neg = torch.exp(overshoot_neg) - 1 
         return factor*(penalty_pos + penalty_neg)
     
-    def penalty_v(self, v, factor=100000.):  
-        penalty_pos = (v - self.v_max*0.95).clamp(min=0) ** 2
-        return factor*penalty_pos
-    
-    def penalty_ac(self, ac, factor=1000.):  
-        penalty = (ac - self.ac_max).clamp(min=0) ** 2
-        return factor*penalty
+    def penalty_v(self, v, factor=10000.):          
+        overshoot_pos = (v - self.v_max*0.95).clamp(min=0)
+        overshoot_neg = (-v + 0.001).clamp(min=0)
+        penalty_pos = torch.exp(overshoot_pos) - 1
+        penalty_neg = torch.exp(overshoot_neg) - 1 
+        return factor*(penalty_pos + penalty_neg)
+            
+    #def penalty_ac(self, ac, factor=1000.):  
+    #    penalty = (ac - self.ac_max).clamp(min=0) ** 2
+    #    return factor*penalty
     
     def forward(self, state, u):
         softplus_op = torch.nn.Softplus(20)
@@ -165,7 +168,7 @@ class FrenetKinBicycleDx(nn.Module):
 
         a, delta = torch.unbind(u, dim=1)
 
-        sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub, ac_ub = torch.unbind(state, dim=1)
+        sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
         beta = torch.atan(self.l_r/(self.l_r+self.l_f)*torch.tan(delta))       
         k = self.curv(sigma)
 
@@ -183,18 +186,18 @@ class FrenetKinBicycleDx(nn.Module):
         
         #Ackerman theory
         # http://www.ingveh.ulg.ac.be/uploads/education/MECA0525/11_MECA0525_VEHDYN1_SSTURN_2021-2022.pdf
-        ac = v**2 * delta / (self.l_r+self.l_f)
+        #ac = v**2 * delta / (self.l_r+self.l_f)
                 
         d_pen = self.penalty_d(d)        
         v_ub = self.penalty_v(v)
-        ac_ub = self.penalty_ac(ac)
+        #ac_ub = self.penalty_ac(ac)
         
         #d_lb = softplus_op(-d - 0.5*self.track_width)
         #d_ub = softplus_op(d - 0.5*self.track_width)
         #v_lb = softplus_op(-v + 0)
         #v_ub = softplus_op(v - self.v_max)
 
-        state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub, ac_ub), 1)
+        state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), 1)
 
         return state
 

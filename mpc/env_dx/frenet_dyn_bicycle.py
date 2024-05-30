@@ -151,12 +151,15 @@ class FrenetDynBicycleDx(nn.Module):
         dsigma = (v_x*torch.cos(phi)-v_y*torch.sin(phi))/(1.-self.curv(sigma)*d)
         dd = v_x*torch.sin(phi)+v_y*torch.cos(phi)
         dphi = r-self.curv(sigma)*((v_x*torch.cos(phi)-v_y*torch.sin(phi))/(1.-self.curv(sigma)*d))
-        dr = 1/I_z*(l_f*F_yf*torch.cos(delta) -l_r*F_yr)
+        dr = 1/I_z*(l_f*F_yf -l_r*F_yr)
         dv_x = a + r*v_y
         dv_y = 1/m*(F_yf*torch.cos(delta)+F_yr)-r*v_x
         #print(sigma)
         #print(self.curv(sigma))
 
+        #import pdb
+        #pdb.set_trace()
+        
         sigma = sigma + self.dt * dsigma
         d = d + self.dt * dd
         phi = phi + self.dt * dphi
