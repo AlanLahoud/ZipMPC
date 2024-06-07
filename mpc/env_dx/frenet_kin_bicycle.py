@@ -60,7 +60,7 @@ class FrenetKinBicycleDx(nn.Module):
         #self.ac_max = params[4]
         self.dt = params[5] #0.04
 
-        self.smooth_curve = params[6]
+        self.smooth_curve = params[8]
         
         
         # model parameters: l_r, l_f (beta and curv(sigma) are calculated in the dynamics)
