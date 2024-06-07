@@ -228,7 +228,7 @@ def get_loss_progress_new(x_init_train, x_init_sim,
     
 def get_curve_hor_from_x(x, track_coord, H_curve):
     idx_track_batch = ((x[:,0]-track_coord[[2],:].T)**2).argmin(0)
-    idcs_track_batch = idx_track_batch[:, None] + torch.arange(H_curve)
+    idcs_track_batch = idx_track_batch[:, None] + torch.arange(H_curve).to(device)
     curvs = track_coord[4,idcs_track_batch].float()
     return curvs
 
