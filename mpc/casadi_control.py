@@ -25,7 +25,7 @@ import os
 #      color_scheme='Linux', call_pdb=1)
 
 class CasadiControl():
-    def __init__(self, track_coordinates, params):
+    def __init__(self, track_coordinates, params, smooth_curve=5):
         super().__init__()
 
         # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1) + ac_ub (1)
@@ -63,10 +63,15 @@ class CasadiControl():
 
         self.a_max = params[6]
         self.delta_max = params[7]
+        
+        self.smooth_curve = smooth_curve
 
 
+    #def sigmoid(self, x):
+    #    return 1 / (1 + exp(-x))
+    
     def sigmoid(self, x):
-      	return 1 / (1 + exp(-x))
+        return (tanh(x/2)+1.)/2
 
     def curv_casadi(self, sigma):
         '''
@@ -86,7 +91,6 @@ class CasadiControl():
         print(sigma[:10])
         print(curv_mask[:10])
         print(curv[:10]) '''
-        print("curv start")
 
         num_sf = self.sigma_f.size()
         num_s = sigma.size()
@@ -99,14 +103,14 @@ class CasadiControl():
         curv_f_np = self.curv_f.numpy()
 
         sigma_shifted = reshape(sigma,num_s[1],1)- sigma_f_mat_np
-        curv_unscaled = self.sigmoid(5*sigma_shifted)
+        curv_unscaled = self.sigmoid(self.smooth_curve*sigma_shifted)
         curv = reshape((curv_unscaled@(curv_f_np.reshape(-1,1))),1,num_s[1])
-        print("curv end")
+
         return curv
 
     def penalty_d(self, d, factor=100000.):
-        overshoot_pos = np.clip((d - 0.5*self.track_width*0.75),0,None)
-        overshoot_neg = np.clip((-d - 0.5*self.track_width*0.75),0,None)
+        overshoot_pos = np.clip((d - 0.25*self.track_width),0,None)
+        overshoot_neg = np.clip((-d - 0.25*self.track_width),0,None)
         penalty_pos = np.exp(overshoot_pos) - 1
         penalty_neg = np.exp(overshoot_neg) - 1
         return factor*(penalty_pos + penalty_neg)
@@ -222,9 +226,14 @@ class CasadiControl():
         u_sym = SX.sym('u_sym',du,N)
 
         #solver parameters
-        options = {}
-        options['ipopt.max_iter'] = 20000
-        options['verbose'] = False
+        options = {
+            'verbose': False,
+            'ipopt.print_level': 0,
+            'print_time': 0,
+            'ipopt.tol': 1e-4,
+            'ipopt.max_iter': 400,
+            'ipopt.hessian_approximation': 'limited-memory'
+        }
 
         beta = np.arctan(l_r/(l_r+l_f)*np.tan(u_sym[1,0:N]))
 
@@ -232,9 +241,7 @@ class CasadiControl():
         dyn2 = horzcat((x_sym[1,0] - x0[0,1]), (x_sym[1,1:N+1] - x_sym[1,0:N] - Ts*(x_sym[3,0:N]*np.sin(x_sym[2,0:N]+beta))))
         dyn3 = horzcat((x_sym[2,0] - x0[0,2]), (x_sym[2,1:N+1] - x_sym[2,0:N] - Ts*(x_sym[3,0:N]*(1/l_f)*np.sin(beta)-self.curv_casadi(x_sym[0,0:N])*x_sym[3,0:N]*(np.cos(x_sym[2,0:N]+beta)/(1-self.curv_casadi(x_sym[0,0:N])*x_sym[1,0:N])))))
         dyn4 = horzcat((x_sym[3,0] - x0[0,3]), (x_sym[3,1:N+1] - x_sym[3,0:N] - Ts*(u_sym[0,0:N])))
-        # think about how to integrate the curvature function
 
-        # define symbolic variables for cost parameters
         feat = vertcat(x_sym[0,0:N]-x0[0,0],x_sym[1:,0:N],u_sym[:,0:N])
         q_sym = SX.sym('q_sym',dx+du)
         p_sym = SX.sym('q_sym',dx+du)
@@ -259,7 +266,7 @@ class CasadiControl():
                     np.zeros(N+1),
                     -self.a_max*np.ones(N),
                     -self.delta_max*np.ones(N),
-                    -0.5*self.track_width*0.75*np.ones(N+1),
+                    -0.30*self.track_width*np.ones(N+1),
                     -0.1*np.ones(N+1)]
 
         ubg = np.r_[np.zeros(N+1),
@@ -268,7 +275,7 @@ class CasadiControl():
                     np.zeros(N+1),
                     self.a_max*np.ones(N),
                     self.delta_max*np.ones(N),
-                    0.5*self.track_width*0.75*np.ones(N+1),
+                    0.30*self.track_width*np.ones(N+1),
                     self.v_max*np.ones(N+1)]
 
         lbx = -np.inf * np.ones(dx*(N+1)+du*N)
@@ -287,6 +294,16 @@ class CasadiControl():
         solver_input['lbg'] = lbg
         solver_input['ubg'] = ubg
 
+        #import pdb
+        #pdb.set_trace()
+        
+        #w_ws = np.vstack(
+        #    [np.reshape(x_warmstart[:dx,0:N+1],(dx*(N+1),1)),
+        #     np.reshape(x_warmstart[dx+df:,0:N],(du*(N),1))]
+        #)
+        
+        #solver_input['x0'] = w_ws
+        
         # solve optimization problem
         solver_output = solver(**solver_input)
 

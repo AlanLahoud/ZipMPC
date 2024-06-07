@@ -60,6 +60,8 @@ class FrenetKinBicycleDx(nn.Module):
         #self.ac_max = params[4]
         self.dt = params[5] #0.04
 
+        self.smooth_curve = params[6]
+        
         
         # model parameters: l_r, l_f (beta and curv(sigma) are calculated in the dynamics)
         #if params is None:
@@ -96,7 +98,8 @@ class FrenetKinBicycleDx(nn.Module):
             #self.mpc_eps = 1e-4
             #self.linesearch_decay = 0.5
             #self.max_linesearch_iter = 2
-
+                   
+            
     def curv(self, sigma):
         '''
         # create vector of size of vector sigma passed to the function
@@ -123,7 +126,7 @@ class FrenetKinBicycleDx(nn.Module):
 
 
         sigma_shifted = sigma.reshape(-1,1) - sigma_f_mat
-        curv_unscaled = torch.sigmoid(10*sigma_shifted)
+        curv_unscaled = torch.sigmoid(self.smooth_curve*sigma_shifted)
         curv = (curv_unscaled@(self.curv_f.reshape(-1,1))).type(torch.float)
 
         '''
@@ -139,8 +142,8 @@ class FrenetKinBicycleDx(nn.Module):
 
     
     def penalty_d(self, d, factor=10000.):  
-        overshoot_pos = (d - 0.4*self.track_width).clamp(min=0)
-        overshoot_neg = (-d - 0.4*self.track_width).clamp(min=0)
+        overshoot_pos = (d - 0.35*self.track_width).clamp(min=0)
+        overshoot_neg = (-d - 0.35*self.track_width).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
         penalty_neg = torch.exp(overshoot_neg) - 1 
         return factor*(penalty_pos + penalty_neg)
@@ -175,6 +178,11 @@ class FrenetKinBicycleDx(nn.Module):
         dsigma = v*(torch.cos(phi+beta)/(1.-k*d))
         dd = v*torch.sin(phi+beta)
         dphi = v/self.l_f*torch.sin(beta)-k*v*(torch.cos(phi+beta)/(1-k*d))
+        
+        #dsigma = v*(torch.cos(phi)/(1.-k*d))
+        #dd = v*torch.sin(phi)
+        #dphi = v/(self.l_f+self.l_r)*torch.tan(delta)-k*v*(torch.cos(phi)/(1-k*d))
+        
         dv = a
 
         sigma = sigma + self.dt * dsigma
