@@ -39,8 +39,8 @@ from time import time
 device = 'cpu' #to do
 k_curve = 100.
 
-mpc_T = 25
-H_curve = 50
+mpc_T = 30
+H_curve = 60
 
 n_batch = 32
 
@@ -114,7 +114,7 @@ def sample_xinit_paj(n_batch):
     sigma_0 = sigma
     sigma_diff = sigma-sigma_0
     
-    d_pen = penalty_d(d, 0.25*track_width)
+    d_pen = penalty_d(d, 0.35*track_width)
     v_ub = penalty_v(v_x, v_max)
     
     k = true_dx.curv(sigma)
