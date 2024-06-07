@@ -24,8 +24,10 @@ plt.style.use('bmh')
 #      color_scheme='Linux', call_pdb=1)
 
 class FrenetKinBicycleDx(nn.Module):
-    def __init__(self, track_coordinates, params):
+    def __init__(self, track_coordinates, params, dev):
         super().__init__()
+        
+        self.params = params
 
         # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1)
         self.n_state = 4+2+1+1
@@ -39,7 +41,7 @@ class FrenetKinBicycleDx(nn.Module):
         self.track_sigma = self.track_coordinates[2,:]
         self.track_curv = self.track_coordinates[4,:]
 
-        self.track_curv_shift = torch.empty(self.track_curv.size())
+        self.track_curv_shift = torch.empty(self.track_curv.size()).to(dev)
         self.track_curv_shift[1:] = self.track_curv[0:-1]
         self.track_curv_shift[0] = self.track_curv[-1]
         self.track_curv_diff = self.track_curv - self.track_curv_shift
@@ -47,9 +49,7 @@ class FrenetKinBicycleDx(nn.Module):
         self.mask = torch.where(torch.absolute(self.track_curv_diff) < 0.1, False, True)
         self.sigma_f = self.track_sigma[self.mask]
         self.curv_f = self.track_curv_diff[self.mask]
-
-        self.params = params
-        
+     
         self.l_r = params[0]
         self.l_f = params[1]
         
