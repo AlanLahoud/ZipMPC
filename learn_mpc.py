@@ -36,7 +36,7 @@ from time import time
 
 # Parameters
 
-device = 'cpu' #to do
+device = 'cuda' #to do
 k_curve = 100.
 
 mpc_T = 18
