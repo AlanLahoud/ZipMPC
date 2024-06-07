@@ -39,10 +39,10 @@ from time import time
 device = 'cpu' #to do
 k_curve = 100.
 
-mpc_T = 18
-H_curve = 36
+mpc_T = 25
+H_curve = 50
 
-n_batch = 16
+n_batch = 64
 
 l_r = 0.2
 l_f = 0.2
@@ -251,14 +251,14 @@ def cost_to_batch(q, p, n_batch, mpc_T):
     return Q_batch, p_batch
 
 def bound_params(q, p):
-    #q[:,1] = q[:,1] + 10.0
-    q = q + 1.
+    q[:,1] = q[:,1] + 10.0
+    #q = q + 1.
     q[:,0] = 0.00001
     q[:,4] = 0.00001
     q = q.clip(0.00001, 40.)
     p[:,0] = 0.0
-    p[:,1] = 0.0
-    p[:,2] = 0.0
+    #p[:,1] = 0.0
+    #p[:,2] = 0.0
     p[:,4] = 0.0
     p2 = p.clone()
     p2 = p.clip(-200.,200.)
@@ -267,14 +267,14 @@ def bound_params(q, p):
 
 
 def bound_params_paj(q, p):
-    #q[:,1] = q[:,1] + 10.0
-    q = q + 1.
+    q[:,1] = q[:,1] + 10.0
+    #q = q + 1.
     q[:,0] = 0.00001
     q[:,6] = 0.00001
     q = q.clip(0.00001, 40.)
     p[:,0] = 0.0
-    p[:,1] = 0.0
-    p[:,2] = 0.0
+    #p[:,1] = 0.0
+    #p[:,2] = 0.0
     p[:,6] = 0.0
     p2 = p.clone()
     p2 = p.clip(-200.,200.)
@@ -403,8 +403,7 @@ for i in range(500):
           '\t Time: ', round(end_time-start_time, 4)
          )
     
+    if i%50 == 49:
+        torch.save(model.state_dict(), f'model_{i}.pkl')
+    
     # It would be nice to add a validation step here 
-    
-    
-    
-torch.save(model.state_dict(), 'model.pkl')
