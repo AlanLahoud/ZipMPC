@@ -338,9 +338,9 @@ true_dx = frenet_kin_bicycle.FrenetKinBicycleDx(track_coord, params, device)
 true_sim_dx = frenet_kin_bicycle.FrenetKinBicycleDx(track_coord, params, device)
 #true_sim_dx = frenet_dyn_bicycle.FrenetDynBicycleDx(track_coord, params)
 
-u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, n_batch, 1)
-u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, n_batch, 1)
-u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, n_batch, 1)
+u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, n_batch, 1).to(device)
+u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, n_batch, 1).to(device)
+u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, n_batch, 1).to(device)
 
 n_state = true_dx.n_state
 n_ctrl = true_dx.n_ctrl
