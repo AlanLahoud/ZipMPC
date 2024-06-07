@@ -42,7 +42,7 @@ k_curve = 100.
 mpc_T = 25
 H_curve = 50
 
-n_batch = 64
+n_batch = 32
 
 l_r = 0.2
 l_f = 0.2
