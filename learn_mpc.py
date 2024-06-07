@@ -355,8 +355,8 @@ env_params_sim = true_sim_dx.params
 
 track_coord = track_coord.to(device)
 
-dx = true_dx.__class__(track_coord,env_params)
-dx_sim = true_sim_dx.__class__(track_coord,env_params_sim)
+dx = true_dx.__class__(track_coord,env_params,device)
+dx_sim = true_sim_dx.__class__(track_coord,env_params_sim,device)
 
 q_penalty = .0001*torch.ones(2).to(device)
 p_penalty = torch.ones(2).to(device)
