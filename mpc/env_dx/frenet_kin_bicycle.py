@@ -35,7 +35,7 @@ class FrenetKinBicycleDx(nn.Module):
         # control: a, delta
         self.n_ctrl = 2
 
-        self.track_coordinates = track_coordinates
+        self.track_coordinates = track_coordinates.to(dev)
 
         # everything to calculate curvature
         self.track_sigma = self.track_coordinates[2,:]
