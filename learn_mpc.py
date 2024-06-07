@@ -332,8 +332,8 @@ track_coord = torch.from_numpy(np.vstack([gen.xCoords, gen.yCoords, gen.arcLengt
 
 params = torch.tensor([l_r, l_f, track_width, v_max, ac_max, dt, a_max, delta_max, k_curve])
 
-true_dx = frenet_kin_bicycle.FrenetKinBicycleDx(track_coord, params)
-true_sim_dx = frenet_kin_bicycle.FrenetKinBicycleDx(track_coord, params)
+true_dx = frenet_kin_bicycle.FrenetKinBicycleDx(track_coord, params, device)
+true_sim_dx = frenet_kin_bicycle.FrenetKinBicycleDx(track_coord, params, device)
 #true_sim_dx = frenet_dyn_bicycle.FrenetDynBicycleDx(track_coord, params)
 
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, n_batch, 1)
