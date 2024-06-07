@@ -49,7 +49,7 @@ l_f = 0.2
 
 v_max = 2.5
 a_max = 3.
-delta_max = 0.5
+delta_max = 0.6
 
 dt = 0.04
 
@@ -63,10 +63,10 @@ class NN(nn.Module):
     #changed output dimensions
     def __init__(self, H, S, O):
         super(NN, self).__init__()
-        self.fc1 = nn.Linear(H + S, 128)  
-        self.fc2 = nn.Linear(128, 128)  
-        self.output1 = nn.Linear(128, O) 
-        self.output2 = nn.Linear(128, O) 
+        self.fc1 = nn.Linear(H + S, 512)  
+        self.fc2 = nn.Linear(512, 256)  
+        self.output1 = nn.Linear(256, O) 
+        self.output2 = nn.Linear(256, O) 
 
     def forward(self, c, x0):
         combined = torch.cat((c, x0), dim=1)
@@ -365,7 +365,7 @@ p_penalty = torch.ones(2).to(device)
 
 model = NN(H_curve, 3, 8).to(device)
 #model.load_state_dict(torch.load('model.pkl'))
-opt = optim.RMSprop(model.parameters(), lr=5e-4)
+opt = optim.Adam(model.parameters(), lr=1e-3)
 q_penalty_batch = q_penalty.unsqueeze(0).repeat(n_batch,1)
 p_penalty_batch = p_penalty.unsqueeze(0).repeat(n_batch,1)
 
