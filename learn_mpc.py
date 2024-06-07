@@ -78,9 +78,11 @@ class NN(nn.Module):
         
 
 def sample_xinit(n_batch):
+    
     def uniform(shape, low, high):
         r = high-low
         return torch.rand(shape)*r+low
+    
     sigma = uniform(n_batch, 0.01, 20.)
     d = uniform(n_batch, -track_width*0.35, track_width*0.35)
     phi = uniform(n_batch, -0.4*np.pi, 0.4*np.pi)
@@ -92,9 +94,9 @@ def sample_xinit(n_batch):
     d_pen = penalty_d(d, 0.35*track_width)
     v_ub = penalty_v(v, v_max)
     
-    k = true_dx.curv(sigma)
+    #k = true_dx.curv(sigma.to(device))
 
-    xinit = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), dim=1)
+    xinit = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), dim=1).to(device)
     return xinit
 
 
