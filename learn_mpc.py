@@ -42,7 +42,7 @@ k_curve = 100.
 mpc_T = 30
 H_curve = 60
 
-n_batch = 64
+n_batch = 16
 
 l_r = 0.2
 l_f = 0.2
@@ -365,14 +365,14 @@ p_penalty = torch.ones(2).to(device)
 
 model = NN(H_curve, 3, 8).to(device)
 #model.load_state_dict(torch.load('model.pkl'))
-opt = optim.Adam(model.parameters(), lr=1e-3)
+opt = optim.RMSProp(model.parameters(), lr=1e-4)
 q_penalty_batch = q_penalty.unsqueeze(0).repeat(n_batch,1)
 p_penalty_batch = p_penalty.unsqueeze(0).repeat(n_batch,1)
 
 
 
 
-for i in range(500):
+for i in range(800):
     
     start_time = time()
     
