@@ -39,10 +39,10 @@ from time import time
 device = 'cpu' #to do
 k_curve = 100.
 
-mpc_T = 25
-H_curve = 75
+mpc_T = 35
+H_curve = 70
 
-n_batch = 32
+n_batch = 16
 
 l_r = 0.2
 l_f = 0.2
