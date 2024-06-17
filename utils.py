@@ -24,7 +24,7 @@ class NN(nn.Module):
         return q, p
         
 
-def sample_xinit(n_batch):
+def sample_xinit(n_batch, track_width, v_max):
     def uniform(shape, low, high):
         r = high-low
         return torch.rand(shape)*r+low

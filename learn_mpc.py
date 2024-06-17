@@ -138,7 +138,7 @@ for i in range(800):
     
     start_time = time()
     
-    x_init_sim = utils.sample_xinit(n_batch).to(device)
+    x_init_sim = utils.sample_xinit(n_batch, track_width, v_max).to(device)
     
     #x_init_train = x_init_sim[:,[0,1,2,4,6,7,8,9]]
     x_init_train = x_init_sim
