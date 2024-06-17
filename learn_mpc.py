@@ -149,7 +149,7 @@ for i in range(800):
         n_batch, mpc_T)
            
     progress_loss, d_loss = utils.get_loss_progress_new(x_init_train, x_init_sim, 
-                                      dx, dx_sim, 
+                                      dx, dx_sim, true_sim_dx,
                                       Q_batch, p_batch, 
                                       u_lower, u_upper, u_init,
                                       lqr_iter, eps, n_batch, grad_method,
