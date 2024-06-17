@@ -41,7 +41,7 @@ device = 'cpu' #to do
 k_curve = 100.
 
 mpc_T = 15
-H_curve = 45
+H_curve = 60
 
 n_batch = 16
 
@@ -173,6 +173,6 @@ for i in range(800):
          )
     
     if i%20 == 0:
-        torch.save(model.state_dict(), f'model_{i}.pkl')
+        torch.save(model.state_dict(), f'model_{mpc_T}_{H_curve}_{i}.pkl')
     
     # It would be nice to add a validation step here 
