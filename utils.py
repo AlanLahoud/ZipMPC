@@ -110,6 +110,10 @@ def get_loss_progress_new(x_init_train, x_init_sim,
         x_curr_sim = x_init_sim
         x_curr_train = x_init_train
         
+        if np.random.random()<0.02:
+            import pdb
+            pdb.set_trace()
+        
         for s in range(H_curve//mpc_T):
                     
             pred_x, pred_u, pred_objs = mpc.MPC(
