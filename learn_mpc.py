@@ -41,7 +41,7 @@ device = 'cpu' #to do
 k_curve = 100.
 
 mpc_T = 15
-H_curve = 30
+H_curve = 60
 
 n_batch = 16
 
