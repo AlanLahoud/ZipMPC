@@ -147,6 +147,10 @@ for i in range(800):
         x_init_train, track_coord, H_curve, model, 
         q_penalty_batch, p_penalty_batch, 
         n_batch, mpc_T)
+    
+    if i%10==0:
+        print(Q_batch[0,0].diag().detach().numpy())
+        print(p_batch[0,0].detach().numpy())
            
     progress_loss, d_loss = utils.get_loss_progress_new(x_init_train, x_init_sim, 
                                       dx, dx_sim, true_sim_dx,
