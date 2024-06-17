@@ -151,6 +151,8 @@ for i in range(800):
     progress_loss, d_loss = utils.get_loss_progress_new(x_init_train, x_init_sim, 
                                       dx, dx_sim, 
                                       Q_batch, p_batch, 
+                                      u_lower, u_upper, u_init,
+                                      lqr_iter, eps, n_batch,
                                       mpc_T, H_curve)
     
     total_loss = progress_loss

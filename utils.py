@@ -101,9 +101,9 @@ def get_loss_progress(x_init, dx, _Q, _p, mpc_T):
     
 def get_loss_progress_new(x_init_train, x_init_sim, 
                           dx, dx_sim, 
-                          _Q, _p, 
-                          mpc_T, 
-                          H_curve):    
+                          _Q, _p, u_lower, u_upper, u_init,
+                          lqr_iter, eps, n_batch,
+                          mpc_T, H_curve):    
                
         assert H_curve%mpc_T == 0
         
