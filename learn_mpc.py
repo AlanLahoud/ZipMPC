@@ -152,7 +152,7 @@ for i in range(800):
                                       dx, dx_sim, 
                                       Q_batch, p_batch, 
                                       u_lower, u_upper, u_init,
-                                      lqr_iter, eps, n_batch,
+                                      lqr_iter, eps, n_batch, grad_method,
                                       mpc_T, H_curve)
     
     total_loss = progress_loss
