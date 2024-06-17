@@ -403,7 +403,7 @@ for i in range(800):
           '\t Time: ', round(end_time-start_time, 4)
          )
     
-    if i%50 == 49:
+    if i%20 == 0:
         torch.save(model.state_dict(), f'model_{i}.pkl')
     
     # It would be nice to add a validation step here 
