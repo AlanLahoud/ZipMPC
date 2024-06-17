@@ -57,6 +57,11 @@ dt = 0.04
 # not using
 ac_max = (0.7*v_max)**2 * delta_max / (l_r+l_f)
 
+track_density = 300
+track_width = 0.5
+
+
+
 params = torch.tensor([l_r, l_f, track_width, v_max, ac_max, dt, a_max, delta_max, k_curve])
 
 
@@ -64,9 +69,6 @@ params = torch.tensor([l_r, l_f, track_width, v_max, ac_max, dt, a_max, delta_ma
 
 
 # Let's try to create a track 
-track_density = 300
-track_width = 0.5
-
 gen = simple_track_generator.trackGenerator(track_density,track_width)
 track_name = 'LONG_TRACK'
 
