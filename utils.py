@@ -80,8 +80,7 @@ def frenet_to_cartesian(point_f, ref_path):
     return torch.tensor([x, y])
 
 
-def get_loss_progress(x_init, dx, _Q, _p, mpc_T=mpc_T):    
-        
+def get_loss_progress(x_init, dx, _Q, _p, mpc_T):     
         pred_x, pred_u, pred_objs = mpc.MPC(
             dx.n_state, dx.n_ctrl, mpc_T,
             u_lower=u_lower, u_upper=u_upper, u_init=u_init,
@@ -103,8 +102,8 @@ def get_loss_progress(x_init, dx, _Q, _p, mpc_T=mpc_T):
 def get_loss_progress_new(x_init_train, x_init_sim, 
                           dx, dx_sim, 
                           _Q, _p, 
-                          mpc_T=mpc_T, 
-                          H_curve=H_curve):    
+                          mpc_T, 
+                          H_curve):    
                
         assert H_curve%mpc_T == 0
         
