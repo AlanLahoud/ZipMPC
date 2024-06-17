@@ -28,10 +28,10 @@ def sample_xinit(n_batch, track_width, v_max, true_dx):
     def uniform(shape, low, high):
         r = high-low
         return torch.rand(shape)*r+low
-    sigma = uniform(n_batch, 0.01, 20.)
-    d = uniform(n_batch, -track_width*0.35, track_width*0.35)
-    phi = uniform(n_batch, -0.4*np.pi, 0.4*np.pi)
-    v = uniform(n_batch, .01, 0.95*v_max)
+    sigma = uniform(n_batch, 5.01, 5.05)
+    d = uniform(n_batch, -track_width*0.05, track_width*0.05)
+    phi = uniform(n_batch, -0.1*np.pi, 0.1*np.pi)
+    v = uniform(n_batch, .50, 0.95*v_max)
 
     sigma_0 = sigma
     sigma_diff = sigma-sigma_0
@@ -110,9 +110,9 @@ def get_loss_progress_new(x_init_train, x_init_sim,
         x_curr_sim = x_init_sim
         x_curr_train = x_init_train
         
-        if np.random.random()<0.02:
-            import pdb
-            pdb.set_trace()
+        #if np.random.random()<0.02:
+        #    import pdb
+        #    pdb.set_trace()
         
         for s in range(H_curve//mpc_T):
                     
