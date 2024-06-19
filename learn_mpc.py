@@ -108,7 +108,7 @@ n_state = true_dx.n_state
 n_ctrl = true_dx.n_ctrl
 
 eps = .1
-lqr_iter = 30
+lqr_iter = 50
 grad_method = GradMethods.AUTO_DIFF
 
 
