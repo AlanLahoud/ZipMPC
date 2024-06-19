@@ -45,7 +45,7 @@ def sample_xinit(n_batch, track_width, v_max, true_dx):
     return xinit
 
     
-def penalty_d(d, th, factor=10000):  
+def penalty_d(d, th, factor=1000):  
     overshoot_pos = (d - th).clamp(min=0)
     overshoot_neg = (-d - th).clamp(min=0)
     penalty_pos = torch.exp(overshoot_pos) - 1
@@ -53,7 +53,7 @@ def penalty_d(d, th, factor=10000):
     return factor*(penalty_pos + penalty_neg)
 
 
-def penalty_v(v, th, factor=10000): 
+def penalty_v(v, th, factor=1000): 
     overshoot_pos = (v - th).clamp(min=0)
     overshoot_neg = (-v + 0.001).clamp(min=0)
     penalty_pos = torch.exp(overshoot_pos) - 1
