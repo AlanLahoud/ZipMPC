@@ -41,7 +41,7 @@ def sample_xinit(n_batch, track_width, v_max, true_dx):
     sigma_0 = sigma
     sigma_diff = sigma-sigma_0
     
-    d_pen = penalty_d(d, 0.35*track_width)
+    d_pen = penalty_d(d, 0.40*track_width)
     v_ub = penalty_v(v, v_max)
     
     k = true_dx.curv(sigma)
