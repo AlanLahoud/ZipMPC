@@ -31,7 +31,7 @@ def sample_xinit(n_batch, track_width, v_max, true_dx):
     sigma = uniform(n_batch, 6.01, 8.05)
     d = uniform(n_batch, -track_width*0.35, track_width*0.35)
     phi = uniform(n_batch, -0.4*np.pi, 0.4*np.pi)
-    v = uniform(n_batch, .50, 0.95*v_max)
+    v = uniform(n_batch, .01, 0.01*v_max)
 
     sigma_0 = sigma
     sigma_diff = sigma-sigma_0
