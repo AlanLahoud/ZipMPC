@@ -231,7 +231,7 @@ class CasadiControl():
             'ipopt.print_level': 0,
             'print_time': 0,
             'ipopt.tol': 1e-4,
-            'ipopt.max_iter': 400,
+            'ipopt.max_iter': 4000,
             'ipopt.hessian_approximation': 'limited-memory'
         }
 
@@ -266,7 +266,7 @@ class CasadiControl():
                     np.zeros(N+1),
                     -self.a_max*np.ones(N),
                     -self.delta_max*np.ones(N),
-                    -0.30*self.track_width*np.ones(N+1),
+                    -0.40*self.track_width*np.ones(N+1),
                     -0.1*np.ones(N+1)]
 
         ubg = np.r_[np.zeros(N+1),
@@ -275,7 +275,7 @@ class CasadiControl():
                     np.zeros(N+1),
                     self.a_max*np.ones(N),
                     self.delta_max*np.ones(N),
-                    0.30*self.track_width*np.ones(N+1),
+                    0.40*self.track_width*np.ones(N+1),
                     self.v_max*np.ones(N+1)]
 
         lbx = -np.inf * np.ones(dx*(N+1)+du*N)

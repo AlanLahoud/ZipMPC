@@ -29,19 +29,19 @@ def sample_xinit(n_batch, track_width, v_max, true_dx):
         r = high-low
         return torch.rand(shape)*r+low
     sigma = uniform(n_batch, 6.01, 8.05)
-    d = uniform(n_batch, -track_width*0.35, track_width*0.35)
+    d = uniform(n_batch, -track_width*0.27, track_width*0.27)
     phi = uniform(n_batch, -0.4*np.pi, 0.4*np.pi)
     v = uniform(n_batch, .01, 0.95*v_max)
     
-    sigma = uniform(n_batch, 6.01, 8.05)
-    d = uniform(n_batch, -track_width*0.35, track_width*0.35)
-    phi = uniform(n_batch, -0.4*np.pi, 0.4*np.pi)
-    v = uniform(n_batch, .01, 0.01*v_max)
+    #sigma = uniform(n_batch, 6.01, 8.05)
+    #d = uniform(n_batch, -track_width*0.35, track_width*0.35)
+    #phi = uniform(n_batch, -0.4*np.pi, 0.4*np.pi)
+    #v = uniform(n_batch, .01, 0.01*v_max)
 
     sigma_0 = sigma
     sigma_diff = sigma-sigma_0
     
-    d_pen = penalty_d(d, 0.40*track_width)
+    d_pen = penalty_d(d, 0.30*track_width)
     v_ub = penalty_v(v, v_max)
     
     k = true_dx.curv(sigma)
