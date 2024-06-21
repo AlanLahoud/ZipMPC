@@ -50,7 +50,7 @@ l_f = 0.2
 
 v_max = 2.5
 a_max = 3.
-delta_max = 0.65
+delta_max = 0.60
 
 dt = 0.04
 
