@@ -127,7 +127,7 @@ p_penalty = torch.ones(2).to(device)
 
 model = utils.NN(H_curve, 3, 8).to(device)
 #model.load_state_dict(torch.load('model.pkl'))
-opt = optim.Adam(model.parameters(), lr=3e-5, weight_decay=1e-5)
+opt = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 q_penalty_batch = q_penalty.unsqueeze(0).repeat(n_batch,1)
 p_penalty_batch = p_penalty.unsqueeze(0).repeat(n_batch,1)
 
