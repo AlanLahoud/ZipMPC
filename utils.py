@@ -28,7 +28,7 @@ def sample_xinit(n_batch, track_width, v_max, true_dx):
     def uniform(shape, low, high):
         r = high-low
         return torch.rand(shape)*r+low
-    sigma = uniform(n_batch, 6.01, 8.05)
+    sigma = uniform(n_batch, 5.01, 8.05)
     d = uniform(n_batch, -track_width*0.27, track_width*0.27)
     phi = uniform(n_batch, -0.4*np.pi, 0.4*np.pi)
     v = uniform(n_batch, .01, 0.95*v_max)
