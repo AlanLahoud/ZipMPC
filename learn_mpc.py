@@ -125,7 +125,7 @@ dx_sim = true_sim_dx.__class__(track_coord,env_params_sim,device)
 q_penalty = .00001*torch.ones(2).to(device)
 p_penalty = torch.ones(2).to(device)
 
-model = utils.NN(H_curve, 3, 8).to(device)
+model = utils.NN(H_curve, 3, 8, mpc_T).to(device)
 #model.load_state_dict(torch.load('model.pkl'))
 opt = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 #q_penalty_batch = q_penalty.unsqueeze(0).repeat(n_batch,1)
