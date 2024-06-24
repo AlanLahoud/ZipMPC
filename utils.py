@@ -150,7 +150,7 @@ def get_loss_progress_new(x_init_train, x_init_sim,
             x_curr_train[:,4] = x_curr_train[:,0]
             x_curr_train[:,5] = 0.
         
-        progress_loss = progress_loss_.mean()
+        progress_loss = -progress_loss_.mean()
         
         #progress_loss = torch.mean(-x_curr_train[:,0] + x_init_train[:,0])
          
