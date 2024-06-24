@@ -10,10 +10,10 @@ from mpc.mpc import GradMethods, QuadCost, LinDx
 class NN(nn.Module):
     def __init__(self, H, S, O, mpc_T):
         super(NN, self).__init__()
-        self.fc1 = nn.Linear(H + S, 512)  
-        self.fc2 = nn.Linear(512, 256)  
-        self.output1 = nn.Linear(256, O*mpc_T) 
-        self.output2 = nn.Linear(256, O*mpc_T) 
+        self.fc1 = nn.Linear(H + S, 1024)  
+        self.fc2 = nn.Linear(1024, 512)  
+        self.output1 = nn.Linear(512, O*mpc_T) 
+        self.output2 = nn.Linear(512, O*mpc_T) 
         self.mpc_T = mpc_T
         self.O = O
 
@@ -33,9 +33,9 @@ def sample_xinit(n_batch, track_width, v_max, true_dx):
         r = high-low
         return torch.rand(shape)*r+low
     sigma = uniform(n_batch, 5.01, 8.05)
-    d = uniform(n_batch, -track_width*0.24, track_width*0.24)
-    phi = uniform(n_batch, -0.35*np.pi, 0.35*np.pi)
-    v = uniform(n_batch, .01, 0.95*v_max)
+    d = uniform(n_batch, -track_width*0.27, track_width*0.27)
+    phi = uniform(n_batch, -0.37*np.pi, 0.37*np.pi)
+    v = uniform(n_batch, .01, 0.99*v_max)
     
     #sigma = uniform(n_batch, 6.01, 8.05)
     #d = uniform(n_batch, -track_width*0.35, track_width*0.35)
@@ -119,9 +119,9 @@ def get_loss_progress_new(x_init_train, x_init_sim,
         x_curr_sim = x_init_sim
         x_curr_train = x_init_train
         
-        #if np.random.random()<0.02:
-        #    import pdb
-        #    pdb.set_trace()
+        if np.random.random()<0.05:
+            import pdb
+            pdb.set_trace()
         
         for s in range(H_curve//mpc_T):
                     
