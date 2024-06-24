@@ -159,7 +159,7 @@ for i in range(800):
                                       lqr_iter, eps, n_batch, grad_method,
                                       mpc_T, H_curve)
     
-    total_loss = progress_loss
+    total_loss = progress_loss + d_loss
     
     opt.zero_grad()
     total_loss.backward()
@@ -168,7 +168,7 @@ for i in range(800):
     end_time = time()
     
     print(f'Batch: {i} , Prog. with (mpc_T, H_curve) = ({mpc_T} , {H_curve}): ', 
-          -round(progress_loss.item(), 4),
+          -round(progress_loss.item(), 4), round(d_loss.item(), 4)
           '\t Time: ', round(end_time-start_time, 4)
          )
     
