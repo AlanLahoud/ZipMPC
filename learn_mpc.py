@@ -168,7 +168,7 @@ for i in range(800):
     end_time = time()
     
     print(f'Batch: {i} , Prog. with (mpc_T, H_curve) = ({mpc_T} , {H_curve}): ', 
-          -round(progress_loss.item(), 4), round(d_loss.item(), 4)
+          -round(progress_loss.item(), 4), round(d_loss.item(), 4),
           '\t Time: ', round(end_time-start_time, 4)
          )
     
