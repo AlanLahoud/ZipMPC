@@ -119,9 +119,9 @@ def get_loss_progress_new(x_init_train, x_init_sim,
         x_curr_sim = x_init_sim
         x_curr_train = x_init_train
         
-        if np.random.random()<0.05:
-            import pdb
-            pdb.set_trace()
+        #if np.random.random()<0.05:
+        #    import pdb
+        #    pdb.set_trace()
         
         for s in range(H_curve//mpc_T):
                     
@@ -129,7 +129,7 @@ def get_loss_progress_new(x_init_train, x_init_sim,
                 dx.n_state, dx.n_ctrl, mpc_T,
                 u_lower=u_lower, u_upper=u_upper, u_init=u_init,
                 lqr_iter=lqr_iter,
-                verbose=0,
+                verbose=1,
                 exit_unconverged=False,
                 detach_unconverged=False,
                 linesearch_decay=.8,
