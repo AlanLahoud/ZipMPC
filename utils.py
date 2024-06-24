@@ -19,7 +19,7 @@ class NN(nn.Module):
         combined = torch.cat((c, x0), dim=1)
         x = F.relu(self.fc1(combined))
         x = F.relu(self.fc2(x))
-        q = F.relu(self.output1(x)) + 0.0001
+        q = F.relu(self.output1(x)) + 0.00001
         p = self.output2(x)
         return q, p
         
@@ -181,8 +181,8 @@ def cost_to_batch(q, p, n_batch, mpc_T):
 
 
 def bound_params(q, p):
-    q[:,1] = 1.
-    q[:,2] = 1.
+    q[:,1] = 10.
+    q[:,2] = 10.
     q[:,3] = 0.00001
 
     #q = q + 1.
