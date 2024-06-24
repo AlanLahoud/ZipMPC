@@ -144,7 +144,7 @@ def get_loss_progress_new(x_init_train, x_init_sim,
             for ss in range(mpc_T):
                 x_curr_sim_ = x_curr_sim.clone()
                 x_curr_sim = true_sim_dx.forward(x_curr_sim_, pred_u[ss])
-                progress_loss_ = progress_loss_ + x_curr_sim[:,0]
+                progress_loss_ = progress_loss_ + x_curr_sim[:,5]
 
             x_curr_train = x_curr_sim
             x_curr_train[:,4] = x_curr_train[:,0]
