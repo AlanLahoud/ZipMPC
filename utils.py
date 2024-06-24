@@ -123,6 +123,8 @@ def get_loss_progress_new(x_init_train, x_init_sim,
         #    import pdb
         #    pdb.set_trace()
         
+        progress_loss_ = 0.
+        
         for s in range(H_curve//mpc_T):
                     
             pred_x, pred_u, pred_objs = mpc.MPC(
@@ -142,12 +144,15 @@ def get_loss_progress_new(x_init_train, x_init_sim,
             for ss in range(mpc_T):
                 x_curr_sim_ = x_curr_sim.clone()
                 x_curr_sim = true_sim_dx.forward(x_curr_sim_, pred_u[ss])
+                progress_loss_ = progress_loss_ + x_curr_sim[:,0]
 
             x_curr_train = x_curr_sim
             x_curr_train[:,4] = x_curr_train[:,0]
             x_curr_train[:,5] = 0.
         
-        progress_loss = torch.mean(-x_curr_train[:,0] + x_init_train[:,0])
+        progress_loss = progress_loss_.mean()
+        
+        #progress_loss = torch.mean(-x_curr_train[:,0] + x_init_train[:,0])
          
         # Below is to check if negative sigma isbeing outputted    
         #mask_weird = x_curr_train[:,0]<x_init_train[:,0]
