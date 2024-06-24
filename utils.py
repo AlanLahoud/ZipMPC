@@ -259,7 +259,7 @@ def bound_params_paj(q, p):
 def normalize_x(x):
     x[:,1] = (x[:,1]+0.135)/0.27
     x[:,3] = (x[:,3])/3
-    x[:,2] = (x[:,2]+3.14*0.37)/3.14*0.74
+    x[:,2] = (x[:,2]+3.14*0.37)/(3.14*0.74)
     return x
 
 def inference_params(x_in, track_coord, H_curve, model, q_pen, p_pen, N, mpc_T):
