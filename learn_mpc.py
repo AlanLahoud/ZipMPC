@@ -41,7 +41,7 @@ device = 'cpu' #to do
 k_curve = 100.
 
 mpc_T = 15
-H_curve = 75
+H_curve = 45
 
 n_batch = 16
 
@@ -128,8 +128,11 @@ p_penalty = torch.ones(2).to(device)
 model = utils.NN(H_curve, 3, 8).to(device)
 #model.load_state_dict(torch.load('model.pkl'))
 opt = optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
-q_penalty_batch = q_penalty.unsqueeze(0).repeat(n_batch,1)
-p_penalty_batch = p_penalty.unsqueeze(0).repeat(n_batch,1)
+#q_penalty_batch = q_penalty.unsqueeze(0).repeat(n_batch,1)
+#p_penalty_batch = p_penalty.unsqueeze(0).repeat(n_batch,1)
+
+q_penalty_batch = q_penalty.unsqueeze(0).repeat(n_batch,1).unsqueeze(1).repeat(1,mpc_T,1)
+p_penalty_batch = p_penalty.unsqueeze(0).repeat(n_batch,1).unsqueeze(1).repeat(1,mpc_T,1)
 
 
 

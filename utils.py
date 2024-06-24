@@ -8,12 +8,12 @@ from mpc.mpc import GradMethods, QuadCost, LinDx
 
 
 class NN(nn.Module):
-    def __init__(self, H, S, O):
+    def __init__(self, H, S, O, mpc_T):
         super(NN, self).__init__()
         self.fc1 = nn.Linear(H + S, 512)  
         self.fc2 = nn.Linear(512, 256)  
-        self.output1 = nn.Linear(256, O) 
-        self.output2 = nn.Linear(256, O) 
+        self.output1 = nn.Linear(256, O*mpc_T) 
+        self.output2 = nn.Linear(256, O*mpc_T) 
 
     def forward(self, c, x0):
         combined = torch.cat((c, x0), dim=1)
@@ -21,6 +21,8 @@ class NN(nn.Module):
         x = F.relu(self.fc2(x))
         q = F.relu(self.output1(x)) + 0.00001
         p = self.output2(x)
+        q = q.reshape(-1, mpc_T, O)
+        p = p.reshape(-1, mpc_T, O)
         return q, p
         
 
@@ -162,14 +164,21 @@ def get_curve_hor_from_x(x, track_coord, H_curve):
     return curvs
 
 
+#def cost_to_batch_NN(q, p, n_batch, mpc_T):
+#    Q_batch = torch.zeros(n_batch, q.shape[1], q.shape[1])
+#    rows, cols = torch.arange(q.shape[1]), torch.arange(q.shape[1])  
+#    Q_batch[:, rows, cols] = q 
+#    Q_batch = Q_batch.unsqueeze(0).repeat(
+#                mpc_T, 1, 1, 1)    
+#    p_batch = p.unsqueeze(0).repeat(mpc_T, 1, 1)
+#    return Q_batch, p_batch
+
+
 def cost_to_batch_NN(q, p, n_batch, mpc_T):
-    Q_batch = torch.zeros(n_batch, q.shape[1], q.shape[1])
+    Q_batch = torch.zeros(mpc_T, n_batch, q.shape[1], q.shape[1])
     rows, cols = torch.arange(q.shape[1]), torch.arange(q.shape[1])  
-    Q_batch[:, rows, cols] = q 
-    Q_batch = Q_batch.unsqueeze(0).repeat(
-                mpc_T, 1, 1, 1)    
-    p_batch = p.unsqueeze(0).repeat(mpc_T, 1, 1)
-    return Q_batch, p_batch
+    Q_batch[:, :, rows, cols] = q 
+    return Q_batch, p
 
 
 def cost_to_batch(q, p, n_batch, mpc_T):
@@ -180,22 +189,44 @@ def cost_to_batch(q, p, n_batch, mpc_T):
     return Q_batch, p_batch
 
 
-def bound_params(q, p):
-    q[:,1] = 1.
-    q[:,2] = 1.
-    q[:,3] = 0.00001
+#def bound_params(q, p):
+#    q[:,1] = 1.
+#    q[:,2] = 1.
+#    q[:,3] = 0.00001
 
     #q = q + 1.
-    q[:,0] = 0.00001
-    q[:,4] = 0.00001
-    q[:,5] = 0.00001
-    q = q.clip(0.00001, 40.)
-    p[:,0] = 0.0
+#    q[:,0] = 0.00001
+#    q[:,4] = 0.00001
+#    q[:,5] = 0.00001
+#    q = q.clip(0.00001, 40.)
+#    p[:,0] = 0.0
     #p[:,1] = 0.0
     #p[:,2] = 0.0
     #p[:,3] = 0.0
-    p[:,4] = 0.0
-    p[:,5] = 0.0
+#    p[:,4] = 0.0
+#    p[:,5] = 0.0
+#    p2 = p.clone()
+#    p2 = p.clip(-200.,200.)
+#    q2 = q.clone()
+#    return q2, p2
+
+
+def bound_params(q, p):
+    q[:,:,1] = 1.
+    q[:,:,2] = 1.
+    q[:,:,3] = 0.00001
+
+    #q = q + 1.
+    q[:,:,0] = 0.00001
+    q[:,:,4] = 0.00001
+    q[:,:,5] = 0.00001
+    q = q.clip(0.00001, 40.)
+    p[:,:,0] = 0.0
+    #p[:,1] = 0.0
+    #p[:,2] = 0.0
+    #p[:,3] = 0.0
+    p[:,:,4] = 0.0
+    p[:,:,5] = 0.0
     p2 = p.clone()
     p2 = p.clip(-200.,200.)
     q2 = q.clone()
@@ -221,8 +252,8 @@ def bound_params_paj(q, p):
 def inference_params(x_in, track_coord, H_curve, model, q_pen, p_pen, N, mpc_T):
     curvs = get_curve_hor_from_x(x_in, track_coord, H_curve)
     q, p = model(curvs, x_in[:,1:4])
-    q = torch.cat((q[:,:6], q_pen, q[:,6:]), dim=1)
-    p = torch.cat((p[:,:6], p_pen, p[:,6:]), dim=1)
+    q = torch.cat((q[:,:,:6], q_pen, q[:,:,6:]), dim=2)
+    p = torch.cat((p[:,:,:6], p_pen, p[:,:,6:]), dim=2)
     q2, p2 = bound_params(q, p) 
     Q_batch, p_batch = cost_to_batch_NN(q2, p2, N, mpc_T)
     return Q_batch, p_batch
