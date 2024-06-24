@@ -141,14 +141,14 @@ class FrenetKinBicycleDx(nn.Module):
         return curv.reshape(-1)
 
     
-    def penalty_d(self, d, factor=100.):  
-        overshoot_pos = (d - 0.30*self.track_width).clamp(min=0)
-        overshoot_neg = (-d - 0.30*self.track_width).clamp(min=0)
+    def penalty_d(self, d, factor=1000.):  
+        overshoot_pos = (d - 0.34*self.track_width).clamp(min=0)
+        overshoot_neg = (-d - 0.34*self.track_width).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
         penalty_neg = torch.exp(overshoot_neg) - 1 
         return factor*(penalty_pos + penalty_neg)
     
-    def penalty_v(self, v, factor=100.):          
+    def penalty_v(self, v, factor=1000.):          
         overshoot_pos = (v - self.v_max).clamp(min=0)
         overshoot_neg = (-v + 0.001).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
