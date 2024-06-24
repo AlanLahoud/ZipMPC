@@ -256,7 +256,14 @@ def bound_params_paj(q, p):
     return q2, p2
 
 
+def normalize_x(x):
+    x[:,1] = (x[:,1]+0.135)/0.27
+    x[:,3] = (x[:,3])/3
+    x[:,2] = (x[:,2]+3.14*0.37)/3.14*0.74
+    return x
+
 def inference_params(x_in, track_coord, H_curve, model, q_pen, p_pen, N, mpc_T):
+    x_in = normalize_x(x_in)
     curvs = get_curve_hor_from_x(x_in, track_coord, H_curve)
     q, p = model(curvs, x_in[:,1:4])
     q = torch.cat((q[:,:,:6], q_pen, q[:,:,6:]), dim=2)

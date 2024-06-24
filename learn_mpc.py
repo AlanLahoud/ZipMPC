@@ -162,7 +162,7 @@ for i in range(800):
                                       lqr_iter, eps, n_batch, grad_method,
                                       mpc_T, H_curve)
     
-    total_loss = progress_loss + 5*d_loss
+    total_loss = progress_loss
     
     opt.zero_grad()
     total_loss.backward()
