@@ -23,8 +23,8 @@ class NN(nn.Module):
         x = F.relu(self.fc2(x))
         q = F.relu(self.output1(x)) + 0.00001
         p = self.output2(x)
-        q = q.reshape(-1, self.O, self.mpc_T)
-        p = p.reshape(-1, self.O, self.mpc_T)
+        q = q.reshape(self.mpc_T, -1, self.O)
+        p = p.reshape(self.mpc_T, -1, self.O)
         return q, p
         
 
