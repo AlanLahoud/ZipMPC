@@ -15,6 +15,7 @@ class NN(nn.Module):
         self.output1 = nn.Linear(256, O*mpc_T) 
         self.output2 = nn.Linear(256, O*mpc_T) 
         self.mpc_T = mpc_T
+        self.O = O
 
     def forward(self, c, x0):
         combined = torch.cat((c, x0), dim=1)
@@ -22,8 +23,8 @@ class NN(nn.Module):
         x = F.relu(self.fc2(x))
         q = F.relu(self.output1(x)) + 0.00001
         p = self.output2(x)
-        q = q.reshape(-1, self.mpc_T, O)
-        p = p.reshape(-1, self.mpc_T, O)
+        q = q.reshape(-1, self.mpc_T, self.O)
+        p = p.reshape(-1, self.mpc_T, self.O)
         return q, p
         
 
