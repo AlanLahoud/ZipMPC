@@ -219,8 +219,8 @@ def cost_to_batch(q, p, n_batch, mpc_T):
 
 
 def bound_params(q, p):
-    q[:,:,1] = 1.
-    q[:,:,2] = 1.
+    q[:,:,1] = 0.1
+    q[:,:,2] = 0.1
     q[:,:,3] = 0.00001
 
     #q = q + 1.
