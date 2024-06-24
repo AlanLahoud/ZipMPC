@@ -177,8 +177,8 @@ def get_curve_hor_from_x(x, track_coord, H_curve):
 
 
 def cost_to_batch_NN(q, p, n_batch, mpc_T):
-    Q_batch = torch.zeros(mpc_T, n_batch, q.shape[1], q.shape[1])
-    rows, cols = torch.arange(q.shape[1]), torch.arange(q.shape[1])  
+    Q_batch = torch.zeros(mpc_T, n_batch, q.shape[2], q.shape[2])
+    rows, cols = torch.arange(q.shape[2]), torch.arange(q.shape[2])  
     Q_batch[:, :, rows, cols] = q 
     return Q_batch, p
 
