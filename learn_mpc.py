@@ -122,7 +122,7 @@ track_coord = track_coord.to(device)
 dx = true_dx.__class__(track_coord,env_params,device)
 dx_sim = true_sim_dx.__class__(track_coord,env_params_sim,device)
 
-q_penalty = .0001*torch.ones(2).to(device)
+q_penalty = .00001*torch.ones(2).to(device)
 p_penalty = torch.ones(2).to(device)
 
 model = utils.NN(H_curve, 3, 8).to(device)
