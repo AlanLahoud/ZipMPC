@@ -40,8 +40,8 @@ import utils
 device = 'cpu' #to do
 k_curve = 100.
 
-mpc_T = 20
-H_curve = 20
+mpc_T = 40
+H_curve = 40
 
 n_batch = 32
 
