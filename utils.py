@@ -26,6 +26,25 @@ class NN(nn.Module):
         q = q.reshape(self.mpc_T, -1, self.O)
         p = p.reshape(self.mpc_T, -1, self.O)
         return q, p
+    
+    
+class NN2(nn.Module):
+    def __init__(self, H, S, O, mpc_T):
+        super(NN, self).__init__()
+        self.fc1 = nn.Linear(H + S, 1024)  
+        self.fc2 = nn.Linear(1024, 512)  
+        self.output1 = nn.Linear(512, O) 
+        self.output2 = nn.Linear(512, O) 
+        self.mpc_T = mpc_T
+        self.O = O
+
+    def forward(self, c, x0):
+        combined = torch.cat((c, x0), dim=1)
+        x = F.relu(self.fc1(combined))
+        x = F.relu(self.fc2(x))
+        q = F.relu(self.output1(x)) + 0.00001
+        p = self.output2(x)
+        return q, p
         
 
 def sample_xinit(n_batch, track_width, v_max, true_dx):
