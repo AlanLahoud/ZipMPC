@@ -25,7 +25,7 @@ import os
 #      color_scheme='Linux', call_pdb=1)
 
 class CasadiControl():
-    def __init__(self, track_coordinates, params, smooth_curve=5):
+    def __init__(self, track_coordinates, params):
         super().__init__()
 
         # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1) + ac_ub (1)
@@ -53,19 +53,17 @@ class CasadiControl():
 
         self.l_r = params[0]
         self.l_f = params[1]
-
-        self.track_width = params[2]
-
-        self.delta_threshold_rad = np.pi
-        self.v_max = params[3]
-        self.ac_max = params[4]
-        self.dt = params[5] #0.04
-
-        self.a_max = params[6]
-        self.delta_max = params[7]
         
-        self.smooth_curve = smooth_curve
+        self.track_width = params[2]
+        
+        self.delta_threshold_rad = np.pi
+        self.dt = params[3]
 
+        self.smooth_curve = params[4]
+        
+        self.v_max = params[5]
+        
+        self.delta_max = params[6]
 
     #def sigmoid(self, x):
     #    return 1 / (1 + exp(-x))
