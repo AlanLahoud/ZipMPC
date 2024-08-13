@@ -78,5 +78,5 @@ def pnqp(H, q, lower, upper, x_init=None, n_iter=20):
         x = maybe_x
 
     # TODO: Maybe change this to a warning.
-    print("[WARNING] pnqp warning: Did not converge")
+    #print("[WARNING] pnqp warning: Did not converge")
     return x, H_ if n == 1 else H_lu_, If, i
