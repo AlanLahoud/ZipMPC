@@ -458,7 +458,9 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     # [for casadi] sigma_diff, d, phi, v, a, delta
     # [for model]  sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_pen, a, delta
     
-    mpc_T, BS, _ = q_p_pred.shape 
+    n_Q, BS, _ = q_p_pred.shape 
+    
+    q_p_pred = q_p_pred.repeat(mpc_T//n_Q, 1, 1)
     
     e = 1e-8
     
@@ -486,6 +488,10 @@ dt = 0.04
 
 mpc_T = 45
 mpc_H = 45
+
+n_Q = 9
+
+assert mpc_T%n_Q==0
 
 l_r = 0.2
 l_f = 0.2
@@ -549,7 +555,7 @@ lqr_iter = 50
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = SimpleNN(mpc_H, mpc_T, 2, max_p)
+model = SimpleNN(mpc_H, n_Q, 2, max_p)
 opt = torch.optim.Adam(model.parameters(), lr=0.00001, weight_decay=1e-4)
 
 control = CasadiControl(track_coord, params)
