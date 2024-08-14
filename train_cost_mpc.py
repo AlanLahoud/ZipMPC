@@ -357,7 +357,7 @@ class FrenetKinBicycleDx(nn.Module):
         
         self.delta_max = params[6]
         
-        self.factor_pen = 10.
+        self.factor_pen = 1000.
                 
         
         
@@ -429,8 +429,8 @@ class FrenetKinBicycleDx(nn.Module):
         
         sigma_diff = sigma - sigma_0 
                 
-        d_pen = 1000.*self.penalty_d(d)        
-        v_ub = 1000.*self.penalty_v(v)
+        d_pen = self.penalty_d(d)        
+        v_ub = self.penalty_v(v)
 
         state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), 1)
         
@@ -630,10 +630,10 @@ for it in range(200):
     
     #progress = (progress_pred - torch.tensor(x_manual[-1,:,5]))
     loss = -progress_pred.mean() \
-    + true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
-    + true_dx.penalty_v(penalty_pred_v).sum(0).mean()
+    + 0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
+    + 0.001*true_dx.penalty_v(penalty_pred_v).sum(0).mean()
     
-    print(true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
+    print(0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
       
     opt.zero_grad()
     loss.backward()
