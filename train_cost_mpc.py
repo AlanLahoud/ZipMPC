@@ -429,8 +429,8 @@ class FrenetKinBicycleDx(nn.Module):
         
         sigma_diff = sigma - sigma_0 
                 
-        d_pen = self.penalty_d(d)        
-        v_ub = self.penalty_v(v)
+        d_pen = 1000.*self.penalty_d(d)        
+        v_ub = 1000.*self.penalty_v(v)
 
         state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), 1)
         
