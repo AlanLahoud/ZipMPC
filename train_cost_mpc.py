@@ -486,8 +486,8 @@ k_curve = 50.
 
 dt = 0.04
 
-mpc_T = 20
-mpc_H = 40
+mpc_T = 15
+mpc_H = 30
 
 n_Q = 5
 
