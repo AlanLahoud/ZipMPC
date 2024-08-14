@@ -489,7 +489,7 @@ dt = 0.04
 mpc_T = 45
 mpc_H = 45
 
-n_Q = 9
+n_Q = 5
 
 assert mpc_T%n_Q==0
 
