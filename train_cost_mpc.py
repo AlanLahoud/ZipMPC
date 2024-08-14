@@ -486,10 +486,10 @@ k_curve = 50.
 
 dt = 0.04
 
-mpc_T = 15
-mpc_H = 15
+mpc_T = 30
+mpc_H = 30
 
-n_Q = 3
+n_Q = 6
 
 assert mpc_T%n_Q==0
 
