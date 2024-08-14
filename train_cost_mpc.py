@@ -485,7 +485,7 @@ k_curve = 50.
 dt = 0.04
 
 mpc_T = 15
-mpc_H = 45
+mpc_H = 15
 
 l_r = 0.2
 l_f = 0.2
