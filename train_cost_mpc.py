@@ -632,6 +632,8 @@ for it in range(200):
     loss = -progress_pred.mean() \
     + true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
     + true_dx.penalty_v(penalty_pred_v).sum(0).mean()
+    
+    print(true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
       
     opt.zero_grad()
     loss.backward()
