@@ -682,7 +682,7 @@ for it in range(200):
 
             progress_val = progress_val_pred - progress_val_manual
             
-            torch.save(model.state_dict(), f'./saved_models/model_{n_Q}_{mpc_T}_{H_curve}_{i}.pkl')
+            torch.save(model.state_dict(), f'./saved_models/model_{n_Q}_{mpc_T}_{mpc_H}_{i}.pkl')
             
             print(f'{it}: Progress: ', round(progress_val.mean(), 3))
             print(f'{it}: progress_val_pred: ', progress_val_pred[:4])
