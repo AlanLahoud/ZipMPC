@@ -20,6 +20,8 @@ from tqdm import tqdm
 
 from casadi import *
 
+import time
+
 
 
 class CasadiControl():
@@ -673,12 +675,14 @@ for it in range(200):
                 
                 #x_pred_val = np.zeros((mpc_T, BS_val, 6))
                 
+                start_time = time.time()
                 q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 x_pred_val = solve_casadi_parallel(
                     q_val_np_casadi, p_val_np_casadi, 
                     x0_val_pred, BS_val, dx, du, control)                
                 
+                end_parallel = time.time()
                 #for bb in range(BS_val):
                 #    q_val_ = q_val[:,bb,idx_to_casadi].detach().numpy().T
                 #    p_val_ = p_val[:,bb,idx_to_casadi].detach().numpy().T
@@ -692,7 +696,12 @@ for it in range(200):
                         Q_manual[:,idx_to_casadi].T, p_manual[:,idx_to_casadi].T,
                         x0_val_manual[bb],dx,du,control)
                     x_manual[:, bb] = x_star
-
+                
+                end_for = time.time()
+                
+                print('Manual:', round(end_for-end_parallel, 6))
+                print('Parallel:', round(end_parallel-start_time, 6))
+                
                 progress_val_pred = progress_val_pred + x_pred_val[-1,:,5]
                 progress_val_manual = progress_val_manual + x_manual[-1,:,5]
                 
