@@ -498,7 +498,7 @@ l_f = 0.2
 
 v_max = 2.0
 
-delta_max = 0.6
+delta_max = 0.55
 
 a_max = 1.5
 
