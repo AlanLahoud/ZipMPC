@@ -457,7 +457,7 @@ def process_single_casadi(sample, q, p, x0, dx, du, control):
     return sample, x
 
 def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
-    x = np.zeros_like(x0)
+    x = np.zeros((q.shape[2],q.shape[1],x0.shape[-1]))
 
     with ProcessPoolExecutor() as executor:
         futures = [executor.submit(
@@ -465,8 +465,6 @@ def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
             sample, q, p, x0, dx, du, control) for sample in range(BS)]
 
         for future in futures:
-            import pdb
-            pdb.set_trace()
             sample, x_sample = future.result()
             x[:, sample] = x_sample
 
