@@ -465,6 +465,8 @@ def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
             sample, q, p, x0, dx, du, control) for sample in range(BS)]
 
         for future in futures:
+            import pdb
+            pdb.set_trace()
             sample, x_sample = future.result()
             x[:, sample] = x_sample
 
