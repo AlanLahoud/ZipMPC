@@ -578,8 +578,7 @@ print(np.shape(x_star))
 
 for it in range(200):
 
-    x0 = sample_init(BS, true_dx)
-    
+    x0 = sample_init(BS, true_dx)  
     
     x0_diff = x0.clone()
     
@@ -616,19 +615,7 @@ for it in range(200):
         progress_pred = progress_pred + pred_x[-1,:,5]
         penalty_pred_d = penalty_pred_d + pred_x[:,:,1]
         penalty_pred_v = penalty_pred_v + pred_x[:,:,3]
-        #import pdb
-        #pdb.set_trace()
-        
-    
-    # It would be good if we could solve with casadi in batches
-    #x_manual = np.zeros((mpc_T, BS, 6))
-    #for bb in range(BS):
-    #    x_star, u_star = solve_casadi(
-    #        Q_manual[:,idx_to_casadi].T, p_manual[:,idx_to_casadi].T,
-    #        x0[bb].detach().numpy(),dx,du,control)
-    #    x_manual[:, bb] = x_star
-    
-    #progress = (progress_pred - torch.tensor(x_manual[-1,:,5]))
+
     loss = -progress_pred.mean() \
     + 0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
     + 0.001*true_dx.penalty_v(penalty_pred_v).sum(0).mean()
@@ -662,14 +649,6 @@ for it in range(200):
                 inp_val = torch.hstack((x0_val_pred_torch[:,1:4], curv_val))
                 q_p_pred_val = model(inp_val)
                 q_val, p_val = q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
-
-                #print("COMPARE Q")
-                #print(Q_manual.mean(0))
-                #print(q_val.mean(1).mean(0))
-                
-                #print("COMPARE P")
-                #print(p_manual.mean(0))
-                #print(p_val.mean(1).mean(0))
                 
                 # It would be good if we could solve with casadi in batches
                 # instead of going through the for loop
@@ -702,10 +681,9 @@ for it in range(200):
                 x0_val_manual[:,5] = 0.            
 
             progress_val = progress_val_pred - progress_val_manual
-
-        #print(round(progress.mean().item(), 3))    
-        #print(q_p_pred.mean(0).mean(0))
-
-        print(f'{it}: Progress: ', round(progress_val.mean(), 3))
-        print(f'{it}: progress_val_pred: ', progress_val_pred[:4])
-        print(f'{it}: progress_val_manual: ', progress_val_manual[:4])
+            
+            torch.save(model.state_dict(), f'./saved_models/model_{n_Q}_{mpc_T}_{H_curve}_{i}.pkl')
+            
+            print(f'{it}: Progress: ', round(progress_val.mean(), 3))
+            print(f'{it}: progress_val_pred: ', progress_val_pred[:4])
+            print(f'{it}: progress_val_manual: ', progress_val_manual[:4])
