@@ -576,7 +576,7 @@ lqr_iter = 50
 grad_method = GradMethods.AUTO_DIFF
 
 model = SimpleNN(mpc_H, n_Q, 2, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00001, weight_decay=1e-4)
+opt = torch.optim.Adam(model.parameters(), lr=0.00002, weight_decay=1e-5)
 
 control = CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 20, 5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
