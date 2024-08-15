@@ -566,7 +566,7 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 64
+BS = 128
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -580,7 +580,7 @@ opt = torch.optim.Adam(model.parameters(), lr=0.00001, weight_decay=1e-5)
 
 control = CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 20, 5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -5, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -.5, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 idx_to_casadi = [5,1,2,3,8,9] # This is only to match the indices of Q from model to casadi
 
@@ -669,37 +669,19 @@ for it in range(200):
                 inp_val = torch.hstack((x0_val_pred_torch[:,1:4], curv_val))
                 q_p_pred_val = model(inp_val)
                 q_val, p_val = q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
-                
-                
+                                
                 q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 x_pred_val = solve_casadi_parallel(
                     q_val_np_casadi, p_val_np_casadi, 
                     x0_val_pred, BS_val, dx, du, control)                
-                
-                #for bb in range(BS_val):
-                #    q_val_ = q_val[:,bb,idx_to_casadi].detach().numpy().T
-                #    p_val_ = p_val[:,bb,idx_to_casadi].detach().numpy().T
-                #    x_val, u_val = solve_casadi(q_val_, p_val_,
-                #        x0_val_pred[bb],dx,du,control)
-                #    x_pred_val[:,bb] = x_val
 
-                               
                 q_manual_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
                 p_manual_casadi = np.expand_dims((p_manual[:,idx_to_casadi].T), 1)
                 x_manual = solve_casadi_parallel(
                     np.repeat(q_manual_casadi, BS_val, 1), 
                     np.repeat(p_manual_casadi, BS_val, 1), 
                     x0_val_manual, BS_val, dx, du, control) 
-                
-                #x_manual = np.zeros((mpc_T, BS_val, 6))
-                #for bb in range(BS_val):
-                #    x_star, u_star = solve_casadi(
-                #        Q_manual[:,idx_to_casadi].T, p_manual[:,idx_to_casadi].T,
-                #        x0_val_manual[bb],dx,du,control)
-                #    x_manual[:, bb] = x_star
-                
-
                 
                 progress_val_pred = progress_val_pred + x_pred_val[-1,:,5]
                 progress_val_manual = progress_val_manual + x_manual[-1,:,5]
