@@ -685,10 +685,11 @@ for it in range(200):
                 #    x_pred_val[:,bb] = x_val
 
                                
-                q_manual_casadi = (Q_manual[:,idx_to_casadi].T).unsqueeze(1).repeat(1,BS_val,1)
-                p_manual_casadi = (p_manual[:,idx_to_casadi].T).unsqueeze(1).repeat(1,BS_val,1)
+                q_manual_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
+                p_manual_casadi = np.expand_dims((p_manual[:,idx_to_casadi].T), 1)
                 x_manual = solve_casadi_parallel(
-                    q_manual_casadi, p_manual_casadi, 
+                    np.repeat(q_manual_casadi, BS_val, 1), 
+                    np.repeat(p_manual_casadi, BS_val, 1), 
                     x0_val_manual, BS_val, dx, du, control) 
                 
                 #x_manual = np.zeros((mpc_T, BS_val, 6))
