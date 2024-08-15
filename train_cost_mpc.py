@@ -6,12 +6,9 @@ from mpc.track.src import simple_track_generator, track_functions
 from mpc import mpc
 from mpc.mpc import GradMethods, QuadCost, LinDx
 
-from torch.func import jacfwd, vmap
+from concurrent.futures import ProcessPoolExecutor
 
 import utils
-
-import cvxpy as cp
-#from cvxpylayers.torch import CvxpyLayer
 
 import torch.autograd.functional as F
 
@@ -22,6 +19,8 @@ import scipy.linalg
 from tqdm import tqdm
 
 from casadi import *
+
+
 
 class CasadiControl():
     def __init__(self, track_coordinates, params):
@@ -451,6 +450,25 @@ def solve_casadi(q_np,p_np,x0_np,dx,du,control):
     
     return x_star, u_star
 
+def process_single_casadi(sample, q, p, x0, dx, du, control):
+    x, u = solve_casadi(
+        q[:,sample], p[:,sample], 
+        x0[sample], dx, du, control)
+    return sample, x
+
+def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
+    x = np.zeros_like(x0)
+
+    with ProcessPoolExecutor() as executor:
+        futures = [executor.submit(
+            process_single_casadi, 
+            sample, q, p, x0, dx, du, control) for sample in range(BS)]
+
+        for future in futures:
+            sample, x_sample = future.result()
+            x[:, sample] = x_sample
+
+    return x
 
 
 def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
@@ -652,14 +670,21 @@ for it in range(200):
                 
                 # It would be good if we could solve with casadi in batches
                 # instead of going through the for loop
-                x_pred_val = np.zeros((mpc_T, BS_val, 6))
-                for bb in range(BS_val):
-
-                    q_val_ = q_val[:,bb,idx_to_casadi].detach().numpy().T
-                    p_val_ = p_val[:,bb,idx_to_casadi].detach().numpy().T
-                    x_val, u_val = solve_casadi(q_val_, p_val_,
-                        x0_val_pred[bb],dx,du,control)
-                    x_pred_val[:,bb] = x_val
+                
+                #x_pred_val = np.zeros((mpc_T, BS_val, 6))
+                
+                q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+                p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+                x_pred_val = solve_casadi_parallel(
+                    q_val_np_casadi, p_val_np_casadi, 
+                    x0_val_pred, BS_val, dx, du, control)                
+                
+                #for bb in range(BS_val):
+                #    q_val_ = q_val[:,bb,idx_to_casadi].detach().numpy().T
+                #    p_val_ = p_val[:,bb,idx_to_casadi].detach().numpy().T
+                #    x_val, u_val = solve_casadi(q_val_, p_val_,
+                #        x0_val_pred[bb],dx,du,control)
+                #    x_pred_val[:,bb] = x_val
 
                 x_manual = np.zeros((mpc_T, BS_val, 6))
                 for bb in range(BS_val):
