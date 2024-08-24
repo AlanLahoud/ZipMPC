@@ -597,7 +597,7 @@ print(x_clamp)
 print(np.shape(x_star))
 
 best_prog = -999999.
-for it in range(200):
+for it in range(500):
 
     x0 = sample_init(BS, true_dx)  
     
