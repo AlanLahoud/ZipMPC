@@ -502,7 +502,7 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
 
 
 # I changed from 100 to 5 to try.
-k_curve = 50.
+k_curve = 20.
 
 dt = 0.04
 
@@ -513,14 +513,14 @@ n_Q = 5
 
 assert mpc_T%n_Q==0
 
-l_r = 0.2
-l_f = 0.2
+l_r = 0.1
+l_f = 0.1
 
-v_max = 2.0
+v_max = 1.3
 
-delta_max = 0.55
+delta_max = 0.4
 
-a_max = 1.5
+a_max = 1.0
 
 track_density = 300
 track_width = 0.5
