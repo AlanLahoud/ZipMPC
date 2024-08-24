@@ -698,7 +698,7 @@ for it in range(200):
 
             progress_val = progress_val_pred - progress_val_manual
             
-            if best_prog<progress_val:
+            if best_prog<progress_val.mean():
                 torch.save(model.state_dict(), f'./saved_models/model_{n_Q}_{mpc_T}_{mpc_H}.pkl')
                            
             print(f'{it}: Progress Diff: ', round(progress_val.mean(), 3), 
