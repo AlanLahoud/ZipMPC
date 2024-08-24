@@ -134,7 +134,7 @@ class CasadiControl():
         dyn3 = horzcat(
             (x_sym[2,0] - x0_np[2]), 
             (x_sym[2,1:mpc_T+1] - x_sym[2,0:mpc_T] - \
-             dt*(x_sym[3,0:mpc_T]*(1/(l_f+l_r))*np.tan(u_sym[1,0:mpc_T])\
+             dt*(x_sym[3,0:mpc_T]*(1/(self.l_f+self.l_r))*np.tan(u_sym[1,0:mpc_T])\
                  -self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T])/(1-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
 
         dyn4 = horzcat(
