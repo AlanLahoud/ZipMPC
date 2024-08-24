@@ -580,7 +580,7 @@ opt = torch.optim.Adam(model.parameters(), lr=0.00001, weight_decay=1e-5)
 
 control = CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 20, 5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -.5, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -2.0, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 idx_to_casadi = [5,1,2,3,8,9] # This is only to match the indices of Q from model to casadi
 
@@ -596,6 +596,7 @@ x_clamp = torch.clamp(torch.from_numpy(x_star[ind,:]),0.0,1.0)
 print(x_clamp)
 print(np.shape(x_star))
 
+best_prog = -999999.
 for it in range(200):
 
     x0 = sample_init(BS, true_dx)  
@@ -647,11 +648,11 @@ for it in range(200):
     opt.step()  
     
     
-    if it%5==0:
+    if it%10==0:
     # V A L I D A T I O N   (only casadi) 
         with torch.no_grad():
 
-            BS_val = 32
+            BS_val = 64
 
             # This sampling should bring always the same set of initial states
             x0_val = sample_init(BS_val, true_dx, sn=0).numpy()
@@ -697,8 +698,13 @@ for it in range(200):
 
             progress_val = progress_val_pred - progress_val_manual
             
-            torch.save(model.state_dict(), f'./saved_models/model_{n_Q}_{mpc_T}_{mpc_H}_{it}.pkl')
+            if best_prog<progress_val:
+                torch.save(model.state_dict(), f'./saved_models/model_{n_Q}_{mpc_T}_{mpc_H}.pkl')
+                           
+            print(f'{it}: Progress Diff: ', round(progress_val.mean(), 3), 
+                  '\tProgress Pred: ', round(progress_val.mean(), 3),
+                  '\tProgress Manual: ', round(progress_val_manual.mean(), 3)
+                 )
             
-            print(f'{it}: Progress: ', round(progress_val.mean(), 3))
-            print(f'{it}: progress_val_pred: ', progress_val_pred[:4])
-            print(f'{it}: progress_val_manual: ', progress_val_manual[:4])
+            #print(f'{it}: progress_val_pred: ', progress_val_pred[:4])
+            #print(f'{it}: progress_val_manual: ', progress_val_manual[:4])

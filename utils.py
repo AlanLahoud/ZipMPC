@@ -5,6 +5,8 @@ import numpy as np
 from mpc import mpc
 from mpc.mpc import GradMethods, QuadCost, LinDx
 
+from matplotlib import pyplot as plt
+
 
 
 class NN(nn.Module):
@@ -303,3 +305,31 @@ def inference_params_paj(x_in, track_coord, H_curve, model, q_pen, p_pen, N, mpc
     q2, p2 = bound_params(q, p) 
     Q_batch, p_batch = cost_to_batch_NN(q2, p2, N, mpc_T)
     return Q_batch, p_batch
+
+
+def plot_traj(x_sim, track_coord, dim_color=3):
+    x_list = []
+    y_list = []
+
+    for i in range(x_sim.shape[0]):
+        xy = frenet_to_cartesian(x_sim[i,:2], track_coord)
+        x_list.append(xy[0].numpy())
+        y_list.append(xy[1].numpy())
+
+    x_plot = np.array(x_list)
+    y_plot = np.array(y_list)
+
+    fig, ax = plt.subplots(1,1, figsize=(10,5), dpi=150)
+    gen.plotPoints(ax)
+
+    custom_cmap = plt.get_cmap('cubehelix').reversed()
+    sct = ax.scatter(x_plot, y_plot, c=x_sim[:,dim_color], cmap=custom_cmap, s=1)
+
+    cbar = plt.colorbar(sct)
+    cbar.set_label('Velocity') 
+
+    print('x_init: ' + str(gen.xCoords[0]))
+    print('y_init: ' + str(gen.yCoords[0]))
+    print('yaw_init: ' + str(gen.tangentAngle[0]))
+    print('Total Arc Length: ' + str(gen.arcLength[-1]/2))
+    plt.show()
