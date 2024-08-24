@@ -702,7 +702,7 @@ for it in range(200):
                 torch.save(model.state_dict(), f'./saved_models/model_{n_Q}_{mpc_T}_{mpc_H}.pkl')
                            
             print(f'{it}: Progress Diff: ', round(progress_val.mean(), 3), 
-                  '\tProgress Pred: ', round(progress_val.mean(), 3),
+                  '\tProgress Pred: ', round(progress_val_pred.mean(), 3),
                   '\tProgress Manual: ', round(progress_val_manual.mean(), 3)
                  )
             
