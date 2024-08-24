@@ -97,7 +97,7 @@ class CasadiControl():
         x_sym = SX.sym('x_sym',dx,mpc_T+1)
         u_sym = SX.sym('u_sym',du,mpc_T)
 
-        beta = np.arctan(l_r/(l_r+l_f)*np.tan(u_sym[1,0:mpc_T]))
+        #beta = np.arctan(l_r/(l_r+l_f)*np.tan(u_sym[1,0:mpc_T]))
 
         #dyn1 = horzcat(
         #    (x_sym[0,0] - x0_np[0]), 
