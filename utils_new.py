@@ -440,6 +440,8 @@ class FrenetKinBicycleDx(nn.Module):
 
 def solve_casadi(q_np,p_np,x0_np,dx,du,control):
     
+    import pdb
+    pdb.set_trace()
     mpc_T = q_np.shape[0]
     
     x_curr_opt, u_curr_opt = control.mpc_casadi(q_np,p_np,x0_np,dx,du)
