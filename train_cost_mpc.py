@@ -23,25 +23,52 @@ from casadi import *
 import time
 
 
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Set parameters for the program.')
+
+    parser.add_argument('--mpc_T', type=int, default=15)
+    parser.add_argument('--mpc_H', type=int, default=45)
+    parser.add_argument('--n_Q', type=int, default=5)
+    parser.add_argument('--l_r', type=float, default=0.10)
+    parser.add_argument('--v_max', type=float, default=1.8)
+    parser.add_argument('--delta_max', type=float, default=0.4)
+    
+    return parser.parse_args()
+
+
+# Parsing arguments
+args = parse_arguments()
+
+mpc_T = args.mpc_T
+mpc_H = args.mpc_H
+n_Q = args.n_Q
+
+l_r = args.l_r
+v_max = args.v_max
+delta_max = args.delta_max
+
+
+
+
 # PARAMETERS
 
 k_curve = 30.
-
 dt = 0.04
 
-mpc_T = 15
-mpc_H = 45
+#mpc_T = 15
+#mpc_H = 45
 
-n_Q = 5
+#n_Q = 5
 
 assert mpc_T%n_Q==0
 
-l_r = 0.12
-l_f = 0.12
+#l_r = 0.12
+l_f = l_r
 
-v_max = 1.8
+#v_max = 1.8
 
-delta_max = 0.4
+#delta_max = 0.4
 
 a_max = 1.0
 
@@ -51,6 +78,8 @@ t_track = 0.3
 init_track = [0,0,0]
 
 max_p = 100 
+
+str_model = f'{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}'
 
 params = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_T])
 
@@ -99,7 +128,7 @@ lqr_iter = 50
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00002, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.00003, weight_decay=1e-5)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 20, 5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
@@ -222,7 +251,7 @@ for it in range(500):
             progress_val = progress_val_pred - progress_val_manual
             
             if best_prog<progress_val.mean():
-                torch.save(model.state_dict(), f'./saved_models/model_{n_Q}_{mpc_T}_{mpc_H}.pkl')
+                torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
                            
             print(f'{it}: Progress Diff: ', round(progress_val.mean(), 3), 
                   '\tProgress Pred: ', round(progress_val_pred.mean(), 3),
