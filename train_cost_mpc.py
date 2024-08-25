@@ -25,7 +25,7 @@ import time
 
 # PARAMETERS
 
-k_curve = 20.
+k_curve = 30.
 
 dt = 0.04
 
@@ -36,10 +36,10 @@ n_Q = 5
 
 assert mpc_T%n_Q==0
 
-l_r = 0.10
-l_f = 0.10
+l_r = 0.12
+l_f = 0.12
 
-v_max = 1.3
+v_max = 1.8
 
 delta_max = 0.4
 
