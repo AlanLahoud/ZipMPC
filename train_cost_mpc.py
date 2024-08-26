@@ -184,7 +184,7 @@ def sample_x0_from_buffer(BS, buffer_x0):
     return x0_sample
 
 best_prog = -999999.
-for it in range(100):
+for it in range(300):
 
     #x0 = utils_new.sample_init(BS, true_dx)  
     
@@ -245,7 +245,7 @@ for it in range(100):
     opt.step()  
     
     
-    if it%10==0:
+    if it%15==0:
     # V A L I D A T I O N   (only casadi) 
         with torch.no_grad():
 
