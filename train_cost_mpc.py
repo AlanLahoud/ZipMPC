@@ -165,6 +165,8 @@ def add_x0_to_buffer(x0, buffer_x0):
     
     mask = (x0_new[:, 1] < 0.15) \
     & (x0_new[:, 1] > -0.15) \
+    & (x0_new[:, 2] < 1.00) \
+    & (x0_new[:, 2] > -1.00) \
     & (x0_new[:, 3] > 0) \
     & (x0_new[:, 3] < v_max) \
     & (x0_new[:, 0] < 10.) \
@@ -188,7 +190,7 @@ for it in range(500):
     
     #x0 = utils_new.sample_init_traj(BS, true_dx, x_star, num_patches, patch+1)
     
-    print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
+    #print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
     
     x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
     
