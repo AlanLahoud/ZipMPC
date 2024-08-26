@@ -235,8 +235,8 @@ for it in range(50):
         penalty_pred_v = penalty_pred_v + pred_x[:,:,3]
 
     loss = -progress_pred.mean() \
-    + 0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
-    + 0.001*true_dx.penalty_v(penalty_pred_v).sum(0).mean()
+    #+ 0.00001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
+    #+ 0.00001*true_dx.penalty_v(penalty_pred_v).sum(0).mean()
     
     #print(0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
       
