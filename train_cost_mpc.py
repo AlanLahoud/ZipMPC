@@ -163,7 +163,7 @@ def add_x0_to_buffer(x0, buffer_x0):
     x0_new[:,2] = x0[:,2] + 0.02*torch.randn_like(x0[:,2])
     x0_new[:,3] = x0[:,3] + torch.randn_like(x0[:,3])
     
-    mask = (x0_new[:, 1] < 0.15) & (x0_new[:, 1] > -0.15) & (x0_new[:, 3] > 0) & (x0_new[:, 3] < v_max) & (torch.randn()<0.2)
+    mask = (x0_new[:, 1] < 0.15) & (x0_new[:, 1] > -0.15) & (x0_new[:, 3] > 0) & (x0_new[:, 3] < v_max) & (torch.randn(1,).squeeze()<-0.3)
     selected_rows = x0_new[mask]
 
     buffer_x0_new = buffer_x0.clone()
