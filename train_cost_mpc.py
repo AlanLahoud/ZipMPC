@@ -169,7 +169,7 @@ def add_x0_to_buffer(x0, buffer_x0):
     & (x0_new[:, 2] > -1.00) \
     & (x0_new[:, 3] > 0) \
     & (x0_new[:, 3] < v_max) \
-    & (x0_new[:, 0] < 10.) \
+    & (x0_new[:, 0] < 6.) \
     & (torch.randn(1,).squeeze()<-0.3)
     selected_rows = x0_new[mask]
 
