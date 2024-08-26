@@ -179,11 +179,11 @@ def sample_x0_from_buffer(BS, buffer_x0):
 best_prog = -999999.
 for it in range(500):
 
-    #x0 = utils_new.sample_init(BS, true_dx)  
+    x0 = utils_new.sample_init(BS, true_dx)  
     
     #x0 = utils_new.sample_init_traj(BS, true_dx, x_star, num_patches, patch+1)
     
-    x0 = sample_x0_from_buffer(BS, buffer_x0)
+    #x0 = sample_x0_from_buffer(BS, buffer_x0)
     
     x0_diff = x0.clone()
     
