@@ -168,8 +168,10 @@ def add_x0_to_buffer(x0, buffer_x0):
     mask = (x0_new[:, 1] < 0.2) & (x0_new[:, 1] > -0.2) & (x0_new[:, 3] > 0) & (x0_new[:, 3] < v_max)
     selected_rows = x0_new[mask]
 
-    buffer_x0 = torch.vstack((buffer_x0,selected_rows))
-    return buffer_x0
+    buffer_x0_new = buffer_x0.clone()
+    
+    buffer_x0_new = torch.vstack((buffer_x0,selected_rows))
+    return buffer_x0_new
 
 def sample_x0_from_buffer(BS, buffer_x0):
     idxs = torch.randint(0, len(buffer_x0), (BS,))
