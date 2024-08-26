@@ -166,7 +166,7 @@ class CasadiControl():
                     np.zeros(mpc_T+1),
                     -self.a_max*np.ones(mpc_T),
                     -self.delta_max*np.ones(mpc_T),
-                    -0.3*self.track_width*np.ones(mpc_T+1),
+                    -0.35*self.track_width*np.ones(mpc_T+1),
                     -0.1*np.ones(mpc_T+1)]
 
         ubg = np.r_[np.zeros(mpc_T+1),
@@ -175,7 +175,7 @@ class CasadiControl():
                     np.zeros(mpc_T+1),
                     self.a_max*np.ones(mpc_T),
                     self.delta_max*np.ones(mpc_T),
-                    0.3*self.track_width*np.ones(mpc_T+1),
+                    0.35*self.track_width*np.ones(mpc_T+1),
                     self.v_max*np.ones(mpc_T+1)]
 
 
@@ -378,8 +378,8 @@ class FrenetKinBicycleDx(nn.Module):
     
     
     def penalty_d(self, d):  
-        overshoot_pos = (d - 0.3*self.track_width).clamp(min=0)
-        overshoot_neg = (-d - 0.3*self.track_width).clamp(min=0)
+        overshoot_pos = (d - 0.35*self.track_width).clamp(min=0)
+        overshoot_neg = (-d - 0.35*self.track_width).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
         penalty_neg = torch.exp(overshoot_neg) - 1 
         return self.factor_pen*(penalty_pos + penalty_neg)
