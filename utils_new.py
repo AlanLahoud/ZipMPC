@@ -485,7 +485,7 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     
     q_p_pred = q_p_pred.repeat(mpc_T//n_Q, 1, 1)
     
-    e = 1e-8
+    e = 1e-6
     
     q = e*torch.ones((mpc_T,BS,10)) + torch.tensor(Q_manual).unsqueeze(1).float()
     p = torch.zeros((mpc_T,BS,10)) + torch.tensor(p_manual).unsqueeze(1).float()
