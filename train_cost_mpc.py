@@ -185,6 +185,8 @@ for it in range(500):
     
     #x0 = utils_new.sample_init_traj(BS, true_dx, x_star, num_patches, patch+1)
     
+    import pdb
+    pdb.set_trace()
     print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
     
     x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
