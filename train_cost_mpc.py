@@ -50,7 +50,9 @@ l_r = args.l_r
 v_max = args.v_max
 delta_max = args.delta_max
 
-
+seed_n = 0
+torch.manual_seed(seed_n)
+np.random.seed(seed_n)
 
 
 # PARAMETERS
@@ -160,7 +162,7 @@ def add_x0_to_buffer(x0, buffer_x0):
     x0_new[:,0] = x0[:,0] + 0.1*torch.randn_like(x0[:,0])
     x0_new[:,1] = x0[:,1] + 0.02*torch.randn_like(x0[:,1])
     x0_new[:,2] = x0[:,2] + 0.02*torch.randn_like(x0[:,2])
-    x0_new[:,3] = x0[:,3] + 0.1*torch.randn_like(x0[:,3])
+    x0_new[:,3] = x0[:,3] + torch.randn_like(x0[:,3])
     
     mask = (x0_new[:, 1] < 0.2) & (x0_new[:, 1] > -0.2) & (x0_new[:, 3] > 0) & (x0_new[:, 3] < v_max)
     selected_rows = x0_new[mask]
