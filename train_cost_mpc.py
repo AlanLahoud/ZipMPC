@@ -151,7 +151,7 @@ print(x_clamp)
 print(np.shape(x_star))
 
 
-buffer_x0 = [torch.tensor([0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])]
+buffer_x0 = torch.tensor([[0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]])
 
 def add_x0_to_buffer(x0, buffer_x0):
     x0[0] = x0[0] + 0.1*torch.randn()
@@ -159,7 +159,7 @@ def add_x0_to_buffer(x0, buffer_x0):
     x0[2] = x0[2] + 0.02*torch.randn()
     x0[3] = x0[3] + 0.1*torch.randn()
     if x0[1] < 0.2 and x0[1] > -0.2 and x0[3]>0 and x0[3]<v_max:
-        buffer_x0.append(x0)
+        buffer_x0 = torch.vstack((buffer_x0,x0.unsqueeze(0)))
     return buffer_x0
 
 def sample_x0_from_buffer(BS, buffer_x0):
