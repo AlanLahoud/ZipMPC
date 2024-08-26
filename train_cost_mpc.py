@@ -150,10 +150,31 @@ x_clamp = torch.clamp(torch.from_numpy(x_star[ind,:]),0.0,1.0)
 print(x_clamp)
 print(np.shape(x_star))
 
+
+buffer_x0 = [torch.tensor([0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])]
+
+def add_x0_to_buffer(x0, buffer_x0):
+    x0[0] = x0[0] + 0.1*torch.randn()
+    x0[1] = x0[1] + 0.02*torch.randn()
+    x0[2] = x0[2] + 0.02*torch.randn()
+    x0[3] = x0[3] + 0.1*torch.randn()
+    if x0[1] < 0.2 and x0[1] > -0.2 and x0[3]>0 and x0[3]<v_max:
+        buffer_x0.append(x0)
+    return buffer_x0
+
+def sample_x0_from_buffer(BS, buffer_x0):
+    idxs = torch.randint(0, len(buffer_x0), (BS,))
+    x0_sample = buffer_x0[idxs]
+    return x0_sample
+
 best_prog = -999999.
 for it in range(500):
 
-    x0 = utils_new.sample_init(BS, true_dx)  
+    #x0 = utils_new.sample_init(BS, true_dx)  
+    
+    #x0 = utils_new.sample_init_traj(BS, true_dx, x_star, num_patches, patch+1)
+    
+    x0 = sample_x0_from_buffer(BS, buffer_x0)
     
     x0_diff = x0.clone()
     
@@ -182,6 +203,9 @@ for it in range(500):
                     eps=eps,
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
+        
+        for xx in pred_x:
+            add_x0_to_buffer(xx, buffer_x0)
         
         x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]
