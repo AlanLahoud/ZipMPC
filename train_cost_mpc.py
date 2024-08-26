@@ -187,7 +187,7 @@ for it in range(500):
     
     print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
     
-    x0 = sample_x0_from_buffer(BS, buffer_x0)
+    x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
     
     x0_diff = x0.clone()
     
