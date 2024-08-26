@@ -154,8 +154,8 @@ print(np.shape(x_star))
 buffer_x0 = torch.tensor([[0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]])
 
 def add_x0_to_buffer(x0, buffer_x0):
-    #import pdb
-    #pdb.set_trace()
+    import pdb
+    pdb.set_trace()
     x0_new = x0.clone()
     x0_new[:,0] = x0[:,0] + 0.1*torch.randn_like(x0[:,0])
     x0_new[:,1] = x0[:,1] + 0.02*torch.randn(x0[:,1])
