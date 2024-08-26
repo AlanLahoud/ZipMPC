@@ -157,15 +157,13 @@ print(np.shape(x_star))
 buffer_x0 = torch.tensor([[0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]])
 
 def add_x0_to_buffer(x0, buffer_x0):
-    #mport pdb
-    #db.set_trace()
     x0_new = x0.clone()
     x0_new[:,0] = x0[:,0] + 0.1*torch.randn_like(x0[:,0])
     x0_new[:,1] = x0[:,1] + 0.02*torch.randn_like(x0[:,1])
     x0_new[:,2] = x0[:,2] + 0.02*torch.randn_like(x0[:,2])
     x0_new[:,3] = x0[:,3] + torch.randn_like(x0[:,3])
     
-    mask = (x0_new[:, 1] < 0.2) & (x0_new[:, 1] > -0.2) & (x0_new[:, 3] > 0) & (x0_new[:, 3] < v_max)
+    mask = (x0_new[:, 1] < 0.15) & (x0_new[:, 1] > -0.15) & (x0_new[:, 3] > 0) & (x0_new[:, 3] < v_max) & (torch.randn()<0.2)
     selected_rows = x0_new[mask]
 
     buffer_x0_new = buffer_x0.clone()
@@ -185,8 +183,6 @@ for it in range(500):
     
     #x0 = utils_new.sample_init_traj(BS, true_dx, x_star, num_patches, patch+1)
     
-    import pdb
-    pdb.set_trace()
     print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
     
     x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
