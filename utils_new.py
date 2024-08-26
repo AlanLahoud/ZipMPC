@@ -495,7 +495,7 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,5] = p[:,:,5] + q_p_pred[:,:,0]
     
     #d
-    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,1]).clamp(e)
+    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,1]).clamp(e + 0.5)
     p[:,:,1] = p[:,:,1] + q_p_pred[:,:,2]    
     
     return q, p
