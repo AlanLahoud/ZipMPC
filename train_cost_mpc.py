@@ -216,7 +216,7 @@ for it in range(500):
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
         for xx in pred_x:
-            add_x0_to_buffer(xx, buffer_x0)
+            buffer_x0 = add_x0_to_buffer(xx, buffer_x0)
         
         x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]
