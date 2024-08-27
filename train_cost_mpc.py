@@ -184,7 +184,7 @@ def sample_x0_from_buffer(BS, buffer_x0):
     return x0_sample
 
 best_prog = -999999.
-for it in range(300):
+for it in range(451):
 
     #x0 = utils_new.sample_init(BS, true_dx)  
     
