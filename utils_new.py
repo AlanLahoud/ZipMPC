@@ -457,16 +457,16 @@ def solve_casadi(q_np,p_np,x0_np,dx,du,control):
     x_star = x_curr_opt_plus[:-1]
     u_star = u_curr_opt
     
-    return x_star, u_star
+    return np.hstack((x_star, u_star))
 
 def process_single_casadi(sample, q, p, x0, dx, du, control):
-    x, u = solve_casadi(
+    xu = solve_casadi(
         q[:,sample], p[:,sample], 
         x0[sample], dx, du, control)
-    return sample, x
+    return sample, xu
 
 def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
-    x = np.zeros((q.shape[2],q.shape[1],x0.shape[-1]))
+    x = np.zeros((q.shape[2],q.shape[1],dx+du))
 
     with ProcessPoolExecutor() as executor:
         futures = [executor.submit(
