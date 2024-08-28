@@ -184,6 +184,8 @@ def sample_x0_from_buffer(BS, buffer_x0):
     return x0_sample
 
 best_prog = -999999.
+eps_dyn = 0.01
+
 for it in range(451):
 
     x0 = utils_new.sample_init(BS, true_dx)  
@@ -222,7 +224,7 @@ for it in range(451):
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
-        pred_u_noise = pred_u + 0.01*torch.randn_like(pred_u)
+        pred_u_noise = pred_u + eps_dyn*torch.randn_like(pred_u)
         
       
         
@@ -291,7 +293,10 @@ for it in range(451):
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 x_pred_val = utils_new.solve_casadi_parallel(
                     q_val_np_casadi, p_val_np_casadi, 
-                    x0_val_pred, BS_val, dx, du, control)                
+                    x0_val_pred, BS_val, dx, du, control) 
+                
+                import pdb
+                pdb.set_trace()
 
                 q_manual_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
                 p_manual_casadi = np.expand_dims((p_manual[:,idx_to_casadi].T), 1)
