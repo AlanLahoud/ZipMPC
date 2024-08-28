@@ -149,9 +149,9 @@ ind = np.array([0,1,3,4])
 
 #print(x_star[ind,:],u_star)
 
-x_clamp = torch.clamp(torch.from_numpy(x_star[ind,:]),0.0,1.0)
-print(x_clamp)
-print(np.shape(x_star))
+#x_clamp = torch.clamp(torch.from_numpy(x_star[ind,:]),0.0,1.0)
+#print(x_clamp)
+#print(np.shape(x_star))
 
 
 buffer_x0 = torch.tensor([[0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]])
