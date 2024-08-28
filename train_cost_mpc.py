@@ -233,6 +233,8 @@ for it in range(451):
             #import pdb
             #pdb.set_trace()
             x0_diff = torch.where((x0_diff[:,1].abs()>0.19).unsqueeze(-1), x0_diff_previous, x0_diff)
+            x0_diff = torch.where((x0_diff[:,2].abs()>2.00).unsqueeze(-1), x0_diff_previous, x0_diff)
+            x0_diff = torch.where((x0_diff[:,0].abs()>10.00).unsqueeze(-1), x0_diff_previous, x0_diff)
             
             
             if x0_diff[:,].max()>15:
