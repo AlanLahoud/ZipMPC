@@ -245,7 +245,7 @@ def sample_init(BS, dyn, sn=None):
         gen.manual_seed(sn)
     
     di = 1000
-    sigma_sample = torch.randint(int(0.0*di), int(4.0*di), (BS,1), generator=gen)/di
+    sigma_sample = torch.randint(int(0.0*di), int(3.5*di), (BS,1), generator=gen)/di
     d_sample = torch.randint(int(-.10*di), int(.10*di), (BS,1), generator=gen)/di
     phi_sample = torch.randint(int(-0.08*di), int(0.08*di), (BS,1), generator=gen)/di
     v_sample = torch.randint(0, int(1.5*di), (BS,1), generator=gen)/di
@@ -315,7 +315,11 @@ def sample_init_traj(BS, dyn, traj, num_patches, patch, sn=None):
 def get_curve_hor_from_x(x, track_coord, H_curve):
     idx_track_batch = ((x[:,0]-track_coord[[2],:].T)**2).argmin(0)
     idcs_track_batch = idx_track_batch[:, None] + torch.arange(H_curve)
-    curvs = track_coord[4,idcs_track_batch].float()
+    try:
+        curvs = track_coord[4,idcs_track_batch].float()
+    except:
+        import pdb
+        pdb.set_trace()
     return curvs
 
 class FrenetKinBicycleDx(nn.Module):
