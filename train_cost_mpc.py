@@ -224,10 +224,16 @@ for it in range(451):
         
         pred_u_noise = pred_u + 0.05*torch.randn_like(pred_u)
         
+      
+        
         
         for iu in range(pred_u.shape[0]):
             x0_diff_aux = x0_diff.clone()
             x0_diff = true_dx.forward(x0_diff, pred_u_noise[iu])
+            
+            if x0_diff[:,0].max()>15:
+                import pdb
+                pdb.set_trace()
         
         #for xx in pred_x:
         #    buffer_x0_old = buffer_x0.clone()
