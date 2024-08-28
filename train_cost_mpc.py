@@ -222,17 +222,24 @@ for it in range(451):
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
-        for xx in pred_x:
-            buffer_x0_old = buffer_x0.clone()
-            buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
+        pred_u_noise = pred_u + 0.05*torch.randn_like(pred_u)
         
-        x0_diff = pred_x[-1].clone()
+        
+        for iu in range(pred_u.shape[0]):
+            x0_diff_aux = x0_diff.clone()
+            x0_diff = true_dx.forward(x0_diff, pred_u_noise[iu])
+        
+        #for xx in pred_x:
+        #    buffer_x0_old = buffer_x0.clone()
+        #    buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
+        
+        #x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]
         x0_diff[:,5] = 0.
         
-        progress_pred = progress_pred + pred_x[-1,:,5]
-        penalty_pred_d = penalty_pred_d + pred_x[:,:,1]
-        penalty_pred_v = penalty_pred_v + pred_x[:,:,3]
+        progress_pred = progress_pred + x0_diff[:,5]
+        penalty_pred_d = penalty_pred_d + x0_diff[:,1]
+        penalty_pred_v = penalty_pred_v + x0_diff[:,3]
 
     loss = -progress_pred.mean() \
     #+ 0.00001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
