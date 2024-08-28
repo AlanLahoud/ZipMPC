@@ -230,9 +230,9 @@ for it in range(451):
         for iu in range(pred_u.shape[0]):
             x0_diff_previous = x0_diff.clone()
             x0_diff = true_dx.forward(x0_diff, pred_u_noise[iu])
-            import pdb
-            pdb.set_trace()
-            x0_diff = torch.where(x0_diff[:,1].abs()>0.19, x0_diff_previous, x0_diff)
+            #import pdb
+            #pdb.set_trace()
+            x0_diff = torch.where((x0_diff[:,1].abs()>0.19).unsqueeze(-1), x0_diff_previous, x0_diff)
             
             
             if x0_diff[:,].max()>15:
