@@ -141,13 +141,13 @@ p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -5.0, 0, 0, 0, 0]),
 
 idx_to_casadi = [5,1,2,3,8,9] # This is only to match the indices of Q from model to casadi
 
-x_star, u_star = utils_new.solve_casadi(
-            Q_manual[:,idx_to_casadi].T, p_manual[:,idx_to_casadi].T,
-            x0.detach().numpy(),dx,du,control)
+#x_star, u_star = utils_new.solve_casadi(
+#            Q_manual[:,idx_to_casadi].T, p_manual[:,idx_to_casadi].T,
+#            x0.detach().numpy(),dx,du,control)
 
 ind = np.array([0,1,3,4])
 
-print(x_star[ind,:],u_star)
+#print(x_star[ind,:],u_star)
 
 x_clamp = torch.clamp(torch.from_numpy(x_star[ind,:]),0.0,1.0)
 print(x_clamp)
