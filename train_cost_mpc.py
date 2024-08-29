@@ -299,7 +299,7 @@ for it in range(451):
                     u_pred_val.shape[0], u_pred_val.shape[1], u_pred_val.shape[2])
                 
                 for iu in range(u_pred_val.shape[0]):
-                    x0_val_pred_previous = x0_val_pred.clone()
+                    x0_val_pred_previous = x0_val_pred.copy()
                     x0_val_pred = true_dx.forward(x0_val_pred, u_pred_noise[iu])
                     x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.19).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,2].abs()>2.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
@@ -315,7 +315,7 @@ for it in range(451):
                 u_manual_noise = u_manual + eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
                 
                 for iu in range(u_manual.shape[0]):
-                    x0_val_manual_previous = x0_val_manual.clone()
+                    x0_val_manual_previous = x0_val_manual.copy()
                     x0_val_manual = true_dx.forward(x0_val_manual, u_manual_noise[iu])
                     x0_val_manual = torch.where((x0_val_manual[:,1].abs()>0.19).unsqueeze(-1), 
                                                 x0_val_manual_previous, x0_val_manual)
