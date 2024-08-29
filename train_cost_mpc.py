@@ -275,7 +275,7 @@ for it in range(451):
             # This sampling should bring always the same set of initial states
             x0_val = utils_new.sample_init(BS_val, true_dx, sn=0).numpy()
 
-            x0_val_pred = x0_val[:,:6]
+            x0_val_pred = x0_val[:,:8]
             x0_val_manual = x0_val[:,:6]
 
             progress_val_pred = 0.
