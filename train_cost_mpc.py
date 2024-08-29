@@ -275,7 +275,7 @@ for it in range(451):
             # This sampling should bring always the same set of initial states
             x0_val = utils_new.sample_init(BS_val, true_dx, sn=0).numpy()
 
-            x0_val_pred = x0_val[:,:8]
+            x0_val_pred = x0_val[:,:6]
             x0_val_manual = x0_val[:,:6]
 
             progress_val_pred = 0.
@@ -300,7 +300,7 @@ for it in range(451):
                 
                 for iu in range(u_pred_val.shape[0]):
                     x0_val_pred_previous = torch.tensor(x0_val_pred).clone()
-                    x0_val_pred = true_dx.forward(torch.tensor(x0_val_pred), torch.tensor(u_pred_noise[iu]))
+                    x0_val_pred = true_dx.forward(torch.tensor(x0_val_pred), torch.tensor(u_pred_noise[iu]))[:,:6]
                     x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.19).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,2].abs()>2.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred).numpy()
@@ -316,7 +316,7 @@ for it in range(451):
                 
                 for iu in range(u_manual.shape[0]):
                     x0_val_manual_previous = torch.tensor(x0_val_manual).clone()
-                    x0_val_manual = true_dx.forward(torch.tensor(x0_val_manual),torch.tensor(u_manual_noise[iu]))
+                    x0_val_manual = true_dx.forward(torch.tensor(x0_val_manual),torch.tensor(u_manual_noise[iu]))[:,:6]
                     x0_val_manual = torch.where((x0_val_manual[:,1].abs()>0.19).unsqueeze(-1), 
                                                 x0_val_manual_previous, x0_val_manual)
                     x0_val_manual = torch.where((x0_val_manual[:,2].abs()>2.00).unsqueeze(-1), 
