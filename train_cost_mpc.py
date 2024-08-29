@@ -300,10 +300,10 @@ for it in range(451):
                 
                 for iu in range(u_pred_val.shape[0]):
                     x0_val_pred_previous = x0_val_pred.copy()
-                    x0_val_pred = true_dx.forward(torch.tensor(x0_val_pred), torch.tensor(u_pred_noise[iu])).numpy()
+                    x0_val_pred = true_dx.forward(torch.tensor(x0_val_pred), torch.tensor(u_pred_noise[iu]))
                     x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.19).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,2].abs()>2.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
-                    x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
+                    x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred).numpy()
 
                 q_manual_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
                 p_manual_casadi = np.expand_dims((p_manual[:,idx_to_casadi].T), 1)
@@ -316,13 +316,13 @@ for it in range(451):
                 
                 for iu in range(u_manual.shape[0]):
                     x0_val_manual_previous = x0_val_manual.copy()
-                    x0_val_manual = true_dx.forward(torch.tensor(x0_val_manual),torch.tensor(u_manual_noise[iu])).numpy()
+                    x0_val_manual = true_dx.forward(torch.tensor(x0_val_manual),torch.tensor(u_manual_noise[iu]))
                     x0_val_manual = torch.where((x0_val_manual[:,1].abs()>0.19).unsqueeze(-1), 
                                                 x0_val_manual_previous, x0_val_manual)
                     x0_val_manual = torch.where((x0_val_manual[:,2].abs()>2.00).unsqueeze(-1), 
                                                 x0_val_manual_previous, x0_val_manual)
                     x0_val_manual = torch.where((x0_val_manual[:,0].abs()>10.00).unsqueeze(-1), 
-                                                x0_val_manual_previous, x0_val_manual)
+                                                x0_val_manual_previous, x0_val_manual).numpy()
                 
                 progress_val_pred = progress_val_pred + x0_val_pred[:,5]
                 progress_val_manual = progress_val_manual + x0_val_manual[:,5]
