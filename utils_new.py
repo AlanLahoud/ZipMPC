@@ -463,24 +463,23 @@ def process_single_casadi(sample, q, p, x0, dx, du, control):
     x, u = solve_casadi(
         q[:,sample], p[:,sample], 
         x0[sample], dx, du, control)
-    return sample, x#, u
+    return sample, x, u
 
 def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
     x = np.zeros((q.shape[2],q.shape[1],x0.shape[-1]))
-    #u = np.zeros((q.shape[2],q.shape[1],du))
+    u = np.zeros((q.shape[2],q.shape[1],du))
 
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers=4) as executor:
         futures = [executor.submit(
             process_single_casadi, 
             sample, q, p, x0, dx, du, control) for sample in range(BS)]
 
         for future in futures:
-            #sample, x_sample, u_sample = future.result()
-            sample, x_sample = future.result()
+            sample, x_sample, u_sample = future.result()
             x[:, sample] = x_sample
-            #u[:, sample] = u_sample
+            u[:, sample] = u_sample
 
-    return x#, u
+    return x, u
 
 
 def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
