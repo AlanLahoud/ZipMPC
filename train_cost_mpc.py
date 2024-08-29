@@ -295,7 +295,7 @@ for it in range(451):
                     q_val_np_casadi, p_val_np_casadi, 
                     x0_val_pred, BS_val, dx, du, control) 
                 
-                u_pred_noise = u_pred_val + eps_dyn*torch.randn_like(u_pred_val)
+                u_pred_noise = u_pred_val + eps_dyn*np.random.randn_like(u_pred_val)
                 
                 for iu in range(u_pred_val.shape[0]):
                     x0_val_pred_previous = x0_val_pred.clone()
@@ -311,7 +311,7 @@ for it in range(451):
                     np.repeat(p_manual_casadi, BS_val, 1), 
                     x0_val_manual, BS_val, dx, du, control) 
                 
-                u_manual_noise = u_manual + eps_dyn*torch.randn_like(u_manual)
+                u_manual_noise = u_manual + eps_dyn*np.random.randn_like(u_manual)
                 
                 for iu in range(u_manual.shape[0]):
                     x0_val_manual_previous = x0_val_manual.clone()
