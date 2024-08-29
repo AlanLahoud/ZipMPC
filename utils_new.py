@@ -474,7 +474,7 @@ def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
     x = np.zeros((q.shape[2],q.shape[1],x0.shape[-1]))
     u = np.zeros((q.shape[2],q.shape[1],du))
 
-    with ProcessPoolExecutor(max_workers=4) as executor:
+    with ProcessPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(
             process_single_casadi, 
             sample, q, p, x0, dx, du, control) for sample in range(BS)]

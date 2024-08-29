@@ -135,7 +135,7 @@ lqr_iter = 50
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00002, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.00003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -189,7 +189,7 @@ def sample_x0_from_buffer(BS, buffer_x0):
 best_prog = -999999.
 
 
-for it in range(451):
+for it in range(601):
 
     x0 = utils_new.sample_init(BS, true_dx)  
     
@@ -269,7 +269,7 @@ for it in range(451):
     opt.step()  
     
     
-    if it%15==0:
+    if it%30==0:
     # V A L I D A T I O N   (only casadi) 
         with torch.no_grad():
 
