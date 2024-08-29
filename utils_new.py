@@ -188,6 +188,8 @@ class CasadiControl():
         options = {
                     'verbose': False,
                     'ipopt.print_level': 0,
+                    'print_time': False,
+                    'ipopt.sb': 'yes',
                     'print_time': 0,
                     'ipopt.tol': 1e-4,
                     'ipopt.max_iter': 4000,
