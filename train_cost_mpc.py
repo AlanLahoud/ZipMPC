@@ -135,7 +135,7 @@ lqr_iter = 50
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00003, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.00002, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -191,13 +191,13 @@ best_prog = -999999.
 
 for it in range(601):
 
-    x0 = utils_new.sample_init(BS, true_dx)  
+    #x0 = utils_new.sample_init(BS, true_dx)  
     
     #x0 = utils_new.sample_init_traj(BS, true_dx, x_star, num_patches, patch+1)
     
     #print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
     
-    #x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
+    x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
     
     x0_diff = x0.clone()
     
@@ -246,9 +246,9 @@ for it in range(601):
                 import pdb
                 pdb.set_trace()
         
-        #for xx in pred_x:
-        #    buffer_x0_old = buffer_x0.clone()
-        #    buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
+        for xx in pred_x:
+            buffer_x0_old = buffer_x0.clone()
+            buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
         
         #x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]
