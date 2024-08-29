@@ -291,7 +291,7 @@ for it in range(451):
                                 
                 q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-                x_pred_val, u_pred_val = utils_new.solve_casadi_parallel(
+                x_pred_val = utils_new.solve_casadi_parallel(
                     q_val_np_casadi, p_val_np_casadi, 
                     x0_val_pred, BS_val, dx, du, control) 
                 
