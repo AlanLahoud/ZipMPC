@@ -413,7 +413,10 @@ class FrenetKinBicycleDx(nn.Module):
 
         a, delta = torch.unbind(u, dim=1)
 
-        sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
+        try:
+            sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
+        except:
+            sigma, d, phi, v, sigma_0, sigma_diff = torch.unbind(state, dim=1)
         
         beta = torch.atan(self.l_r/(self.l_r+self.l_f)*torch.tan(delta))       
         k = self.curv(sigma)
