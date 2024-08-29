@@ -35,6 +35,7 @@ def parse_arguments():
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.5)
     parser.add_argument('--delta_max', type=float, default=0.4)
+    parser.add_argument('--eps_dyn', type=float, default=0.05)
     
     return parser.parse_args()
 
@@ -49,6 +50,8 @@ n_Q = args.n_Q
 l_r = args.l_r
 v_max = args.v_max
 delta_max = args.delta_max
+
+eps_dyn = args.eps_dyn
 
 seed_n = 0
 torch.manual_seed(seed_n)
@@ -83,7 +86,7 @@ init_track = [0,0,0]
 
 max_p = 100 
 
-str_model = f'{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}'
+str_model = f'{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{eps_dyn}'
 
 params = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_T])
 
@@ -184,7 +187,7 @@ def sample_x0_from_buffer(BS, buffer_x0):
     return x0_sample
 
 best_prog = -999999.
-eps_dyn = 0.01
+
 
 for it in range(451):
 
