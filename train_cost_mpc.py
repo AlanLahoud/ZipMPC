@@ -199,7 +199,7 @@ for it in range(601):
     
     x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
     
-    #x0_diff = x0.clone()
+    x0_diff = x0.clone()
     
     progress_pred = torch.tensor(0.)
     penalty_pred_d = torch.tensor(0.)
