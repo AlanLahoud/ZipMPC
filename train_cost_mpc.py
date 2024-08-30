@@ -228,7 +228,7 @@ for it in range(601):
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
         
-        pred_u_noise = pred_u + eps_dyn*torch.randn_like(pred_u)
+        pred_u_noise = pred_u #+ eps_dyn*torch.randn_like(pred_u)
               
         
         for iu in range(pred_u.shape[0]):
@@ -297,9 +297,8 @@ for it in range(601):
                     q_val_np_casadi, p_val_np_casadi, 
                     x0_val_pred, BS_val, dx, du, control) 
                 
-                np.random.seed(0)
-                u_pred_noise = u_pred_val + eps_dyn*np.random.randn(
-                    u_pred_val.shape[0], u_pred_val.shape[1], u_pred_val.shape[2])
+                #np.random.seed(0)
+                u_pred_noise = u_pred_val #+ eps_dyn*np.random.randn(u_pred_val.shape[0], u_pred_val.shape[1], u_pred_val.shape[2])
                 
                 for iu in range(u_pred_val.shape[0]):
                     x0_val_pred_previous = torch.tensor(x0_val_pred).clone()
@@ -315,8 +314,8 @@ for it in range(601):
                     np.repeat(p_manual_casadi, BS_val, 1), 
                     x0_val_manual, BS_val, dx, du, control) 
                 
-                np.random.seed(0)
-                u_manual_noise = u_manual + eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
+                #np.random.seed(0)
+                u_manual_noise = u_manual #+ eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
                 
                 for iu in range(u_manual.shape[0]):
                     x0_val_manual_previous = torch.tensor(x0_val_manual).clone()
