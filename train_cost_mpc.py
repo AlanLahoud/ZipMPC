@@ -298,6 +298,7 @@ for it in range(601):
                     q_val_np_casadi, p_val_np_casadi, 
                     x0_val_pred, BS_val, dx, du, control) 
                 
+                np.random.seed(0)
                 u_pred_noise = u_pred_val + eps_dyn*np.random.randn(
                     u_pred_val.shape[0], u_pred_val.shape[1], u_pred_val.shape[2])
                 
@@ -315,6 +316,7 @@ for it in range(601):
                     np.repeat(p_manual_casadi, BS_val, 1), 
                     x0_val_manual, BS_val, dx, du, control) 
                 
+                np.random.seed(0)
                 u_manual_noise = u_manual + eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
                 
                 for iu in range(u_manual.shape[0]):
