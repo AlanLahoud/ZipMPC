@@ -191,13 +191,13 @@ best_prog = -999999.
 
 for it in range(601):
 
-    #x0 = utils_new.sample_init(BS, true_dx)  
+    x0 = utils_new.sample_init(BS, true_dx)  
     
     #x0 = utils_new.sample_init_traj(BS, true_dx, x_star, num_patches, patch+1)
     
     #print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
     
-    x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
+    #x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
     
     x0_diff = x0.clone()
     
@@ -227,12 +227,9 @@ for it in range(601):
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
-        import pdb
-        pdb.set_trace()
+        
         pred_u_noise = pred_u + eps_dyn*torch.randn_like(pred_u)
-        
-      
-        
+              
         
         for iu in range(pred_u.shape[0]):
             x0_diff_previous = x0_diff.clone()
@@ -248,9 +245,9 @@ for it in range(601):
                 import pdb
                 pdb.set_trace()
         
-        for xx in pred_x:
-            buffer_x0_old = buffer_x0.clone()
-            buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
+        #for xx in pred_x:
+        #    buffer_x0_old = buffer_x0.clone()
+        #    buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
         
         #x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]
@@ -275,7 +272,7 @@ for it in range(601):
     # V A L I D A T I O N   (only casadi) 
         with torch.no_grad():
 
-            BS_val = 64
+            BS_val = 32
 
             # This sampling should bring always the same set of initial states
             x0_val = utils_new.sample_init(BS_val, true_dx, sn=0).numpy()
