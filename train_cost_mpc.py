@@ -335,11 +335,11 @@ for it in range(601):
                 x0_val_pred[:,4] = x0_val_pred[:,0]
                 x0_val_manual[:,4] = x0_val_manual[:,0]
                 
-                x0_val_pred[:,5] = 0.
-                x0_val_manual[:,5] = 0.        
-                
                 progress_val_pred = progress_val_pred + x0_val_pred[:,5]
                 progress_val_manual = progress_val_manual + x0_val_manual[:,5]
+                
+                x0_val_pred[:,5] = 0.
+                x0_val_manual[:,5] = 0.        
 
             progress_val = progress_val_pred - progress_val_manual
             
