@@ -227,6 +227,8 @@ for it in range(601):
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
+        import pdb
+        pdb.set_trace()
         pred_u_noise = pred_u + eps_dyn*torch.randn_like(pred_u)
         
       
