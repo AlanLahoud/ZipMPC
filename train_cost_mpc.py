@@ -327,8 +327,7 @@ for it in range(601):
                 #    x0_val_manual = torch.where((x0_val_manual[:,0].abs()>10.00).unsqueeze(-1), 
                 #                                x0_val_manual_previous, x0_val_manual).numpy()
                 
-                progress_val_pred = progress_val_pred + x0_val_pred[:,5]
-                progress_val_manual = progress_val_manual + x0_val_manual[:,5]
+               
                 
                 x0_val_pred = x_pred_val[-1]
                 x0_val_manual = x_manual[-1]
@@ -337,7 +336,10 @@ for it in range(601):
                 x0_val_manual[:,4] = x0_val_manual[:,0]
                 
                 x0_val_pred[:,5] = 0.
-                x0_val_manual[:,5] = 0.            
+                x0_val_manual[:,5] = 0.        
+                
+                progress_val_pred = progress_val_pred + x0_val_pred[:,5]
+                progress_val_manual = progress_val_manual + x0_val_manual[:,5]
 
             progress_val = progress_val_pred - progress_val_manual
             
