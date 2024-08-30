@@ -197,9 +197,9 @@ for it in range(601):
     
     #print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
     
-    #x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
+    x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
     
-    x0_diff = x0.clone()
+    #x0_diff = x0.clone()
     
     progress_pred = torch.tensor(0.)
     penalty_pred_d = torch.tensor(0.)
@@ -245,9 +245,9 @@ for it in range(601):
                 import pdb
                 pdb.set_trace()
         
-        #for xx in pred_x:
-        #    buffer_x0_old = buffer_x0.clone()
-        #    buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
+        for xx in pred_x:
+            buffer_x0_old = buffer_x0.clone()
+            buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
         
         #x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]
