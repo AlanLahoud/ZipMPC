@@ -228,28 +228,28 @@ for it in range(601):
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
         
-        #pred_u_noise = pred_u #+ eps_dyn*torch.randn_like(pred_u)
+        pred_u_noise = pred_u + eps_dyn*torch.randn_like(pred_u)
               
         
-        #for iu in range(pred_u.shape[0]):
-        #    x0_diff_previous = x0_diff.clone()
-        #    x0_diff = true_dx.forward(x0_diff, pred_u_noise[iu])
+        for iu in range(pred_u.shape[0]):
+            x0_diff_previous = x0_diff.clone()
+            x0_diff = true_dx.forward(x0_diff, pred_u_noise[iu])
             #import pdb
             #pdb.set_trace()
-        #    x0_diff = torch.where((x0_diff[:,1].abs()>0.19).unsqueeze(-1), x0_diff_previous, x0_diff)
-        #    x0_diff = torch.where((x0_diff[:,2].abs()>2.00).unsqueeze(-1), x0_diff_previous, x0_diff)
-        #    x0_diff = torch.where((x0_diff[:,0].abs()>10.00).unsqueeze(-1), x0_diff_previous, x0_diff)
+            x0_diff = torch.where((x0_diff[:,1].abs()>0.19).unsqueeze(-1), x0_diff_previous, x0_diff)
+            x0_diff = torch.where((x0_diff[:,2].abs()>2.00).unsqueeze(-1), x0_diff_previous, x0_diff)
+            x0_diff = torch.where((x0_diff[:,0].abs()>10.00).unsqueeze(-1), x0_diff_previous, x0_diff)
             
             
-        #    if x0_diff[:,0].max()>15:
-        #        import pdb
-        #        pdb.set_trace()
+            if x0_diff[:,0].max()>15:
+                import pdb
+                pdb.set_trace()
         
         #for xx in pred_x:
         #    buffer_x0_old = buffer_x0.clone()
         #    buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
         
-        x0_diff = pred_x[-1].clone()
+        #x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]     
         
         progress_pred = progress_pred + x0_diff[:,5]
@@ -298,15 +298,15 @@ for it in range(601):
                     q_val_np_casadi, p_val_np_casadi, 
                     x0_val_pred, BS_val, dx, du, control) 
                 
-                #np.random.seed(0)
-                #u_pred_noise = u_pred_val #+ eps_dyn*np.random.randn(u_pred_val.shape[0], u_pred_val.shape[1], u_pred_val.shape[2])
+                np.random.seed(0)
+                u_pred_noise = u_pred_val + eps_dyn*np.random.randn(u_pred_val.shape[0], u_pred_val.shape[1], u_pred_val.shape[2])
                 
-                #for iu in range(u_pred_val.shape[0]):
-                #    x0_val_pred_previous = torch.tensor(x0_val_pred).clone()
-                #    x0_val_pred = true_dx.forward(torch.tensor(x0_val_pred), torch.tensor(u_pred_noise[iu]))[:,:6]
-                #    x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.19).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
-                #    x0_val_pred = torch.where((x0_val_pred[:,2].abs()>2.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
-                #    x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred).numpy()
+                for iu in range(u_pred_val.shape[0]):
+                    x0_val_pred_previous = torch.tensor(x0_val_pred).clone()
+                    x0_val_pred = true_dx.forward(torch.tensor(x0_val_pred), torch.tensor(u_pred_noise[iu]))[:,:6]
+                    x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.19).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
+                    x0_val_pred = torch.where((x0_val_pred[:,2].abs()>2.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
+                    x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred).numpy()
 
                 q_manual_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
                 p_manual_casadi = np.expand_dims((p_manual[:,idx_to_casadi].T), 1)
@@ -315,23 +315,23 @@ for it in range(601):
                     np.repeat(p_manual_casadi, BS_val, 1), 
                     x0_val_manual, BS_val, dx, du, control) 
                 
-                #np.random.seed(0)
-                #u_manual_noise = u_manual #+ eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
+                np.random.seed(0)
+                u_manual_noise = u_manual #+ eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
                 
-                #for iu in range(u_manual.shape[0]):
-                #    x0_val_manual_previous = torch.tensor(x0_val_manual).clone()
-                #    x0_val_manual = true_dx.forward(torch.tensor(x0_val_manual),torch.tensor(u_manual_noise[iu]))[:,:6]
-                #    x0_val_manual = torch.where((x0_val_manual[:,1].abs()>0.19).unsqueeze(-1), 
-                #                                x0_val_manual_previous, x0_val_manual)
-                #    x0_val_manual = torch.where((x0_val_manual[:,2].abs()>2.00).unsqueeze(-1), 
-                #                                x0_val_manual_previous, x0_val_manual)
-                #    x0_val_manual = torch.where((x0_val_manual[:,0].abs()>10.00).unsqueeze(-1), 
-                #                                x0_val_manual_previous, x0_val_manual).numpy()
+                for iu in range(u_manual.shape[0]):
+                    x0_val_manual_previous = torch.tensor(x0_val_manual).clone()
+                    x0_val_manual = true_dx.forward(torch.tensor(x0_val_manual),torch.tensor(u_manual_noise[iu]))[:,:6]
+                    x0_val_manual = torch.where((x0_val_manual[:,1].abs()>0.19).unsqueeze(-1), 
+                                                x0_val_manual_previous, x0_val_manual)
+                    x0_val_manual = torch.where((x0_val_manual[:,2].abs()>2.00).unsqueeze(-1), 
+                                                x0_val_manual_previous, x0_val_manual)
+                    x0_val_manual = torch.where((x0_val_manual[:,0].abs()>10.00).unsqueeze(-1), 
+                                                x0_val_manual_previous, x0_val_manual).numpy()
                 
                
                 
-                x0_val_pred = x_pred_val[-1]
-                x0_val_manual = x_manual[-1]
+                #x0_val_pred = x_pred_val[-1]
+                #x0_val_manual = x_manual[-1]
                 
                 x0_val_pred[:,4] = x0_val_pred[:,0]
                 x0_val_manual[:,4] = x0_val_manual[:,0]
