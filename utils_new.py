@@ -232,9 +232,9 @@ class SimpleNN(nn.Module):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
         x = self.fc3(x)
-        x = self.output_activation(x) * self.K
+        #x = self.output_activation(x) * self.K
         x = x.reshape(self.mpc_T, -1, self.O)
-        return x/3
+        return x
 
 def sample_init(BS, dyn, sn=None):
     
