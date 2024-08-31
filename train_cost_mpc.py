@@ -250,12 +250,13 @@ for it in range(601):
         #    buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
         
         x0_diff = pred_x[-1].clone()
-        x0_diff[:,4] = x0_diff[:,0]
-        x0_diff[:,5] = 0.
+        x0_diff[:,4] = x0_diff[:,0]     
         
         progress_pred = progress_pred + x0_diff[:,5]
         penalty_pred_d = penalty_pred_d + x0_diff[:,1]
         penalty_pred_v = penalty_pred_v + x0_diff[:,3]
+        
+        x0_diff[:,5] = 0.
 
     loss = -progress_pred.mean() \
     #+ 0.00001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
