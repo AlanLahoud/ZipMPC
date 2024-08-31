@@ -316,7 +316,7 @@ for it in range(601):
                     x0_val_manual, BS_val, dx, du, control) 
                 
                 np.random.seed(0)
-                u_manual_noise = u_manual #+ eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
+                u_manual_noise = u_manual + eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
                 
                 for iu in range(u_manual.shape[0]):
                     x0_val_manual_previous = torch.tensor(x0_val_manual).clone()
