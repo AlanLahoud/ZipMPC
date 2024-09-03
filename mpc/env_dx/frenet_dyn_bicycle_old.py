@@ -48,21 +48,17 @@ class FrenetDynBicycleDx(nn.Module):
         self.sigma_f = self.track_sigma[self.mask]
         self.curv_f = self.track_curv_diff[self.mask]
 
+        self.params = params
+
         self.l_r = params[0]
         self.l_f = params[1]
 
         self.track_width = params[2]
 
         self.delta_threshold_rad = np.pi
-        self.dt = params[3]
-
-        self.smooth_curve = params[4]
-
-        self.v_max = params[5]
-
-        self.delta_max = params[6]
-
-        self.factor_pen = 1000.
+        self.v_max = params[3]
+        self.ac_max = params[4]
+        self.dt = params[5] #0.04
 
         # # model parameters: l_r, l_f (beta and curv(sigma) are calculated in the dynamics)
         # if params is None:
@@ -99,33 +95,25 @@ class FrenetDynBicycleDx(nn.Module):
 
 
         sigma_shifted = sigma.reshape(-1,1) - sigma_f_mat
-        curv_unscaled = torch.sigmoid(self.smooth_curve*sigma_shifted)
+        curv_unscaled = torch.sigmoid(5000*sigma_shifted)
         curv = (curv_unscaled@(self.curv_f.reshape(-1,1))).type(torch.float)
 
 
         return curv.reshape(-1)
 
 
-    def penalty_d(self, d):
-        overshoot_pos = (d - 0.35*self.track_width).clamp(min=0)
-        overshoot_neg = (-d - 0.35*self.track_width).clamp(min=0)
+    def penalty_d(self, d, factor=100000.):
+        overshoot_pos = (d - 0.5*self.track_width*0.75).clamp(min=0)
+        overshoot_neg = (-d - 0.5*self.track_width*0.75).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
         penalty_neg = torch.exp(overshoot_neg) - 1
-        return self.factor_pen*(penalty_pos + penalty_neg)
+        return factor*(penalty_pos + penalty_neg)
 
-    def penalty_v(self, v):
-        overshoot_pos = (v - self.v_max).clamp(min=0)
-        overshoot_neg = (-v + 0.001).clamp(min=0)
-        penalty_pos = torch.exp(overshoot_pos) - 1
-        penalty_neg = torch.exp(overshoot_neg) - 1
-        return self.factor_pen*(penalty_pos + penalty_neg)
-
-    def penalty_delta(self, delta):
-        overshoot_pos = (delta - self.delta_max).clamp(min=0)
-        overshoot_neg = (-delta - self.delta_max).clamp(min=0)
-        penalty_pos = torch.exp(overshoot_pos) - 1
-        penalty_neg = torch.exp(overshoot_neg) - 1
-        return self.factor_pen*(penalty_pos + penalty_neg)
+    def penalty_v(self, v, factor=100000.):
+        # as v_x defines the forward direction - this function is applied with
+        # respect to v_x.
+        penalty_pos = (v - self.v_max*0.95).clamp(min=0) ** 2
+        return factor*penalty_pos
 
     def forward(self, state, u):
         softplus_op = torch.nn.Softplus(20)
@@ -136,49 +124,42 @@ class FrenetDynBicycleDx(nn.Module):
         if state.is_cuda and not self.params.is_cuda:
             self.params = self.params.cuda()
 
-        lr = self.l_r
-        lf = self.l_f
+        l_r = self.l_r
+        l_f = self.l_f
 
-        tau, delta = torch.unbind(u, dim=1)
+        a, delta = torch.unbind(u, dim=1)
+        #print(delta)
 
         sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
+        #fP(α) = D sin(C arctan(Bα)) B = 10.0, C = 1.9, D = 1.0
+        # αf = arctan( vy + lf ˙ψ|vx|)− δf
+        a_f = torch.atan((v_y + l_f*r)/torch.abs(v_x)-delta)
+        a_r = torch.atan((v_y - l_r*r)/torch.abs(v_x))
 
-        # car params
-        m = 0.200
-        I_z = 0.0004
+        m = 1.5
+        g = 9.81
+        mu = 0.85
+        I_z = m*l_r*l_f # this should be an approximation
 
-        # lateral force params
-        Df = 0.43
-        Cf = 1.4
-        Bf = 8.0
-        Dr = 0.6
-        Cr = 1.7
-        Br = 8.0
+        B = 6.0
+        C = 1.6
+        D = 1.0
 
-        # longitudinal force params
-        Cm1 = 0.98028992
-        Cm2 = 0.01814131
-        Cd = 0.02750696
-        Croll = 0.08518052
-
-        a_f = -(torch.atan2((- v_y - lf*r),torch.abs(v_x))+delta)
-        a_r = -(torch.atan2((-v_y + lr*r),torch.abs(v_x)))
-
-
-        # forces on the wheels
-        F_x = (Cm1 - Cm2 * v_x) * tau - Cd * v_x * v_x - Croll  # motor force
-
-        F_f = -Df*torch.sin(Cf*torch.atan(Bf*a_f))
-        F_r = -Dr*torch.sin(Cr*torch.atan(Br*a_r))
-
+        F_yf = -0.5*m*g*mu*(D*torch.sin(C*torch.atan(B*a_f)))
+        F_yr = -0.5*m*g*mu*(D*torch.sin(C*torch.atan(B*a_r)))
 
         dsigma = (v_x*torch.cos(phi)-v_y*torch.sin(phi))/(1.-self.curv(sigma)*d)
         dd = v_x*torch.sin(phi)+v_y*torch.cos(phi)
         dphi = r-self.curv(sigma)*((v_x*torch.cos(phi)-v_y*torch.sin(phi))/(1.-self.curv(sigma)*d))
-        dr = 1/I_z*(F_f * lf * torch.cos(delta) - F_r * lr)
-        dv_x = 1/m*(F_x - F_f * torch.sin(delta) + m * v_y * r)
-        dv_y = 1/m*(F_r + F_f * torch.cos(delta) - m * v_x * r)
+        dr = 1/I_z*(l_f*F_yf -l_r*F_yr)
+        dv_x = a + r*v_y
+        dv_y = 1/m*(F_yf*torch.cos(delta)+F_yr)-r*v_x
+        #print(sigma)
+        #print(self.curv(sigma))
 
+        #import pdb
+        #pdb.set_trace()
+        
         sigma = sigma + self.dt * dsigma
         d = d + self.dt * dd
         phi = phi + self.dt * dphi
@@ -191,6 +172,11 @@ class FrenetDynBicycleDx(nn.Module):
         d_pen = self.penalty_d(d)
 
         v_ub = self.penalty_v(v_x)
+
+        #d_lb = softplus_op(-d - 0.5*self.track_width)
+        #d_ub = softplus_op(d - 0.5*self.track_width)
+        #v_lb = softplus_op(-v + 0)
+        #v_ub = softplus_op(v - self.v_max)
 
         state = torch.stack((sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff, d_pen, v_ub), 1)
 

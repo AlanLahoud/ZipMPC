@@ -53,21 +53,21 @@ class CasadiControl():
 
         self.l_r = params[0]
         self.l_f = params[1]
-        
+
         self.track_width = params[2]
-        
+
         self.delta_threshold_rad = np.pi
         self.dt = params[3]
 
         self.smooth_curve = params[4]
-        
+
         self.v_max = params[5]
-        
+
         self.delta_max = params[6]
 
     #def sigmoid(self, x):
     #    return 1 / (1 + exp(-x))
-    
+
     def sigmoid(self, x):
         return (tanh(x/2)+1.)/2
 
@@ -130,8 +130,8 @@ class CasadiControl():
 
         Ts = self.dt
         N=horizon
-        l_r=0.2
-        l_f=0.2
+        l_r=self.lr
+        l_f=self.ls
 
         dx = dx - dc - df
 
@@ -215,8 +215,8 @@ class CasadiControl():
 
         Ts = self.dt
         N=horizon
-        l_r=0.2
-        l_f=0.2
+        l_r=self.lr
+        l_f=self.ls
 
         dx = dx - dc - df
 
@@ -294,14 +294,14 @@ class CasadiControl():
 
         #import pdb
         #pdb.set_trace()
-        
+
         #w_ws = np.vstack(
         #    [np.reshape(x_warmstart[:dx,0:N+1],(dx*(N+1),1)),
         #     np.reshape(x_warmstart[dx+df:,0:N],(du*(N),1))]
         #)
-        
+
         #solver_input['x0'] = w_ws
-        
+
         # solve optimization problem
         solver_output = solver(**solver_input)
 
@@ -325,8 +325,8 @@ class CasadiControl():
     def mpc_casadi_with_constraints_2(self, q, p, x0, horizon, df, dc, dx, du):
         Ts = self.dt
         N = horizon
-        l_r = 0.2
-        l_f = 0.2
+        l_r = self.lr
+        l_f = self.ls
 
         dx = dx - dc - df
 
@@ -542,29 +542,40 @@ class CasadiControl():
 
         Ts = self.dt
         N=horizon
-        l_r=0.2
-        l_f=0.2
+        lr = self.l_r
+        lf = self.l_f
 
-        # set them like in learned dynamics
-        m = 1.5
-        g = 9.81
-        mu = 0.85
-        I_z = m*l_r*l_f # this should be an approximation
+        # car params
+        m = 0.200
+        I_z = 0.0004
 
-        B = 6.0
-        C = 1.6
-        D = 1.0
+        # lateral force params
+        Df = 0.43
+        Cf = 1.4
+        Bf = 8.0
+        Dr = 0.6
+        Cr = 1.7
+        Br = 8.0
+
+        # longitudinal force params
+        Cm1 = 0.98028992
+        Cm2 = 0.01814131
+        Cd = 0.02750696
+        Croll = 0.08518052
 
         dx = dx - dc - df
 
         x_sym = SX.sym('x_sym',dx,N+1)
         u_sym = SX.sym('u_sym',du,N)
 
-        a_f = (x_sym[5,0:N]  + l_f*x_sym[3,0:N])/(fabs(x_sym[4,0:N])+0.001)-u_sym[1,0:N]
-        a_r = (x_sym[5,0:N]  - l_r*x_sym[3,0:N])/(fabs(x_sym[4,0:N])+0.001)
+        a_f = -(atan2((-x_sym[5,0:N] - l_f*x_sym[3,0:N]),(fabs(x_sym[4,0:N])+0.001))+u_sym[1,0:N])
+        a_r = -(atan2((-x_sym[5,0:N] + l_r*x_sym[3,0:N]),(fabs(x_sym[4,0:N])+0.001)))
 
-        F_yf = -0.5*m*g*mu*(D*C*B*a_f)
-        F_yr = -0.5*m*g*mu*(D*C*B*a_r)
+        # forces on the wheels
+        F_x = (Cm1 - Cm2 * x_sym[4,0:N]) * u_sym[0,0:N] - Cd * x_sym[4,0:N]* x_sym[4,0:N] - Croll  # motor force
+
+        F_f = -Df*sin(Cf*atan(Bf*a_f))
+        F_r = -Dr*sin(Cr*atan(Br*a_r))
 
         #solver parameters
         options = {}
@@ -572,40 +583,40 @@ class CasadiControl():
         options['verbose'] = False
 
         dyn1 = horzcat(
-            (x_sym[0,0] - x0[0,0]), 
+            (x_sym[0,0] - x0[0,0]),
             (x_sym[0,1:N+1] - x_sym[0,0:N] - \
              Ts*((x_sym[4,0:N]*cos(x_sym[2,0:N])-x_sym[5,0:N]*sin(
                 x_sym[2,0:N]))/(1.-self.curv_casadi(x_sym[0,0:N])*x_sym[1,0:N]))))
-        
+
         dyn2 = horzcat(
-            (x_sym[1,0] - x0[0,1]), 
+            (x_sym[1,0] - x0[0,1]),
             (x_sym[1,1:N+1] - x_sym[1,0:N] - \
              Ts*(x_sym[4,0:N]*sin(x_sym[2,0:N])+x_sym[5,0:N]*cos(
                 x_sym[2,0:N]))))
-        
+
         dyn3 = horzcat(
-            (x_sym[2,0] - x0[0,2]), 
+            (x_sym[2,0] - x0[0,2]),
             (x_sym[2,1:N+1] - x_sym[2,0:N] - \
              Ts*(x_sym[3,0:N] - self.curv_casadi(
                 x_sym[0,0:N])*(x_sym[4,0:N]*cos(
                 x_sym[2,0:N])-x_sym[5,0:N]*sin(x_sym[2,0:N]))/(1-self.curv_casadi(
                 x_sym[0,0:N])*x_sym[1,0:N]))))
-        
+
         dyn4 = horzcat(
-            (x_sym[3,0] - x0[0,3]), 
+            (x_sym[3,0] - x0[0,3]),
             (x_sym[3,1:N+1] - x_sym[3,0:N] - \
-             Ts*(1/I_z*(l_f*F_yf -l_r*F_yr))))
-        
+             Ts*(1/I_z*(F_f * lf *cos(u_sym[0,0:N])- F_r * lr))))
+
         dyn5 = horzcat(
-            (x_sym[4,0] - x0[0,4]), 
+            (x_sym[4,0] - x0[0,4]),
             (x_sym[4,1:N+1] - x_sym[4,0:N] - \
-             Ts*(u_sym[0,0:N]+x_sym[3,0:N]*x_sym[5,0:N])))
-        
+             Ts*1/m*(F_x - F_f *sin(u_sym[0,0:N]) + m *x_sym[5,0:N]* x_sym[3,0:N])))
+
         dyn6 = horzcat(
-            (x_sym[5,0] - x0[0,5]), 
+            (x_sym[5,0] - x0[0,5]),
             (x_sym[5,1:N+1] - x_sym[5,0:N] - \
-             Ts*(1/m*(F_yf+F_yr)-x_sym[3,0:N]*x_sym[4,0:N])))
-        
+             Ts*1/m*(F_r + F_f * cos(u_sym[0,0:N]) - m *x_sym[4,0:N]* x_sym[3,0:N])))
+
         # think about how to integrate the curvature function
 
         # define symbolic variables for cost parameters
