@@ -529,7 +529,7 @@ class CasadiControl():
     #     # print solution
     #     return sol_evalf
 
-    def mpc_casadi_with_constraints_paj(self,q,p,x0,horizon,df,dc,dx,du,x_warmstart):
+    def mpc_casadi_with_constraints_paj(self,q,p,x0,horizon,df,dc,dx,du):
 
         # with: dx, du: number of states/inputs passed from the dynamics
         # dc: number of constraints
@@ -540,10 +540,10 @@ class CasadiControl():
         # here the q and the p scale the following
         # feature vector [sigma-sigma_0, d, phi, v, penalty_d,penalty_v,a,delta]
 
-        Ts = self.dt
+        Ts = 0.05
         N=horizon
-        lr = self.l_r
-        lf = self.l_f
+        l_r = self.l_r
+        l_f = self.l_f
 
         # car params
         m = 0.200
@@ -568,18 +568,18 @@ class CasadiControl():
         x_sym = SX.sym('x_sym',dx,N+1)
         u_sym = SX.sym('u_sym',du,N)
 
-        a_f = -(atan2((-x_sym[5,0:N] - l_f*x_sym[3,0:N]),(fabs(x_sym[4,0:N])+0.001))+u_sym[1,0:N])
-        a_r = -(atan2((-x_sym[5,0:N] + l_r*x_sym[3,0:N]),(fabs(x_sym[4,0:N])+0.001)))
+        a_f = -(np.arctan2((-x_sym[5,0:N] - l_f*x_sym[3,0:N]),((x_sym[4,0:N])+0.00001))+u_sym[1,0:N])
+        a_r = -(np.arctan2((-x_sym[5,0:N] + l_r*x_sym[3,0:N]),((x_sym[4,0:N])+0.00001)))
 
         # forces on the wheels
         F_x = (Cm1 - Cm2 * x_sym[4,0:N]) * u_sym[0,0:N] - Cd * x_sym[4,0:N]* x_sym[4,0:N] - Croll  # motor force
 
-        F_f = -Df*sin(Cf*atan(Bf*a_f))
-        F_r = -Dr*sin(Cr*atan(Br*a_r))
+        F_f = -Df*np.sin(Cf*np.arctan(Bf*a_f))
+        F_r = -Dr*np.sin(Cr*np.arctan(Br*a_r))
 
         #solver parameters
         options = {}
-        options['ipopt.max_iter'] = 20000
+        options['ipopt.max_iter'] = 2000
         options['verbose'] = False
 
         dyn1 = horzcat(
@@ -605,17 +605,17 @@ class CasadiControl():
         dyn4 = horzcat(
             (x_sym[3,0] - x0[0,3]),
             (x_sym[3,1:N+1] - x_sym[3,0:N] - \
-             Ts*(1/I_z*(F_f * lf *cos(u_sym[0,0:N])- F_r * lr))))
+             Ts*(1/I_z*(F_f * l_f *cos(u_sym[1,0:N])- F_r * l_r))))
 
         dyn5 = horzcat(
             (x_sym[4,0] - x0[0,4]),
             (x_sym[4,1:N+1] - x_sym[4,0:N] - \
-             Ts*1/m*(F_x - F_f *sin(u_sym[0,0:N]) + m *x_sym[5,0:N]* x_sym[3,0:N])))
+             Ts*1/m*(F_x - F_f *sin(u_sym[1,0:N]) + m *x_sym[5,0:N]* x_sym[3,0:N])))
 
         dyn6 = horzcat(
             (x_sym[5,0] - x0[0,5]),
             (x_sym[5,1:N+1] - x_sym[5,0:N] - \
-             Ts*1/m*(F_r + F_f * cos(u_sym[0,0:N]) - m *x_sym[4,0:N]* x_sym[3,0:N])))
+             Ts*1/m*(F_r + F_f * cos(u_sym[1,0:N]) - m *x_sym[4,0:N]* x_sym[3,0:N])))
 
         # think about how to integrate the curvature function
 
@@ -629,13 +629,13 @@ class CasadiControl():
         dl = substitute(substitute(l,q_sym,q_used),p_sym,p_used)
 
         const = vertcat(transpose(dyn1),transpose(dyn2),transpose(dyn3),transpose(dyn4),transpose(dyn5),transpose(dyn6),transpose(u_sym[0,0:N]),transpose(u_sym[1,0:N]),transpose(x_sym[1,0:N+1]),transpose(x_sym[4,0:N+1]))
-        lbg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),-2*np.ones(N),-0.4*np.ones(N),-0.5*self.track_width*0.75*np.ones(N+1),0.01*np.ones(N+1)]
-        ubg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),2*np.ones(N),0.4*np.ones(N),0.5*self.track_width*0.75*np.ones(N+1),self.v_max*0.95*np.ones(N+1)]
+        lbg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),-2*np.ones(N),-0.4*np.ones(N),-0.4*self.track_width*0.75*np.ones(N+1),0.01*np.ones(N+1)]
+        ubg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),2*np.ones(N),0.4*np.ones(N),0.4*self.track_width*0.75*np.ones(N+1),self.v_max*0.95*np.ones(N+1)]
         lbx = -np.inf * np.ones(dx*(N+1)+du*N)
         ubx = np.inf * np.ones(dx*(N+1)+du*N)
 
         x = vertcat(reshape(x_sym[:,0:N+1],(dx*(N+1),1)),reshape(u_sym[:,0:N],(du*N,1)))
-        w_ws = np.vstack([np.reshape(x_warmstart[:dx,0:N+1],(dx*(N+1),1)),np.reshape(x_warmstart[dx+dc+df:,0:N],(du*(N),1))])
+        #w_ws = np.vstack([np.reshape(x_warmstart[:dx,0:N+1],(dx*(N+1),1)),np.reshape(x_warmstart[dx+dc+df:,0:N],(du*(N),1))])
 
         # define solver
         nlp = {'x':x,'f':dl, 'g':const}
@@ -649,7 +649,7 @@ class CasadiControl():
         solver_input['ubg'] = ubg
 
         # add initial guess to solver
-        solver_input['x0'] = w_ws
+        #solver_input['x0'] = w_ws
 
         # solve optimization problem
         solver_output = solver(**solver_input)
@@ -667,3 +667,72 @@ class CasadiControl():
 
         # print solution
         return sol_evalf
+
+    def casadi_dyn_bicyl_step(self,x0,u,df,dc,dx,du):
+
+        # here the q and the p scale the following
+        # feature vector [sigma-sigma_0, d, phi, v, penalty_d,penalty_v,a,delta]
+
+        Ts = 0.05
+        l_r = 0.03
+        l_f = 0.03
+
+        # car params
+        m = 0.200
+        I_z = 1
+
+        # lateral force params
+        Df = 0.43
+        Cf = 1.4
+        Bf = 8.0
+        Dr = 0.6
+        Cr = 1.7
+        Br = 8.0
+
+        # longitudinal force params
+        Cm1 = 0.98028992
+        Cm2 = 0.01814131
+        Cd = 0.02750696
+        Croll = 0.08518052
+
+        dx = dx - dc - df
+
+        x_sym = SX.sym('x_sym',dx)
+        u_sym = SX.sym('u_sym',du)
+
+        x_out = SX.sym('x_out',dx)
+
+        a_f = -(np.arctan2((-x_sym[5] - l_f*x_sym[3]),((x_sym[4])+0.00001))+u_sym[1])
+        a_r = -(np.arctan2((-x_sym[5] + l_r*x_sym[3]),((x_sym[4])+0.00001)))
+
+        # forces on the wheels
+        F_x = (Cm1 - Cm2 * x_sym[4]) * u_sym[0] - Cd * x_sym[4]* x_sym[4] - Croll  # motor force
+
+        F_f = -Df*np.sin(Cf*np.arctan(Bf*a_f))
+        F_r = -Dr*np.sin(Cr*np.arctan(Br*a_r))
+
+        dyn1 = x_sym[0] + Ts*((x_sym[4]*np.cos(x_sym[2])-x_sym[5]*np.sin(
+                x_sym[2]))/(1.-self.curv_casadi(x_sym[0])*x_sym[1]))
+
+        dyn2 =  x_sym[1] + Ts*(x_sym[4]*np.sin(x_sym[2])+x_sym[5]*np.cos(
+                x_sym[2]))
+
+        dyn3 = x_sym[2] + Ts*(x_sym[3] - self.curv_casadi(
+                x_sym[0])*(x_sym[4]*np.cos(
+                x_sym[2])-x_sym[5]*np.sin(x_sym[2]))/(1-self.curv_casadi(
+                x_sym[0])*x_sym[1]))
+
+        dyn4 = x_sym[3] + Ts*(1/I_z*(F_f * l_f *np.cos(u_sym[1])- F_r * l_r))
+
+        dyn5 = x_sym[4] + Ts*1/m*(F_x - F_f *np.sin(u_sym[1]) + m *x_sym[5]* x_sym[3])
+
+        dyn6 = x_sym[5] + Ts*1/m*(F_r + F_f * np.cos(u_sym[1]) - m *x_sym[4]* x_sym[3])
+
+        x_out[0] = substitute(substitute(dyn1,x_sym,x0),u_sym,u)
+        x_out[1] = substitute(substitute(dyn2,x_sym,x0),u_sym,u)
+        x_out[2] = substitute(substitute(dyn3,x_sym,x0),u_sym,u)
+        x_out[3] = substitute(substitute(dyn4,x_sym,x0),u_sym,u)
+        x_out[4] = substitute(substitute(dyn5,x_sym,x0),u_sym,u)
+        x_out[5] = substitute(substitute(dyn6,x_sym,x0),u_sym,u)
+
+        return evalf(x_out)
