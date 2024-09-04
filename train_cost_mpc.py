@@ -249,14 +249,14 @@ for it in range(361):
             x0_diff = true_dx.forward(x0_diff, pred_u_noise[iu])
             true_dx = model_mismatch_reverse(true_dx)
             
-            x0_diff = torch.where((x0_diff[:,1].abs()>0.19).unsqueeze(-1), x0_diff_previous, x0_diff)
-            x0_diff = torch.where((x0_diff[:,2].abs()>2.00).unsqueeze(-1), x0_diff_previous, x0_diff)
-            x0_diff = torch.where((x0_diff[:,0].abs()>10.00).unsqueeze(-1), x0_diff_previous, x0_diff)
+            #x0_diff = torch.where((x0_diff[:,1].abs()>0.19).unsqueeze(-1), x0_diff_previous, x0_diff)
+            #x0_diff = torch.where((x0_diff[:,2].abs()>2.00).unsqueeze(-1), x0_diff_previous, x0_diff)
+            #x0_diff = torch.where((x0_diff[:,0].abs()>10.00).unsqueeze(-1), x0_diff_previous, x0_diff)
             
             
-            if x0_diff[:,0].max()>15:
-                import pdb
-                pdb.set_trace()
+            #if x0_diff[:,0].max()>15:
+            #    import pdb
+            #    pdb.set_trace()
         
         #for xx in pred_x:
         #    buffer_x0_old = buffer_x0.clone()
@@ -279,7 +279,7 @@ for it in range(361):
     + 0.001*penalty_pred_v.mean()
     
     print(-progress_pred.mean().detach(), 
-          0.001*penalty_pred_d.mean().detach(), 
+          0.01*penalty_pred_d.mean().detach(), 
           0.001*penalty_pred_v.mean().detach())
     
     #print(0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
