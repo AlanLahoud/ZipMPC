@@ -134,7 +134,7 @@ lqr_iter = 50
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 4, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -276,12 +276,12 @@ for it in range(361):
         #pdb.set_trace()
     
     loss = -progress_pred.mean() \
-    + 0.001*penalty_pred_d.mean() \
-    + 0.001*penalty_pred_v.mean()
+    + 0.01*penalty_pred_d.mean() \
+    + 0.01*penalty_pred_v.mean()
     
     print(-progress_pred.mean().detach(), 
-          0.001*penalty_pred_d.mean().detach(), 
-          0.001*penalty_pred_v.mean().detach()
+          0.01*penalty_pred_d.mean().detach(), 
+          0.01*penalty_pred_v.mean().detach()
             )
     
     #print(0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
