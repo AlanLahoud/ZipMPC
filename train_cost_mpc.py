@@ -322,10 +322,7 @@ for it in range(361):
                     true_dx = model_mismatch_reverse(true_dx)
                     x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.19).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,2].abs()>2.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
-                    x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred).numpy()
-                
-                import pdb
-                pdb.set_trace()
+                    x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred).numpy()   
                 
                 q_manual_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
                 p_manual_casadi = np.expand_dims((p_manual[:,idx_to_casadi].T), 1)
@@ -354,6 +351,9 @@ for it in range(361):
                 #x0_val_pred = x_pred_val[-1]
                 #x0_val_manual = x_manual[-1]
                 
+                import pdb
+                pdb.set_trace()
+                
                 x0_val_pred[:,4] = x0_val_pred[:,0]
                 x0_val_manual[:,4] = x0_val_manual[:,0]
                 
@@ -361,7 +361,9 @@ for it in range(361):
                 progress_val_manual = progress_val_manual + x0_val_manual[:,5]
                 
                 x0_val_pred[:,5] = 0.
-                x0_val_manual[:,5] = 0.        
+                x0_val_manual[:,5] = 0. 
+                
+                
 
             progress_val = progress_val_pred - progress_val_manual
             
