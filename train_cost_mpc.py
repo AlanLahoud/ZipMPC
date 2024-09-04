@@ -187,8 +187,8 @@ def sample_x0_from_buffer(BS, buffer_x0):
 
 
 def model_mismatch_apply(true_dx):
-    true_dx.l_r = 0.15
-    true_dx.l_f = 0.15
+    true_dx.l_r = 0.13
+    true_dx.l_f = 0.13
     return true_dx
     
 def model_mismatch_reverse(true_dx):
@@ -271,8 +271,8 @@ for it in range(361):
         
         x0_diff[:,5] = 0.
 
-    #import pdb
-    #pdb.set_trace()
+    import pdb
+    pdb.set_trace()
     
     loss = -progress_pred.mean() \
     #+ 0.00001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
