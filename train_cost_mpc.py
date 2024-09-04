@@ -271,8 +271,8 @@ for it in range(361):
         
         x0_diff[:,5] = 0.
 
-    import pdb
-    pdb.set_trace()
+    #import pdb
+    #pdb.set_trace()
     
     loss = -progress_pred.mean() \
     #+ 0.00001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
