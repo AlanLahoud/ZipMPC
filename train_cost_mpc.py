@@ -187,8 +187,8 @@ def sample_x0_from_buffer(BS, buffer_x0):
 
 
 def model_mismatch_apply(true_dx):
-    true_dx.l_r = 0.12
-    true_dx.l_f = 0.12
+    true_dx.l_r = 0.15
+    true_dx.l_f = 0.15
     return true_dx
     
 def model_mismatch_reverse(true_dx):
@@ -331,7 +331,7 @@ for it in range(361):
                     x0_val_manual, BS_val, dx, du, control) 
                 
                 np.random.seed(0)
-                u_manual_noise = u_manual + eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
+                u_manual_noise = u_manual #+ eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
                 
                 for iu in range(u_manual.shape[0]):
                     x0_val_manual_previous = torch.tensor(x0_val_manual).clone()
