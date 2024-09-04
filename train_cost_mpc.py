@@ -249,9 +249,10 @@ for it in range(361):
             x0_diff = true_dx.forward(x0_diff, pred_u_noise[iu])
             true_dx = model_mismatch_reverse(true_dx)
             
-            #x0_diff = torch.where((x0_diff[:,1].abs()>0.19).unsqueeze(-1), x0_diff_previous, x0_diff)
-            #x0_diff = torch.where((x0_diff[:,2].abs()>2.00).unsqueeze(-1), x0_diff_previous, x0_diff)
-            #x0_diff = torch.where((x0_diff[:,0].abs()>10.00).unsqueeze(-1), x0_diff_previous, x0_diff)
+            x0_diff = torch.where((x0_diff[:,0].abs()>10.00).unsqueeze(-1), x0_diff_previous, x0_diff)
+            x0_diff = torch.where((x0_diff[:,1].abs()>0.25).unsqueeze(-1), x0_diff_previous, x0_diff)
+            x0_diff = torch.where((x0_diff[:,2].abs()>2.00).unsqueeze(-1), x0_diff_previous, x0_diff)
+            x0_diff = torch.where((x0_diff[:,3].abs()>1.70).unsqueeze(-1), x0_diff_previous, x0_diff)
             
             
             #if x0_diff[:,0].max()>15:
