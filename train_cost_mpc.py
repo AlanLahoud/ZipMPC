@@ -266,7 +266,7 @@ for it in range(361):
         #x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]     
         
-        progress_pred = progress_pred + x0_diff[:z,5]
+        progress_pred = progress_pred + x0_diff[:,5]
         penalty_pred_d = penalty_pred_d + x0_diff[:,6]
         penalty_pred_v = penalty_pred_v + x0_diff[:,7]
         
