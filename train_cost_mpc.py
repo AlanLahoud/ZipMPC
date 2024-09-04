@@ -335,7 +335,9 @@ for it in range(361):
                 
                 for iu in range(u_manual.shape[0]):
                     x0_val_manual_previous = torch.tensor(x0_val_manual).clone()
+                    true_dx = model_mismatch_apply(true_dx)
                     x0_val_manual = true_dx.forward(torch.tensor(x0_val_manual),torch.tensor(u_manual_noise[iu]))[:,:6]
+                    true_dx = model_mismatch_reverse(true_dx)
                     x0_val_manual = torch.where((x0_val_manual[:,1].abs()>0.19).unsqueeze(-1), 
                                                 x0_val_manual_previous, x0_val_manual)
                     x0_val_manual = torch.where((x0_val_manual[:,2].abs()>2.00).unsqueeze(-1), 
