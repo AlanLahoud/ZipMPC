@@ -187,8 +187,8 @@ def sample_x0_from_buffer(BS, buffer_x0):
 
 
 def model_mismatch_apply(true_dx):
-    true_dx.l_r = 0.14
-    true_dx.l_f = 0.14
+    true_dx.l_r = 0.11
+    true_dx.l_f = 0.11
     return true_dx
     
 def model_mismatch_reverse(true_dx):
