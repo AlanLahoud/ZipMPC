@@ -503,10 +503,10 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
 
     #sigma_diff
     q[:,:,5] = q[:,:,5] + q_p_pred[:,:,0].clamp(e)
-    p[:,:,5] = p[:,:,5] + q_p_pred[:,:,1]
+    #p[:,:,5] = p[:,:,5] + q_p_pred[:,:,1]
     
     #d
-    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,2]).clamp(e + 0.5)
-    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,3]    
+    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,1]).clamp(e + 0.5)
+    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,2]    
     
     return q, p
