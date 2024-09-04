@@ -327,7 +327,7 @@ for it in range(361):
                     true_dx = model_mismatch_apply(true_dx)
                     x0_val_pred = true_dx.forward(torch.tensor(x0_val_pred), torch.tensor(u_pred_noise[iu]))[:,:6]
                     true_dx = model_mismatch_reverse(true_dx)
-                    x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.19).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
+                    x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.17).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,2].abs()>2.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)  
                     x0_val_pred = torch.where((x0_val_pred[:,3].abs()>1.50).unsqueeze(-1), x0_val_pred_previous, x0_val_pred).numpy()   
@@ -347,7 +347,7 @@ for it in range(361):
                     true_dx = model_mismatch_apply(true_dx)
                     x0_val_manual = true_dx.forward(torch.tensor(x0_val_manual),torch.tensor(u_manual_noise[iu]))[:,:6]
                     true_dx = model_mismatch_reverse(true_dx)
-                    x0_val_manual = torch.where((x0_val_manual[:,1].abs()>0.19).unsqueeze(-1), 
+                    x0_val_manual = torch.where((x0_val_manual[:,1].abs()>0.17).unsqueeze(-1), 
                                                 x0_val_manual_previous, x0_val_manual)
                     x0_val_manual = torch.where((x0_val_manual[:,2].abs()>2.00).unsqueeze(-1), 
                                                 x0_val_manual_previous, x0_val_manual)
