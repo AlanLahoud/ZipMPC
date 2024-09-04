@@ -133,13 +133,13 @@ lqr_iter = 50
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
+model = utils_new.SimpleNN(mpc_H, n_Q, 4, max_p)
+opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0, 5, 3, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -5., 0, 0, 0, 0]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0, 2, 2, 0, 0, 0.01, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -2., 0, 0, 0, 0]), 0), mpc_T, 0)
 
 idx_to_casadi = [5,1,2,3,8,9] # This is only to match the indices of Q from model to casadi
 
