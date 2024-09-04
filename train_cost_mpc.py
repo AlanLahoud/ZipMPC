@@ -187,8 +187,8 @@ def sample_x0_from_buffer(BS, buffer_x0):
 
 
 def model_mismatch_apply(true_dx):
-    true_dx.l_r = 0.13
-    true_dx.l_f = 0.13
+    true_dx.l_r = 0.12
+    true_dx.l_f = 0.12
     return true_dx
     
 def model_mismatch_reverse(true_dx):
@@ -238,8 +238,8 @@ for it in range(361):
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
-        import pdb
-        pdb.set_trace()
+        #import pdb
+        #pdb.set_trace()
         
         pred_u_noise = pred_u #+ eps_dyn*torch.randn_like(pred_u)
               
