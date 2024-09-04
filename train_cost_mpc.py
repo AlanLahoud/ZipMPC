@@ -271,10 +271,12 @@ for it in range(361):
         
         x0_diff[:,5] = 0.
 
+        import pdb
+        pdb.set_trace()
     
     loss = -progress_pred.mean() \
-    #+ 0.00001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
-    #+ 0.00001*true_dx.penalty_v(penalty_pred_v).sum(0).mean()
+    + 0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
+    + 0.001*true_dx.penalty_v(penalty_pred_v).sum(0).mean()
     
     #print(0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
       
@@ -350,10 +352,7 @@ for it in range(361):
                 
                 #x0_val_pred = x_pred_val[-1]
                 #x0_val_manual = x_manual[-1]
-                
-                import pdb
-                pdb.set_trace()
-                
+                     
                 x0_val_pred[:,4] = x0_val_pred[:,0]
                 x0_val_manual[:,4] = x0_val_manual[:,0]
                 
