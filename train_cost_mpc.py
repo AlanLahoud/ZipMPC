@@ -77,7 +77,7 @@ l_f = l_r
 
 #delta_max = 0.4
 
-a_max = 1.0
+a_max = 2.0
 
 track_density = 300
 track_width = 0.5
@@ -266,7 +266,7 @@ for it in range(361):
         #x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]     
         
-        progress_pred = progress_pred + x0_diff[:,5]
+        progress_pred = progress_pred + x0_diff[:z,5]
         penalty_pred_d = penalty_pred_d + x0_diff[:,6]
         penalty_pred_v = penalty_pred_v + x0_diff[:,7]
         
@@ -276,12 +276,12 @@ for it in range(361):
         #pdb.set_trace()
     
     loss = -progress_pred.mean() \
-    + 0.001*penalty_pred_d.mean() \
-    + 0.001*penalty_pred_v.mean()
+    + 0.01*penalty_pred_d.mean() \
+    + 0.01*penalty_pred_v.mean()
     
     print(-progress_pred.mean().detach(), 
-          0.001*penalty_pred_d.mean().detach(), 
-          0.001*penalty_pred_v.mean().detach()
+          0.01*penalty_pred_d.mean().detach(), 
+          0.01*penalty_pred_v.mean().detach()
             )
     
     #print(0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
