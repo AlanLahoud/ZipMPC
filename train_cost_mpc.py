@@ -271,8 +271,6 @@ for it in range(361):
         
         x0_diff[:,5] = 0.
 
-    import pdb
-    pdb.set_trace()
     
     loss = -progress_pred.mean() \
     #+ 0.00001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
@@ -285,7 +283,7 @@ for it in range(361):
     opt.step()  
     
     
-    if it%30==0:
+    if it%5==0:
     # V A L I D A T I O N   (only casadi) 
         with torch.no_grad():
 
@@ -325,7 +323,10 @@ for it in range(361):
                     x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.19).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,2].abs()>2.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred).numpy()
-
+                
+                import pdb
+                pdb.set_trace()
+                
                 q_manual_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
                 p_manual_casadi = np.expand_dims((p_manual[:,idx_to_casadi].T), 1)
                 x_manual, u_manual = utils_new.solve_casadi_parallel(
