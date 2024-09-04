@@ -315,6 +315,9 @@ for it in range(361):
                 inp_val = torch.hstack((x0_val_pred_torch[:,1:4], curv_val))
                 q_p_pred_val = model(inp_val)
                 q_val, p_val = utils_new.q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
+                
+                import pdb
+                pdb.set_trace()
                                 
                 q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
