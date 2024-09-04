@@ -275,7 +275,7 @@ for it in range(361):
         #pdb.set_trace()
     
     loss = -progress_pred.mean() \
-    + 0.001*penalty_pred_d.mean() \
+    + 0.01*penalty_pred_d.mean() \
     + 0.001*penalty_pred_v.mean()
     
     print(-progress_pred.mean().detach(), 
