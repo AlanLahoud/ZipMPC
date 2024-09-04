@@ -118,7 +118,6 @@ track_coord = torch.from_numpy(np.vstack(
 true_dx = utils_new.FrenetKinBicycleDx(track_coord, params, 'cpu')
 
 
-
 x0 = torch.tensor([0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])
 u0 = torch.tensor([0.0, 0.0])
 
@@ -186,6 +185,18 @@ def sample_x0_from_buffer(BS, buffer_x0):
     x0_sample = buffer_x0[idxs]
     return x0_sample
 
+
+def model_mismatch_apply(true_dx):
+    true_dx.l_r = 0.12
+    true_dx.l_f = 0.12
+    return true_dx
+    
+def model_mismatch_reverse(true_dx):
+    true_dx.l_r = l_r
+    true_dx.l_f = l_r
+    return true_dx
+
+
 best_prog = -999999.
 
 
@@ -228,14 +239,16 @@ for it in range(361):
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
         
-        pred_u_noise = pred_u + eps_dyn*torch.randn_like(pred_u)
+        pred_u_noise = pred_u #+ eps_dyn*torch.randn_like(pred_u)
               
         
         for iu in range(pred_u.shape[0]):
             x0_diff_previous = x0_diff.clone()
+            
+            true_dx = model_mismatch_apply(true_dx)
             x0_diff = true_dx.forward(x0_diff, pred_u_noise[iu])
-            #import pdb
-            #pdb.set_trace()
+            true_dx = model_mismatch_reverse(true_dx)
+            
             x0_diff = torch.where((x0_diff[:,1].abs()>0.19).unsqueeze(-1), x0_diff_previous, x0_diff)
             x0_diff = torch.where((x0_diff[:,2].abs()>2.00).unsqueeze(-1), x0_diff_previous, x0_diff)
             x0_diff = torch.where((x0_diff[:,0].abs()>10.00).unsqueeze(-1), x0_diff_previous, x0_diff)
@@ -299,11 +312,13 @@ for it in range(361):
                     x0_val_pred, BS_val, dx, du, control) 
                 
                 np.random.seed(0)
-                u_pred_noise = u_pred_val + eps_dyn*np.random.randn(u_pred_val.shape[0], u_pred_val.shape[1], u_pred_val.shape[2])
+                u_pred_noise = u_pred_val #+ eps_dyn*np.random.randn(u_pred_val.shape[0], u_pred_val.shape[1], u_pred_val.shape[2])
                 
                 for iu in range(u_pred_val.shape[0]):
                     x0_val_pred_previous = torch.tensor(x0_val_pred).clone()
+                    true_dx = model_mismatch_apply(true_dx)
                     x0_val_pred = true_dx.forward(torch.tensor(x0_val_pred), torch.tensor(u_pred_noise[iu]))[:,:6]
+                    true_dx = model_mismatch_reverse(true_dx)
                     x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.19).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,2].abs()>2.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
                     x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred).numpy()
