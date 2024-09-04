@@ -316,8 +316,8 @@ for it in range(361):
                 q_p_pred_val = model(inp_val)
                 q_val, p_val = utils_new.q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
                 
-                import pdb
-                pdb.set_trace()
+                print(q_val[:,:,[1,5]].mean(0).mean(0))
+                print(p_val[:,:,[1,5]].mean(0).mean(0))
                                 
                 q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
