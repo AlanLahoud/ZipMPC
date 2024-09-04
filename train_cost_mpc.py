@@ -281,11 +281,11 @@ for it in range(361):
     + 0.001*penalty_pred_d.mean() \
     + 0.001*penalty_pred_v.mean()
     
-    print('Progress train and penalties:', 
-          -progress_pred.mean().detach().item(), 
-          0.001*penalty_pred_d.mean().detach().item(), 
-          0.001*penalty_pred_v.mean().detach().item()
-            )
+    #print('Progress train and penalties:', 
+    #      -progress_pred.mean().detach().item(), 
+    #      0.001*penalty_pred_d.mean().detach().item(), 
+    #      0.001*penalty_pred_v.mean().detach().item()
+    #        )
     
     #print(0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
       
@@ -317,8 +317,8 @@ for it in range(361):
                 q_p_pred_val = model(inp_val)
                 q_val, p_val = utils_new.q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
                 
-                print('Qd, Qs:', q_val[:,:,[1,5]].mean(0).mean(0).detach().numpy())
-                print('Pd, Ps:', p_val[:,:,[1,5]].mean(0).mean(0).detach().numpy())
+                #print('Qd, Qs:', q_val[:,:,[1,5]].mean(0).mean(0).detach().numpy())
+                #print('Pd, Ps:', p_val[:,:,[1,5]].mean(0).mean(0).detach().numpy())
                                 
                 q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
