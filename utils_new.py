@@ -365,7 +365,7 @@ class FrenetKinBicycleDx(nn.Module):
         
         self.delta_max = params[6]
         
-        self.factor_pen = 1000.
+        self.factor_pen = 10000.
                 
         
         
