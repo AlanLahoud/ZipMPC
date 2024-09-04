@@ -266,8 +266,8 @@ for it in range(361):
         x0_diff[:,4] = x0_diff[:,0]     
         
         progress_pred = progress_pred + x0_diff[:,5]
-        penalty_pred_d = penalty_pred_d + x0_diff[:,1]
-        penalty_pred_v = penalty_pred_v + x0_diff[:,3]
+        penalty_pred_d = penalty_pred_d + x0_diff[:,6]
+        penalty_pred_v = penalty_pred_v + x0_diff[:,7]
         
         x0_diff[:,5] = 0.
 
@@ -275,8 +275,8 @@ for it in range(361):
         pdb.set_trace()
     
     loss = -progress_pred.mean() \
-    + 0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean() \
-    + 0.001*true_dx.penalty_v(penalty_pred_v).sum(0).mean()
+    + 0.001*penalty_pred_d.mean() \
+    + 0.001*penalty_pred_v.mean()
     
     #print(0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
       
