@@ -248,7 +248,7 @@ def sample_init(BS, dyn, sn=None):
     
     di = 1000
     sigma_sample = torch.randint(int(0.0*di), int(2.5*di), (BS,1), generator=gen)/di
-    d_sample = torch.randint(int(-.03*di), int(.03*di), (BS,1), generator=gen)/di
+    d_sample = torch.randint(int(-0.03*di), int(0.03*di), (BS,1), generator=gen)/di
     phi_sample = torch.randint(int(-0.03*di), int(0.03*di), (BS,1), generator=gen)/di
     v_sample = torch.randint(0, int(.5*di), (BS,1), generator=gen)/di
     
