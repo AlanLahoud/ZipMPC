@@ -458,6 +458,9 @@ for it in range(361):
                     max_steps=500
     
                     x0_b_manual = x0_lap_manual[b].copy()
+
+                    import pdb
+                    pdb.set_trace()
                     
                     while finished==0 and crashed==0:
                         q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
