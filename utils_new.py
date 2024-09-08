@@ -346,6 +346,7 @@ def get_curve_hor_from_x(x, track_coord, H_curve):
     idx_track_batch = ((x[:,0]-track_coord[[2],:].T)**2).argmin(0)
     idcs_track_batch = idx_track_batch[:, None] + torch.arange(H_curve)
     try:
+        idcs_track_batch = torch.clip(idcs_track_batch, None, track_coord.shape[1]-1)
         curvs = track_coord[4,idcs_track_batch].float()
     except:
         import pdb
