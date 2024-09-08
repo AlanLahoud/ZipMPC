@@ -443,7 +443,8 @@ for it in range(361):
 
                     steps = steps+1
 
-                    print(x0_b_pred[0])
+                    if steps%10==9:
+                        print(steps, x0_b_pred[0])
 
                 lap_time = dt*steps
                 
