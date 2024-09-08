@@ -448,9 +448,6 @@ for it in range(361):
 
                     steps = steps+1
 
-                import pdb
-                pdb.set_trace()
-                print(x0_b_pred)
                 lap_time = dt*steps
                 
                 finish_list[b] = finished
