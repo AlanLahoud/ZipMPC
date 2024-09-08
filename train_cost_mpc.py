@@ -447,7 +447,10 @@ for it in range(361):
                 
                 finish_list[b] = finished
                 lap_time_list[b] = lap_time
-                
+
+            import pdb
+            pdb.set_trace()
+            
             print('Pred finish: ', finish_list)
             print('Pred lap time: ', lap_time_list)
 
