@@ -428,18 +428,17 @@ for it in range(361):
                     p_lap_np_casadi = torch.permute(p_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
 
                     
-                    x0_b_pred, u_b_pred = utils_new.solve_casadi(
+                    x_b_pred, u_b_pred = utils_new.solve_casadi(
                         q_lap_np_casadi[:,0,:], p_lap_np_casadi[:,0,:], 
                         x0_b_pred, dx, du, control) 
+
+                    x0_b_pred = x_b_pred[1]
 
                     #import pdb
                     #pdb.set_trace()
                     #true_dx = model_mismatch_apply(true_dx)
                     #x0_b_pred = true_dx.forward(torch.tensor(x0_b_pred), torch.tensor(u_b_pred))[:,:6]
                     #true_dx = model_mismatch_reverse(true_dx)
-
-                    import pdb
-                    pdb.set_trace()
                     
                     if x0_b_pred[0]>track_coord[2].max().numpy():
                         finished=1
