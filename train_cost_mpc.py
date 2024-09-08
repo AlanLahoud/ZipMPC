@@ -414,7 +414,7 @@ for it in range(361):
                 steps = 0
                 max_steps=150
                 while finished==0 and crashed==0:
-                    x0_lap_pred_torch = torch.tensor(x0_lap_pred[bb], dtype=torch.float32).unsqueeze(0)
+                    x0_lap_pred_torch = torch.tensor(x0_lap_pred[b], dtype=torch.float32).unsqueeze(0)
                     curv_lap = utils_new.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
                     inp_lap = torch.hstack((x0_lap_pred_torch[:,1:4], curv_lap))
                     q_p_pred_lap = model(inp_lap)
@@ -441,7 +441,7 @@ for it in range(361):
 
                 lap_time = dt*steps
                 
-                finish_list[bb] = finished
-                lap_time_list[bb] = lap_time
+                finish_list[b] = finished
+                lap_time_list[b] = lap_time
             print(finish_list)
             print(lap_time_list)
