@@ -156,7 +156,7 @@ ind = np.array([0,1,3,4])
 #print(np.shape(x_star))
 
 
-buffer_x0 = torch.tensor([[0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]])
+buffer_x0 = torch.tensor([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]])
 
 def add_x0_to_buffer(x0, buffer_x0):
     x0_new = x0.clone()
@@ -265,7 +265,7 @@ for it in range(361):
             for xx in pred_x[:3]: #only few steps
                 buffer_x0_old = buffer_x0.clone()
                 buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
-        print(buffer_x0.max(0))
+        print(buffer_x0.max(0)[0])
         #x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]     
         
