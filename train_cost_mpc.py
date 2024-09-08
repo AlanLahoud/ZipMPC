@@ -443,7 +443,7 @@ for it in range(361):
                     if x0_b_pred[0]>track_coord[2].max().numpy():
                         finished=1
                         
-                    if x0_b_pred[1].abs()>0.17 or steps>max_steps:
+                    if x0_b_pred[1]>0.17 or x0_b_pred[1]<0.17 or steps>max_steps:
                         crashed=1
 
                 lap_time = dt*steps
