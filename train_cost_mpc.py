@@ -412,7 +412,7 @@ for it in range(361):
                 finished = 0
                 crashed = 0
                 steps = 0
-                max_steps=150
+                max_steps=350
 
                 x0_b_pred = x0_lap_pred[b].copy()
                 
