@@ -275,10 +275,10 @@ def sample_init_test(BS, dyn, sn=None):
         gen.manual_seed(sn)
     
     di = 1000
-    sigma_sample = torch.randint(int(0.0*di), int(0.0*di), (BS,1), generator=gen)/di
+    sigma_sample = torch.zeros((BS,1))
     d_sample = torch.randint(int(-0.06*di), int(0.06*di), (BS,1), generator=gen)/di
     phi_sample = torch.randint(int(-0.06*di), int(0.06*di), (BS,1), generator=gen)/di
-    v_sample = torch.randint(0, 0, (BS,1), generator=gen)/di
+    v_sample = torch.zeros((BS,1))
     
     sigma_diff_sample = torch.zeros((BS,1))
     
