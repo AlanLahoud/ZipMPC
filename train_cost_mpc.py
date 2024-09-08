@@ -459,8 +459,8 @@ for it in range(361):
     
                     x0_b_manual = x0_lap_manual[b].copy()
 
-                    import pdb
-                    pdb.set_trace()
+                    #import pdb
+                    #pdb.set_trace()
                     
                     while finished==0 and crashed==0:
                         q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
@@ -470,9 +470,9 @@ for it in range(361):
                             q_lap_manual_casadi, p_lap_manual_casadi, 
                             x0_b_manual, dx, du, control) 
     
-                        x0_b_manual = x_b_pred[1]
+                        x0_b_manual = x_b_manual[1]
                         
-                        if x0_b_pred[0]>track_coord[2].max().numpy():
+                        if x0_b_manual[0]>track_coord[2].max().numpy():
                             finished=1
                             
                         if x0_b_manual[1]>0.17 or x0_b_manual[1]<-0.17 or steps>max_steps:
