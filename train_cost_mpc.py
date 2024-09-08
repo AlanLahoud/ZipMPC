@@ -426,6 +426,8 @@ for it in range(361):
                         q_lap_np_casadi, p_lap_np_casadi, 
                         x0_lap_pred, 1, dx, du, control) 
 
+                    import pdb
+                    pdb.set_trace()
                     x0_lap_pred_previous = torch.tensor(x0_lap_pred).clone()
                     true_dx = model_mismatch_apply(true_dx)
                     x0_lap_pred = true_dx.forward(torch.tensor(x0_lap_pred), torch.tensor(u_pred_lap[iu]))[:,:6]
