@@ -438,6 +438,9 @@ for it in range(361):
                     #x0_b_pred = true_dx.forward(torch.tensor(x0_b_pred), torch.tensor(u_b_pred))[:,:6]
                     #true_dx = model_mismatch_reverse(true_dx)
 
+                    import pdb
+                    pdb.set_trace()
+                    
                     if x0_b_pred[0]>track_coord[2].max().numpy():
                         finished=1
                         
