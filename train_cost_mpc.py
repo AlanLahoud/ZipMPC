@@ -414,6 +414,8 @@ for it in range(361):
                 steps = 0
                 max_steps=150
                 while finished==0 and crashed==0:
+                    import pdb
+                    pdb.set_trace()
                     x0_lap_pred_torch = torch.tensor(x0_lap_pred[b], dtype=torch.float32).unsqueeze(0)
                     curv_lap = utils_new.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
                     inp_lap = torch.hstack((x0_lap_pred_torch[:,1:4], curv_lap))
