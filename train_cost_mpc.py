@@ -134,7 +134,7 @@ lqr_iter = 70
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00001, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.000005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -397,7 +397,7 @@ for it in range(361):
         with torch.no_grad():
 
             print('LAP PERFORMANCE:')
-            BS_test = 4
+            BS_test = 2
 
             # This sampling should bring always the same set of initial states
             x0_lap = utils_new.sample_init_test(BS_test, true_dx, sn=0).numpy()
@@ -433,12 +433,6 @@ for it in range(361):
                         x0_b_pred, dx, du, control) 
 
                     x0_b_pred = x_b_pred[1]
-
-                    #import pdb
-                    #pdb.set_trace()
-                    #true_dx = model_mismatch_apply(true_dx)
-                    #x0_b_pred = true_dx.forward(torch.tensor(x0_b_pred), torch.tensor(u_b_pred))[:,:6]
-                    #true_dx = model_mismatch_reverse(true_dx)
                     
                     if x0_b_pred[0]>track_coord[2].max().numpy():
                         finished=1
@@ -452,5 +446,41 @@ for it in range(361):
                 
                 finish_list[b] = finished
                 lap_time_list[b] = lap_time
-            print(finish_list)
-            print(lap_time_list)
+                
+            print('Pred finish: ', finish_list)
+            print('Pred lap time: ', lap_time_list)
+
+            if it==0:
+                for b in range(BS_test):
+                    finished = 0
+                    crashed = 0
+                    steps = 0
+                    max_steps=500
+    
+                    x0_b_manual = x0_lap_manual[b].copy()
+                    
+                    while finished==0 and crashed==0:
+                        q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
+                        p_lap_manual_casadi = p_manual[:,idx_to_casadi].T
+                        
+                        x_b_manual, u_b_manual = utils_new.solve_casadi(
+                            q_lap_np_casadi, p_lap_np_casadi, 
+                            x0_b_manual, dx, du, control) 
+    
+                        x0_b_manual = x_b_pred[1]
+                        
+                        if x0_b_pred[0]>track_coord[2].max().numpy():
+                            finished=1
+                            
+                        if x0_b_manual[1]>0.17 or x0_b_manual[1]<-0.17 or steps>max_steps:
+                            crashed=1
+    
+                        steps = steps+1
+    
+                    lap_time = dt*steps
+                    
+                    finish_list[b] = finished
+                    lap_time_list[b] = lap_time
+                    
+                print('Manual finish: ', finish_list)
+                print('Manual lap time: ', lap_time_list)
