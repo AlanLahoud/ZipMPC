@@ -412,7 +412,7 @@ for it in range(361):
                 finished = 0
                 crashed = 0
                 steps = 0
-                max_steps=350
+                max_steps=500
 
                 x0_b_pred = x0_lap_pred[b].copy()
                 
@@ -448,6 +448,8 @@ for it in range(361):
 
                     steps = steps+1
 
+                import pdb
+                pdb.set_trace()
                 print(x0_b_pred)
                 lap_time = dt*steps
                 
