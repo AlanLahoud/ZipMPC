@@ -156,7 +156,7 @@ ind = np.array([0,1,3,4])
 #print(np.shape(x_star))
 
 
-buffer_x0 = torch.tensor([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]])
+buffer_x0 = torch.tensor([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
 
 def add_x0_to_buffer(x0, buffer_x0):
     x0_new = x0.clone()
