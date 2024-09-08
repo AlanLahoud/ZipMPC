@@ -464,7 +464,7 @@ for it in range(361):
                         p_lap_manual_casadi = p_manual[:,idx_to_casadi].T
                         
                         x_b_manual, u_b_manual = utils_new.solve_casadi(
-                            q_lap_np_casadi, p_lap_np_casadi, 
+                            q_lap_manual_casadi, p_lap_manual_casadi, 
                             x0_b_manual, dx, du, control) 
     
                         x0_b_manual = x_b_pred[1]
