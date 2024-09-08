@@ -264,6 +264,34 @@ def sample_init(BS, dyn, sn=None):
     return x_init_sample
 
 
+def sample_init_test(BS, dyn, sn=None):
+    
+    # If sn!=None, we makesure that we always sample the same set of initial states
+    # We need that for validation to understand if our model is improving or not
+    
+    gen=None
+    if sn != None:
+        gen = torch.Generator()
+        gen.manual_seed(sn)
+    
+    di = 1000
+    sigma_sample = torch.randint(int(0.0*di), int(0.0*di), (BS,1), generator=gen)/di
+    d_sample = torch.randint(int(-0.06*di), int(0.06*di), (BS,1), generator=gen)/di
+    phi_sample = torch.randint(int(-0.06*di), int(0.06*di), (BS,1), generator=gen)/di
+    v_sample = torch.randint(0, 0, (BS,1), generator=gen)/di
+    
+    sigma_diff_sample = torch.zeros((BS,1))
+    
+    d_pen = dyn.penalty_d(d_sample)
+    v_pen = dyn.penalty_v(v_sample)
+    
+    x_init_sample = torch.hstack((
+        sigma_sample, d_sample, phi_sample, v_sample, 
+        sigma_sample, sigma_diff_sample, d_pen, v_pen))   
+    
+    return x_init_sample
+
+
 def sample_init_traj(BS, dyn, traj, num_patches, patch, sn=None):
     
     # If sn!=None, we makesure that we always sample the same set of initial states

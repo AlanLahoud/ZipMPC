@@ -391,3 +391,55 @@ for it in range(361):
             
             #print(f'{it}: progress_val_pred: ', progress_val_pred[:4])
             #print(f'{it}: progress_val_manual: ', progress_val_manual[:4])
+
+    if it%50==0:
+        # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
+        with torch.no_grad():
+
+            print('LAP PERFORMANCE:')
+            BS_test = 4
+
+            # This sampling should bring always the same set of initial states
+            x0_lap = utils_new.sample_init_test(BS_val, true_dx, sn=0).numpy()
+
+            x0_lap_pred = x0_lap[:,:6]
+            x0_lap_manual = x0_lap[:,:6]
+
+            finish_list = np.zeros((BS_test,))
+            lap_time_list = np.zeros((BS_test,))
+            
+            for b in range(BS_test):
+                finished = 0
+                crashed = 0
+                steps = 0
+                max_steps=150
+                while finished==0 and crashed==0:
+                    x0_lap_pred_torch = torch.tensor(x0_lap_pred, dtype=torch.float32)
+                    curv_lap = utils_new.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
+                    inp_lap = torch.hstack((x0_lap_pred_torch[:,1:4], curv_lap))
+                    q_p_pred_lap = model(inp_lap)
+                    q_lap, p_lap = utils_new.q_and_p(mpc_T, q_p_pred_lap, Q_manual, p_manual)
+
+                    q_lap_np_casadi = torch.permute(q_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+                    p_lap_np_casadi = torch.permute(p_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+                    x_pred_lap, u_pred_lap = utils_new.solve_casadi_parallel(
+                        q_lap_np_casadi, p_lap_np_casadi, 
+                        x0_lap_pred, 1, dx, du, control) 
+
+                    x0_lap_pred_previous = torch.tensor(x0_lap_pred).clone()
+                    true_dx = model_mismatch_apply(true_dx)
+                    x0_lap_pred = true_dx.forward(torch.tensor(x0_lap_pred), torch.tensor(u_pred_lap[iu]))[:,:6]
+                    true_dx = model_mismatch_reverse(true_dx)
+
+                    if x0_val_pred[:,9]>track_coord[2].max():
+                        finished=1
+                        
+                    if x0_val_pred[:,1].abs()>0.17 or steps>max_steps:
+                        crashed=1
+
+                lap_time = dt*steps
+                
+                finish_list[bb] = finished
+                lap_time_list[bb] = lap_time
+            print(finish_list)
+            print(lap_time_list)
