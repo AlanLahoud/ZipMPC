@@ -433,10 +433,10 @@ for it in range(361):
                     x0_lap_pred = true_dx.forward(torch.tensor(x0_lap_pred), torch.tensor(u_pred_lap[iu]))[:,:6]
                     true_dx = model_mismatch_reverse(true_dx)
 
-                    if x0_lap_pred[0,0]>track_coord[2].max().numpy():
+                    if x0_lap_pred[b,0]>track_coord[2].max():
                         finished=1
                         
-                    if x0_lap_pred[0,1].abs()>0.17 or steps>max_steps:
+                    if x0_lap_pred[b,1].abs()>0.17 or steps>max_steps:
                         crashed=1
 
                 lap_time = dt*steps
