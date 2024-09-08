@@ -438,7 +438,7 @@ for it in range(361):
                     #x0_b_pred = true_dx.forward(torch.tensor(x0_b_pred), torch.tensor(u_b_pred))[:,:6]
                     #true_dx = model_mismatch_reverse(true_dx)
 
-                    if x0_b_pred[0]>track_coord[2].max():
+                    if x0_b_pred[0]>track_coord[2].max().numpy():
                         finished=1
                         
                     if x0_b_pred[1].abs()>0.17 or steps>max_steps:
