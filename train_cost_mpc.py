@@ -443,6 +443,8 @@ for it in range(361):
 
                     steps = steps+1
 
+                    print(x0_b_pred[0])
+
                 lap_time = dt*steps
                 
                 finish_list[b] = finished
