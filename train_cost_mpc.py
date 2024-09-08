@@ -134,7 +134,7 @@ lqr_iter = 70
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -445,6 +445,8 @@ for it in range(361):
                         
                     if x0_b_pred[1]>0.17 or x0_b_pred[1]<-0.17 or steps>max_steps:
                         crashed=1
+
+                    steps = steps+1
 
                 lap_time = dt*steps
                 
