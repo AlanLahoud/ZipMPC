@@ -413,10 +413,15 @@ for it in range(361):
                 crashed = 0
                 steps = 0
                 max_steps=150
+
+                x0_b_pred = x0_lap_pred[b].copy()
+                
                 while finished==0 and crashed==0:
                     import pdb
                     pdb.set_trace()
-                    x0_lap_pred_torch = torch.tensor(x0_lap_pred[b], dtype=torch.float32).unsqueeze(0)
+
+                    
+                    x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
                     curv_lap = utils_new.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
                     inp_lap = torch.hstack((x0_lap_pred_torch[:,1:4], curv_lap))
                     q_p_pred_lap = model(inp_lap)
@@ -424,21 +429,24 @@ for it in range(361):
 
                     q_lap_np_casadi = torch.permute(q_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                     p_lap_np_casadi = torch.permute(p_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-                    x_pred_lap, u_pred_lap = utils_new.solve_casadi_parallel(
-                        q_lap_np_casadi, p_lap_np_casadi, 
-                        x0_lap_pred, 1, dx, du, control) 
 
                     import pdb
                     pdb.set_trace()
-                    x0_lap_pred_previous = torch.tensor(x0_lap_pred).clone()
-                    true_dx = model_mismatch_apply(true_dx)
-                    x0_lap_pred = true_dx.forward(torch.tensor(x0_lap_pred), torch.tensor(u_pred_lap[iu]))[:,:6]
-                    true_dx = model_mismatch_reverse(true_dx)
+                    
+                    x0_b_pred, u_b_pred = utils_new.solve_casadi(
+                        q_lap_np_casadi, p_lap_np_casadi, 
+                        x0_b_pred, 1, dx, du, control) 
 
-                    if x0_lap_pred[b,0]>track_coord[2].max():
+                    #import pdb
+                    #pdb.set_trace()
+                    #true_dx = model_mismatch_apply(true_dx)
+                    #x0_b_pred = true_dx.forward(torch.tensor(x0_b_pred), torch.tensor(u_b_pred))[:,:6]
+                    #true_dx = model_mismatch_reverse(true_dx)
+
+                    if x0_b_pred[0]>track_coord[2].max():
                         finished=1
                         
-                    if x0_lap_pred[b,1].abs()>0.17 or steps>max_steps:
+                    if x0_b_pred[1].abs()>0.17 or steps>max_steps:
                         crashed=1
 
                 lap_time = dt*steps
