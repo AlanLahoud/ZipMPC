@@ -260,11 +260,12 @@ for it in range(361):
             #if x0_diff[:,0].max()>15:
             #    import pdb
             #    pdb.set_trace()
-        
-        for xx in pred_x:
-            buffer_x0_old = buffer_x0.clone()
-            buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
-        
+
+        if sim==0:
+            for xx in pred_x[:3]: #only few steps
+                buffer_x0_old = buffer_x0.clone()
+                buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
+        buffer_x0.max(0)
         #x0_diff = pred_x[-1].clone()
         x0_diff[:,4] = x0_diff[:,0]     
         
