@@ -430,7 +430,7 @@ for it in range(361):
                     
                     x0_b_pred, u_b_pred = utils_new.solve_casadi(
                         q_lap_np_casadi[:,0,:], p_lap_np_casadi[:,0,:], 
-                        x0_b_pred, 1, dx, du, control) 
+                        x0_b_pred, dx, du, control) 
 
                     #import pdb
                     #pdb.set_trace()
