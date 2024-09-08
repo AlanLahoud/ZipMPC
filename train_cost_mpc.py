@@ -417,9 +417,6 @@ for it in range(361):
                 x0_b_pred = x0_lap_pred[b].copy()
                 
                 while finished==0 and crashed==0:
-                    import pdb
-                    pdb.set_trace()
-
                     
                     x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
                     curv_lap = utils_new.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
@@ -430,11 +427,9 @@ for it in range(361):
                     q_lap_np_casadi = torch.permute(q_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                     p_lap_np_casadi = torch.permute(p_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
 
-                    import pdb
-                    pdb.set_trace()
                     
                     x0_b_pred, u_b_pred = utils_new.solve_casadi(
-                        q_lap_np_casadi, p_lap_np_casadi, 
+                        q_lap_np_casadi[:,0,:], p_lap_np_casadi[:,0,:], 
                         x0_b_pred, 1, dx, du, control) 
 
                     #import pdb
