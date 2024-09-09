@@ -208,6 +208,9 @@ for it in range(361):
     #x0 = utils_new.sample_init_traj(BS, true_dx, x_star, num_patches, patch+1)
     
     #print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
+
+    import pdb
+    pdb.set_trace()
     
     x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
 
@@ -396,7 +399,7 @@ for it in range(361):
             #print(f'{it}: progress_val_pred: ', progress_val_pred[:4])
             #print(f'{it}: progress_val_manual: ', progress_val_manual[:4])
 
-    if it%50==0:
+    if it%50==49:
         # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
         with torch.no_grad():
 
