@@ -411,7 +411,7 @@ for it in range(361):
             #print(f'{it}: progress_val_pred: ', progress_val_pred[:4])
             #print(f'{it}: progress_val_manual: ', progress_val_manual[:4])
 
-    if it%50==49:
+    if it%50==0:
         # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
         with torch.no_grad():
 
