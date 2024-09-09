@@ -182,10 +182,10 @@ def add_x0_to_buffer(x0, buffer_x0):
     return buffer_x0_new
 
 def sample_x0_from_buffer(BS, buffer_x0):
-    sgimas = buffer_x0[:, 0]
+    sigmas = buffer_x0[:, 0]
     
-    min_val = sgimas.min().item()
-    max_val = sgimas.max().item()
+    min_val = sigmas.min().item()
+    max_val = sigmas.max().item()
     sampled_values = torch.linspace(min_val, max_val, steps=BS)
 
     differences = torch.abs(sigmas.unsqueeze(1) - sampled_values.unsqueeze(0))
