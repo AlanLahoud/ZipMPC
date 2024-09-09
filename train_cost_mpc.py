@@ -32,7 +32,7 @@ def parse_arguments():
     parser.add_argument('--mpc_T', type=int, default=15)
     parser.add_argument('--mpc_H', type=int, default=45)
     parser.add_argument('--n_Q', type=int, default=5)
-    parser.add_argument('--l_r', type=float, default=0.11)
+    parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.5)
     parser.add_argument('--delta_max', type=float, default=0.4)
     parser.add_argument('--eps_dyn', type=float, default=0.05)
@@ -134,12 +134,12 @@ lqr_iter = 70
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.000005, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.000001, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0.001, 0, 0, 0, 0]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -0.1, 0, 0, 0, 0]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -0.2, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 idx_to_casadi = [5,1,2,3,8,9] # This is only to match the indices of Q from model to casadi
 
@@ -213,7 +213,7 @@ def model_mismatch_reverse(true_dx):
 best_prog = -999999.
 
 
-for it in range(361):
+for it in range(401):
 
     #x0 = utils_new.sample_init(BS, true_dx)  
     
