@@ -194,6 +194,8 @@ def sample_x0_from_buffer(BS, buffer_x0):
     
     x0_sample = buffer_x0[nearest_indices]
 
+    import pdb
+    pdb.set_trace()
     #idxs = torch.randint(0, len(buffer_x0), (BS,))
     #x0_sample = buffer_x0[idxs]
     return x0_sample
