@@ -182,7 +182,19 @@ def add_x0_to_buffer(x0, buffer_x0):
     return buffer_x0_new
 
 def sample_x0_from_buffer(BS, buffer_x0):
-    idxs = torch.randint(0, len(buffer_x0), (BS,))
+    sgimas = buffer_x0[:, 0]
+    
+    min_val = sgimas.min().item()
+    max_val = sgimas.max().item()
+    sampled_values = torch.linspace(min_val, max_val, steps=BS)
+
+    differences = torch.abs(sigmas.unsqueeze(1) - sampled_values.unsqueeze(0))
+    
+    _, nearest_indices = differences.min(dim=0)
+    
+    x0_sample = buffer_x0[nearest_indices]
+
+    #idxs = torch.randint(0, len(buffer_x0), (BS,))
     x0_sample = buffer_x0[idxs]
     return x0_sample
 
