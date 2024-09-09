@@ -32,7 +32,7 @@ def parse_arguments():
     parser.add_argument('--mpc_T', type=int, default=15)
     parser.add_argument('--mpc_H', type=int, default=45)
     parser.add_argument('--n_Q', type=int, default=5)
-    parser.add_argument('--l_r', type=float, default=0.10)
+    parser.add_argument('--l_r', type=float, default=0.12)
     parser.add_argument('--v_max', type=float, default=1.5)
     parser.add_argument('--delta_max', type=float, default=0.4)
     parser.add_argument('--eps_dyn', type=float, default=0.05)
@@ -187,8 +187,8 @@ def sample_x0_from_buffer(BS, buffer_x0):
 
 
 def model_mismatch_apply(true_dx):
-    true_dx.l_r = 0.10
-    true_dx.l_f = 0.10
+    true_dx.l_r = l_r
+    true_dx.l_f = l_f
     return true_dx
     
 def model_mismatch_reverse(true_dx):
@@ -279,8 +279,8 @@ for it in range(361):
         #pdb.set_trace()
     
     loss = -progress_pred.mean() \
-    + 0.01*penalty_pred_d.mean() \
-    + 0.01*penalty_pred_v.mean()
+    + 0.001*penalty_pred_d.mean() \
+    + 0.001*penalty_pred_v.mean()
     
     #print('Progress train and penalties:', 
     #      -progress_pred.mean().detach().item(), 
