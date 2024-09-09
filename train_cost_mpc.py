@@ -171,7 +171,7 @@ def add_x0_to_buffer(x0, buffer_x0):
     & (x0_new[:, 2] > -1.00) \
     & (x0_new[:, 3] > 0) \
     & (x0_new[:, 3] < v_max) \
-    & (x0_new[:, 0] < 6.) \
+    & (x0_new[:, 0] < 20.) \
     & (torch.randn(1,).squeeze()<-0.3)
     selected_rows = x0_new[mask]
 
@@ -279,8 +279,8 @@ for it in range(361):
         #pdb.set_trace()
     
     loss = -progress_pred.mean() \
-    + 0.001*penalty_pred_d.mean() \
-    + 0.001*penalty_pred_v.mean()
+    + 0.01*penalty_pred_d.mean() \
+    + 0.01*penalty_pred_v.mean()
     
     #print('Progress train and penalties:', 
     #      -progress_pred.mean().detach().item(), 
