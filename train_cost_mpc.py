@@ -209,8 +209,8 @@ for it in range(361):
     
     #print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
 
-    import pdb
-    pdb.set_trace()
+    #import pdb
+    #pdb.set_trace()
     
     x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
 
@@ -268,7 +268,7 @@ for it in range(361):
             #    pdb.set_trace()
 
         if sim==0:
-            for xx in pred_x[1:10]: #only few steps
+            for xx in pred_x[1:15]: #only few steps
                 buffer_x0_old = buffer_x0.clone()
                 buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
         #print(buffer_x0.max(0)[0])
