@@ -163,7 +163,7 @@ def add_x0_to_buffer(x0, buffer_x0):
     x0_new[:,0] = x0[:,0] + 0.1*torch.randn_like(x0[:,0])
     x0_new[:,1] = x0[:,1] + 0.02*torch.randn_like(x0[:,1])
     x0_new[:,2] = x0[:,2] + 0.02*torch.randn_like(x0[:,2])
-    x0_new[:,3] = x0[:,3] + torch.randn_like(x0[:,3])
+    x0_new[:,3] = x0[:,3] + 0.02*torch.randn_like(x0[:,3])
     
     mask = (x0_new[:, 1] < 0.15) \
     & (x0_new[:, 1] > -0.15) \
@@ -171,6 +171,7 @@ def add_x0_to_buffer(x0, buffer_x0):
     & (x0_new[:, 2] > -1.00) \
     & (x0_new[:, 3] > 0) \
     & (x0_new[:, 3] < v_max) \
+    & (x0_new[:, 0] >=0) \
     & (x0_new[:, 0] < 20.) \
     & (torch.randn(1,).squeeze()<-0.3)
     selected_rows = x0_new[mask]
@@ -264,7 +265,7 @@ for it in range(361):
             #    pdb.set_trace()
 
         if sim==0:
-            for xx in pred_x[1:5]: #only few steps
+            for xx in pred_x[1:10]: #only few steps
                 buffer_x0_old = buffer_x0.clone()
                 buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
         #print(buffer_x0.max(0)[0])
