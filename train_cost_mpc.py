@@ -226,7 +226,7 @@ for it in range(401):
     
     x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
 
-    print('xo sample:', x0[:,0])
+    #print('xo sample:', x0[:,0])
     
     x0_diff = x0.clone()
     
@@ -280,7 +280,7 @@ for it in range(401):
             #    pdb.set_trace()
 
         if sim==0:
-            for xx in pred_x[1:15]: #only few steps
+            for xx in pred_x[1:5]: #only few steps
                 buffer_x0_old = buffer_x0.clone()
                 buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
         #print(buffer_x0.max(0)[0])
@@ -298,7 +298,8 @@ for it in range(401):
     
     loss = -progress_pred.mean() \
     + 0.001*penalty_pred_d.mean() \
-    + 0.001*penalty_pred_v.mean()
+    + 0.001*penalty_pred_v.mean() \
+    + (x0_diff[:,6]**2).mean()
     
     #print('Progress train and penalties:', 
     #      -progress_pred.mean().detach().item(), 
