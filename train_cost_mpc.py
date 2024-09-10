@@ -236,6 +236,8 @@ for it in range(401):
     progress_pred = torch.tensor(0.)
     penalty_pred_d = torch.tensor(0.)
     penalty_pred_v = torch.tensor(0.)
+    penalty_pred_phi = torch.tensor(0.)
+    
     for sim in range(0, mpc_H//mpc_T):
         
         curv = utils_new.get_curve_hor_from_x(x0_diff, track_coord, mpc_H)
