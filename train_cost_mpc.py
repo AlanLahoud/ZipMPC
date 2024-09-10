@@ -267,7 +267,7 @@ for it in range(401):
         #penalty_pred_d = penalty_pred_d + pred_x[:,:,6].sum(0)
         #penalty_pred_v = penalty_pred_v + pred_x[:,:,7].sum(0)
 
-    penalty_pred_d = penalty_pred_d + (pred_x[-1,:,1]**2).sum(0)
+    penalty_pred_d = penalty_pred_d + (pred_x[-1,:,1]**2)
         
     
     loss = -progress_pred.mean() \
