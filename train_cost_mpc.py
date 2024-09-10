@@ -256,58 +256,25 @@ for it in range(401):
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
-        #import pdb
-        #pdb.set_trace()
-        
-        pred_u_noise = pred_u #+ eps_dyn*torch.randn_like(pred_u)
-              
-        
-        for iu in range(pred_u.shape[0]):
-            x0_diff_previous = x0_diff.clone()
-            
-            true_dx = model_mismatch_apply(true_dx)
-            x0_diff = true_dx.forward(x0_diff, pred_u_noise[iu])
-            true_dx = model_mismatch_reverse(true_dx)
-            
-            x0_diff = torch.where((x0_diff[:,0].abs()>10.00).unsqueeze(-1), x0_diff_previous, x0_diff)
-            x0_diff = torch.where((x0_diff[:,1].abs()>0.25).unsqueeze(-1), x0_diff_previous, x0_diff)
-            x0_diff = torch.where((x0_diff[:,2].abs()>2.00).unsqueeze(-1), x0_diff_previous, x0_diff)
-            x0_diff = torch.where((x0_diff[:,3].abs()>1.70).unsqueeze(-1), x0_diff_previous, x0_diff)
-            
-            
-            #if x0_diff[:,0].max()>15:
-            #    import pdb
-            #    pdb.set_trace()
 
         if sim==0:
-            for xx in pred_x[1:5]: #only few steps
+            for xx in pred_x[1:5]: #only few steps added to the buffer
                 buffer_x0_old = buffer_x0.clone()
                 buffer_x0 = add_x0_to_buffer(xx, buffer_x0_old)
-        #print(buffer_x0.max(0)[0])
-        #x0_diff = pred_x[-1].clone()
-        x0_diff[:,4] = x0_diff[:,0]     
-        
-        progress_pred = progress_pred + x0_diff[:,5]
-        penalty_pred_d = penalty_pred_d + x0_diff[:,6]
-        penalty_pred_v = penalty_pred_v + x0_diff[:,7]
-        
-        x0_diff[:,5] = 0.
 
-        #import pdb
-        #pdb.set_trace()
+        x0_diff = pred_x[-1].clone()
+        x0_diff[:,5] = 0.
+                
+        progress_pred = progress_pred + pred_x[-1][:,5]
+        penalty_pred_d = penalty_pred_d + pred_x[:,:,6].sum(0)
+        penalty_pred_v = penalty_pred_v + pred_x[:,:,7].sum(0)
+        
     
     loss = -progress_pred.mean() \
     + 0.001*penalty_pred_d.mean() \
     + 0.001*penalty_pred_v.mean() \
-    + (pred_x[:,:,1]**2).sum(0).mean()
+    + (pred_x[:,1]**2).SUM()
     
-    #print('Progress train and penalties:', 
-    #      -progress_pred.mean().detach().item(), 
-    #      0.001*penalty_pred_d.mean().detach().item(), 
-    #      0.001*penalty_pred_v.mean().detach().item()
-    #        )
-    
-    #print(0.001*true_dx.penalty_d(penalty_pred_d).sum(0).mean().detach())
       
     opt.zero_grad()
     loss.backward()
