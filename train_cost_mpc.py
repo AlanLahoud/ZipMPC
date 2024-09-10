@@ -159,12 +159,15 @@ ind = np.array([0,1,3,4])
 buffer_x0 = torch.tensor([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
 
 def add_x0_to_buffer(x0, buffer_x0):
+
+    # Giving some randomness to the initial state
     x0_new = x0.clone()
     x0_new[:,0] = x0[:,0] + 0.1*torch.randn_like(x0[:,0])
     x0_new[:,1] = x0[:,1] + 0.02*torch.randn_like(x0[:,1])
     x0_new[:,2] = x0[:,2] + 0.02*torch.randn_like(x0[:,2])
     x0_new[:,3] = x0[:,3] + 0.02*torch.randn_like(x0[:,3])
-    
+
+    # Making sure we dont sample any bad initial state
     mask = (x0_new[:, 1] < 0.15) \
     & (x0_new[:, 1] > -0.15) \
     & (x0_new[:, 2] < 1.00) \
@@ -182,6 +185,8 @@ def add_x0_to_buffer(x0, buffer_x0):
     return buffer_x0_new
 
 def sample_x0_from_buffer(BS, buffer_x0):
+    
+    # Sampling the initial states uniformly according to sigmas
     sigmas = buffer_x0[:, 0]
     
     min_val = sigmas.min().item()
@@ -210,8 +215,9 @@ def model_mismatch_reverse(true_dx):
     return true_dx
 
 
-best_prog = -999999.
 
+
+best_prog = -999999.
 
 for it in range(401):
 
@@ -268,18 +274,19 @@ for it in range(401):
         #penalty_pred_v = penalty_pred_v + pred_x[:,:,7].sum(0)
 
         penalty_pred_d = penalty_pred_d + (pred_x[-1,:,1]**2)
+        penalty_pred_phi = penalty_pred_phi + (pred_x[-1,:,2]**2)
         
     
     loss = -progress_pred.mean() \
-    + 100*penalty_pred_d.mean()
+    + 100*penalty_pred_d.mean() \
+    + 100*penalty_pred_phi.mean()
     #+ 0.001*penalty_pred_v.mean() \
     #+ (pred_x[:,:,1]**2).sum(0).mean()
 
-    print('Progress:', progress_pred.mean().detach().item(),
-          'Penalty D:', 100*penalty_pred_d.mean().detach().item(),
-          #'Penalty V:', 0.001*penalty_pred_v.mean().item(),
-          #'Penalty Center D:', (pred_x[:,:,1]**2).sum(0).mean().item()        
-         )
+    #print('Progress:', progress_pred.mean().detach().item(),
+    #      'Penalty D:', 100*penalty_pred_d.mean().detach().item(),
+    #      'Penalty PHI:', 100*penalty_pred_phi.mean().detach().item()      
+    #     )
     
     opt.zero_grad()
     loss.backward()
@@ -348,9 +355,7 @@ for it in range(401):
                   '\tProgress Pred: ', round(progress_val_pred.mean(), 3),
                   '\tProgress Manual: ', round(progress_val_manual.mean(), 3)
                  )
-            
-            #print(f'{it}: progress_val_pred: ', progress_val_pred[:4])
-            #print(f'{it}: progress_val_manual: ', progress_val_manual[:4])
+
 
     if it%50==0:
         # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
@@ -402,20 +407,15 @@ for it in range(401):
 
                     steps = steps+1
 
-                    #if steps%10==9:
-                    #    print(steps, x0_b_pred[0])
-
                 lap_time = dt*steps
                 
                 finish_list[b] = finished
                 lap_time_list[b] = lap_time
 
-            #import pdb
-            #pdb.set_trace()
-            
             print('Pred finish: ', finish_list)
             print('Pred lap time: ', lap_time_list)
 
+            # We just compute the manual lap in the first iteration
             if it==0:
                 for b in range(BS_test):
                     finished = 0
@@ -425,9 +425,6 @@ for it in range(401):
     
                     x0_b_manual = x0_lap_manual[b].copy()
 
-                    #import pdb
-                    #pdb.set_trace()
-                    
                     while finished==0 and crashed==0:
                         q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
                         p_lap_manual_casadi = p_manual[:,idx_to_casadi].T
