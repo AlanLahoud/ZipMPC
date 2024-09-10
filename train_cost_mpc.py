@@ -278,7 +278,11 @@ for it in range(401):
           'Penalty V:', 0.001*penalty_pred_v.mean().item(),
           'Penalty Center D:', (pred_x[:,:,1]**2).sum(0).mean().item()        
          )
-      
+
+    if it>=7:
+        import pdb
+        pdb.set_trace()
+    
     opt.zero_grad()
     loss.backward()
     opt.step()  
