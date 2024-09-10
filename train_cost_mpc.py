@@ -273,7 +273,7 @@ for it in range(401):
     loss = -progress_pred.mean() \
     + 0.001*penalty_pred_d.mean() \
     + 0.001*penalty_pred_v.mean() \
-    + (pred_x[:,1]**2).SUM()
+    + (pred_x[:,:,1]**2).sum(0).mean()
     
       
     opt.zero_grad()
