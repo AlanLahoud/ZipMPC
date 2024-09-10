@@ -267,7 +267,7 @@ for it in range(401):
         #penalty_pred_d = penalty_pred_d + pred_x[:,:,6].sum(0)
         #penalty_pred_v = penalty_pred_v + pred_x[:,:,7].sum(0)
 
-    penalty_pred_d = penalty_pred_d + (pred_x[-1,:,1]**2)
+        penalty_pred_d = penalty_pred_d + (pred_x[-1,:,1]**2)
         
     
     loss = -progress_pred.mean() \
@@ -275,15 +275,11 @@ for it in range(401):
     #+ 0.001*penalty_pred_v.mean() \
     #+ (pred_x[:,:,1]**2).sum(0).mean()
 
-    print('Progress:', -progress_pred.mean().detach().item(),
+    print('Progress:', progress_pred.mean().detach().item(),
           'Penalty D:', 100*penalty_pred_d.mean().detach().item(),
           #'Penalty V:', 0.001*penalty_pred_v.mean().item(),
           #'Penalty Center D:', (pred_x[:,:,1]**2).sum(0).mean().item()        
          )
-
-    if it>=7:
-        import pdb
-        pdb.set_trace()
     
     opt.zero_grad()
     loss.backward()
