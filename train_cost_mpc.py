@@ -215,18 +215,15 @@ best_prog = -999999.
 
 for it in range(401):
 
+    # Here, we can choose which sampliung strategy to use
+    # The first is the simplest grid, the second is the patch
+    # and the third is the buffer exploration/exploitation
+    
     #x0 = utils_new.sample_init(BS, true_dx)  
     
     #x0 = utils_new.sample_init_traj(BS, true_dx, x_star, num_patches, patch+1)
-    
-    #print(buffer_x0.shape, print(buffer_x0.mean(0)), print(buffer_x0.std(0)))
 
-    #import pdb
-    #pdb.set_trace()
-    
     x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
-
-    #print('xo sample:', x0[:,0])
     
     x0_diff = x0.clone()
     
@@ -257,6 +254,7 @@ for it in range(401):
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
 
+        # Here, we add samples to the buffer
         if sim==0:
             for xx in pred_x[1:5]: #only few steps added to the buffer
                 buffer_x0_old = buffer_x0.clone()
@@ -274,7 +272,12 @@ for it in range(401):
     + 0.001*penalty_pred_d.mean() \
     + 0.001*penalty_pred_v.mean() \
     + (pred_x[:,:,1]**2).sum(0).mean()
-    
+
+    print('Progress:', -progress_pred.mean().detach().item(),
+          'Penalty D:', 0.001*penalty_pred_d.mean().detach().item(),
+          'Penalty V:', 0.001*penalty_pred_v.mean().item(),
+          'Penalty Center D:', (pred_x[:,:,1]**2).sum(0).mean().item()        
+         )
       
     opt.zero_grad()
     loss.backward()
@@ -312,19 +315,7 @@ for it in range(401):
                 x_pred_val, u_pred_val = utils_new.solve_casadi_parallel(
                     q_val_np_casadi, p_val_np_casadi, 
                     x0_val_pred, BS_val, dx, du, control) 
-                
-                np.random.seed(0)
-                u_pred_noise = u_pred_val #+ eps_dyn*np.random.randn(u_pred_val.shape[0], u_pred_val.shape[1], u_pred_val.shape[2])
-                
-                for iu in range(u_pred_val.shape[0]):
-                    x0_val_pred_previous = torch.tensor(x0_val_pred).clone()
-                    true_dx = model_mismatch_apply(true_dx)
-                    x0_val_pred = true_dx.forward(torch.tensor(x0_val_pred), torch.tensor(u_pred_noise[iu]))[:,:6]
-                    true_dx = model_mismatch_reverse(true_dx)
-                    x0_val_pred = torch.where((x0_val_pred[:,1].abs()>0.17).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
-                    x0_val_pred = torch.where((x0_val_pred[:,2].abs()>2.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)
-                    x0_val_pred = torch.where((x0_val_pred[:,0].abs()>10.00).unsqueeze(-1), x0_val_pred_previous, x0_val_pred)  
-                    x0_val_pred = torch.where((x0_val_pred[:,3].abs()>1.50).unsqueeze(-1), x0_val_pred_previous, x0_val_pred).numpy()   
+                 
                 
                 q_manual_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
                 p_manual_casadi = np.expand_dims((p_manual[:,idx_to_casadi].T), 1)
@@ -333,37 +324,17 @@ for it in range(401):
                     np.repeat(p_manual_casadi, BS_val, 1), 
                     x0_val_manual, BS_val, dx, du, control) 
                 
-                np.random.seed(0)
-                u_manual_noise = u_manual #+ eps_dyn*np.random.randn(u_manual.shape[0], u_manual.shape[1], u_manual.shape[2])
-                
-                for iu in range(u_manual.shape[0]):
-                    x0_val_manual_previous = torch.tensor(x0_val_manual).clone()
-                    true_dx = model_mismatch_apply(true_dx)
-                    x0_val_manual = true_dx.forward(torch.tensor(x0_val_manual),torch.tensor(u_manual_noise[iu]))[:,:6]
-                    true_dx = model_mismatch_reverse(true_dx)
-                    x0_val_manual = torch.where((x0_val_manual[:,1].abs()>0.17).unsqueeze(-1), 
-                                                x0_val_manual_previous, x0_val_manual)
-                    x0_val_manual = torch.where((x0_val_manual[:,2].abs()>2.00).unsqueeze(-1), 
-                                                x0_val_manual_previous, x0_val_manual)
-                    x0_val_manual = torch.where((x0_val_manual[:,0].abs()>10.00).unsqueeze(-1), 
-                                                x0_val_manual_previous, x0_val_manual)
-                    x0_val_manual = torch.where((x0_val_manual[:,3].abs()>1.50).unsqueeze(-1), 
-                                                x0_val_manual_previous, x0_val_manual).numpy()
-                
-               
-                
-                #x0_val_pred = x_pred_val[-1]
-                #x0_val_manual = x_manual[-1]
+                x0_val_pred = x_pred_val[-1]
+                x0_val_manual = x_manual[-1]
                      
-                x0_val_pred[:,4] = x0_val_pred[:,0]
-                x0_val_manual[:,4] = x0_val_manual[:,0]
+                x0_val_pred[:,4] = x_pred_val[-1,:,0]
+                x0_val_manual[:,4] = x_manual[-1,:,0]
                 
-                progress_val_pred = progress_val_pred + x0_val_pred[:,5]
-                progress_val_manual = progress_val_manual + x0_val_manual[:,5]
+                progress_val_pred = progress_val_pred + x_pred_val[-1,:,5]
+                progress_val_manual = progress_val_manual + x_manual[-1,:,5]
                 
                 x0_val_pred[:,5] = 0.
                 x0_val_manual[:,5] = 0. 
-                
                 
 
             progress_val = progress_val_pred - progress_val_manual
