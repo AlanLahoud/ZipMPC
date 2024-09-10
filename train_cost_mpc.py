@@ -139,7 +139,7 @@ opt = torch.optim.Adam(model.parameters(), lr=0.00001, weight_decay=1e-5)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -0.2, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -0.1, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 idx_to_casadi = [5,1,2,3,8,9] # This is only to match the indices of Q from model to casadi
 
@@ -226,7 +226,7 @@ for it in range(401):
     
     x0 = sample_x0_from_buffer(BS, buffer_x0).detach()
 
-    #print('xo sample:', x0[0])
+    print('xo sample:', x0[:,0])
     
     x0_diff = x0.clone()
     
