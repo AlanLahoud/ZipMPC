@@ -276,7 +276,7 @@ for it in range(401):
     #+ (pred_x[:,:,1]**2).sum(0).mean()
 
     print('Progress:', -progress_pred.mean().detach().item(),
-          'Penalty D:', 0.001*penalty_pred_d.mean().detach().item(),
+          'Penalty D:', 100*penalty_pred_d.mean().detach().item(),
           #'Penalty V:', 0.001*penalty_pred_v.mean().item(),
           #'Penalty Center D:', (pred_x[:,:,1]**2).sum(0).mean().item()        
          )
