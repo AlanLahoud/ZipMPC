@@ -299,7 +299,7 @@ for it in range(401):
     loss = -progress_pred.mean() \
     + 0.001*penalty_pred_d.mean() \
     + 0.001*penalty_pred_v.mean() \
-    + (x0_diff[:,6]**2).mean()
+    + (x0_diff[:,1]**2).mean()
     
     #print('Progress train and penalties:', 
     #      -progress_pred.mean().detach().item(), 
