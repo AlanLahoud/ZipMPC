@@ -234,8 +234,8 @@ best_prog = -999999.
 
 num_traj_updates = 10
 num_patches = 10
-BS_init = 4
-BS_val = 20
+BS_init = 40
+BS_val = 10
 
 # Get initial lap_time
 
@@ -256,6 +256,7 @@ for b in range(BS_test):
     max_steps=500
 
     x0_b_manual = x0_lap_manual[b].copy()
+    x_manual_full = x0_b_manual.reshape(-1,1)
 
     while finished==0 and crashed==0:
         q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
@@ -266,6 +267,7 @@ for b in range(BS_test):
             x0_b_manual, dx, du, control)
 
         x0_b_manual = x_b_manual[1]
+        x_manual_full = np.append(x_manual_full, x0_b_manual.reshape(-1,1), axis=1)
 
         if x0_b_manual[0]>track_coord[2].max().numpy():
             finished=1
@@ -288,18 +290,17 @@ if finished == 1:
     current_time = lap_time
     q_current_casadi = q_manual_casadi
     p_current_casadi = p_manual_casadi
+    x_current_full = x_manual_full
 else:
     sys.exit("Manual parameter choice not feasible")
 
 
 for traj in range(num_traj_updates):
 
-    x_star, u_star = utils_new.solve_casadi(
-        q_current_casadi, p_current_casadi,
-        x0_lap_manual[0],dx,du,control)
+    x_star = np.transpose(x_current_full)
 
     for patch in range(num_patches):
-        for it in range(100):
+        for it in range(20):
 
             # update batch size such that data points from a later patch have the same weighting as from an earlier
             BS = BS*(patch+1)
@@ -308,7 +309,7 @@ for traj in range(num_traj_updates):
             u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
             u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 
-            x0 = utils_new.sample_init_traj(BS, true_dx, x_star, num_patches, patch+1)
+            x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, num_patches)
 
             x0_diff = x0.clone().float()
 
@@ -433,7 +434,7 @@ for traj in range(num_traj_updates):
                          )
 
 
-            if it%50==0:
+            if it%5==0:
                 # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
                 with torch.no_grad():
 
@@ -456,6 +457,7 @@ for traj in range(num_traj_updates):
                         max_steps=500
 
                         x0_b_pred = x0_lap_pred[b].copy()
+                        x_pred_full = x0_b_pred.reshape(-1,1)
 
                         while finished==0 and crashed==0:
 
@@ -474,6 +476,7 @@ for traj in range(num_traj_updates):
                                 x0_b_pred, dx, du, control)
 
                             x0_b_pred = x_b_pred[1]
+                            x_pred_full = np.append(x_pred_full, x0_b_pred.reshape(-1,1), axis=1)
 
                             if x0_b_pred[0]>track_coord[2].max().numpy():
                                 finished=1
@@ -485,10 +488,14 @@ for traj in range(num_traj_updates):
 
                         lap_time = dt*steps
 
+                        print('current lap time: ', current_time)
+                        print('Pred lap time: ', lap_time)
+
                         if finished == 1 and lap_time < current_time:
                             current_time = lap_time
                             q_current = q_lap_np_casadi
                             p_current = p_lap
+                            x_current_full = x_pred_full
 
                         # Compare with previous best lap_time and potentially replace parameter estimate
 

@@ -342,6 +342,57 @@ def sample_init_traj(BS, dyn, traj, num_patches, patch, sn=None):
 
     return x_init_sample
 
+def sample_init_traj_dist(BS, dyn, traj, num_patches, sn=None):
+
+    # If sn!=None, we makesure that we always sample the same set of initial states
+    # We need that for validation to understand if our model is improving or not
+
+    gen=None
+    if sn != None:
+        gen = torch.Generator()
+        gen.manual_seed(sn)
+
+    di = 1000
+
+    # The idea is to take the trajectory and divide it into num_patches patches.
+    # We then sample BS / num_patches samples from each batch such that already
+    # in the first training step we the whole track and will not be surprised
+    # by a curve later on.
+
+    traj_steps = np.shape(traj)
+    #print('traj_steps:',traj_steps)
+    patch_steps = np.floor(traj_steps[0]/num_patches)
+
+    # in this step we randomly
+    traj_ind_sample = torch.zeros([BS,1]).int()
+    for i in range(num_patches):
+        traj_ind_sample[i*int(BS/num_patches):(i+1)*int(BS/num_patches)] = torch.randint(int(patch_steps*i),int(patch_steps*(i+1)),(int(BS/num_patches),1), generator=gen)
+    #print('traj_ind_sample:',traj_ind_sample)
+    traj_sample = traj[traj_ind_sample.detach().numpy().flatten(),:]
+    #print('traj_sample:',traj_sample)
+
+    # now we keep sigma as it is and sample d, phi, and v in a small "tube" around the traj points
+
+    # Note that we clamp the sampled d and v values to stay in their constraints. Sampling constraint violating
+    # states would not make sense.
+
+    d_sample = torch.clamp(torch.from_numpy(traj_sample[:,1].reshape(-1,1))+torch.randint(int(-.01*di), int(.01*di), (BS,1), generator=gen)/di,-0.24,0.24)
+    phi_sample = torch.from_numpy(traj_sample[:,2].reshape(-1,1))+torch.randint(int(-0.01*di), int(0.01*di), (BS,1), generator=gen)/di
+    v_sample = torch.clamp(torch.from_numpy(traj_sample[:,3].reshape(-1,1))+torch.randint(int(-0.01*di), int(.01*di), (BS,1), generator=gen)/di,0.0,2.5)
+
+    # and this part we can actually keep
+
+    sigma_diff_sample = torch.zeros((BS,1))
+
+    d_pen = dyn.penalty_d(d_sample)
+    v_pen = dyn.penalty_v(v_sample)
+
+    x_init_sample = torch.hstack((
+        torch.from_numpy(traj_sample[:,0].reshape(-1,1)), d_sample, phi_sample, v_sample,
+        torch.from_numpy(traj_sample[:,0].reshape(-1,1)), sigma_diff_sample, d_pen, v_pen))
+
+    return x_init_sample
+
 def get_curve_hor_from_x(x, track_coord, H_curve):
     idx_track_batch = ((x[:,0]-track_coord[[2],:].T)**2).argmin(0)
     idcs_track_batch = idx_track_batch[:, None] + torch.arange(H_curve)
@@ -361,7 +412,7 @@ class FrenetKinBicycleDx(nn.Module):
 
         # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1)
         self.n_state = 4+2+1+1
-        print('Number of states:', self.n_state)
+        #print('Number of states:', self.n_state)
 
         self.n_ctrl = 2 # control: a, delta
 
