@@ -311,6 +311,9 @@ for traj in range(num_traj_updates):
 
             x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, num_patches)
 
+            import pdb
+            pdb.set_trace()
+            
             x0_diff = x0.clone().float()
 
             x0_buffer = sample_x0_from_buffer(BS, buffer_x0).detach()
