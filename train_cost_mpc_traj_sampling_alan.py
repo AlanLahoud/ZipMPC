@@ -332,7 +332,6 @@ for traj in range(num_traj_updates):
             q, p = utils_new.q_and_p(mpc_T, q_p_pred, Q_manual, p_manual)
             Q = torch.diag_embed(q, offset=0, dim1=-2, dim2=-1)
 
-            print('Test 1')
             for sim in range(0, mpc_H//mpc_T):
 
                 pred_x, pred_u, pred_objs = mpc.MPC(
@@ -360,7 +359,6 @@ for traj in range(num_traj_updates):
                 #pdb.set_trace()
 
 
-            print('Test 2')
             progress = progress_pred
             loss = -progress.mean() \
             + penalty_pred_d.sum(0).mean() \
@@ -434,7 +432,6 @@ for traj in range(num_traj_updates):
                           '\tProgress Manual: ', round(progress_val_manual.mean(), 3)
                          )
 
-            print('Test 3')
             if it%5==0:
                 # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
                 with torch.no_grad():
