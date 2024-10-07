@@ -306,7 +306,7 @@ for traj in range(num_traj_updates):
         for it in range(6):
 
             # update batch size such that data points from a later patch have the same weighting as from an earlier
-            BS = BS*(patch+1)
+            BS = BS#*(patch+1)
 
             u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
             u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
