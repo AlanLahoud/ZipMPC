@@ -136,7 +136,7 @@ lqr_iter = 70
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00001, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -296,14 +296,11 @@ else:
 
 
 for traj in range(num_traj_updates):
-
-    import pdb
-    pdb.set_trace()
     
     x_star = np.transpose(x_current_full)
 
     for patch in range(num_patches):
-        for it in range(6):
+        for it in range(20):
 
             # update batch size such that data points from a later patch have the same weighting as from an earlier
             BS = BS#*(patch+1)
