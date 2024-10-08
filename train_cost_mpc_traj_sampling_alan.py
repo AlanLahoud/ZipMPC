@@ -232,7 +232,7 @@ best_prog = -999999.
 #x0 = torch.tensor([0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])
 #u0 = torch.tensor([0.0, 0.0])
 
-num_traj_updates = 10
+epochs = 50
 num_patches = 10
 BS_init = 40
 BS_val = 10
@@ -295,7 +295,7 @@ else:
     sys.exit("Manual parameter choice not feasible")
 
 
-for traj in range(num_traj_updates):
+for ep in range(epochs):
     
     x_star = np.transpose(x_current_full)
 
@@ -358,7 +358,10 @@ for traj in range(num_traj_updates):
             + 0.01*penalty_pred_d.sum(0).mean() \
             + 0.01*penalty_pred_v.sum(0).mean()
 
-            print(progress.mean().detach(), penalty_pred_d.sum(0).mean().detach(), penalty_pred_v.sum(0).mean().detach())
+            print('Loss terms: ',
+                round(progress.mean().detach().item(), 3), 
+                round(penalty_pred_d.sum(0).mean().detach().item(), 3), 
+                round(penalty_pred_v.sum(0).mean().detach().item(), 3))
             
             
             opt.zero_grad()
@@ -435,40 +438,3 @@ for traj in range(num_traj_updates):
                         lap_time_list[b] = lap_time
 
                     print('Pred finish: ', finish_list)
-                    print('Pred lap time: ', lap_time_list)
-
-                    # We just compute the manual lap in the first iteration
-                    # if it==0:
-                    #     for b in range(BS_test):
-                    #         finished = 0
-                    #         crashed = 0
-                    #         steps = 0
-                    #         max_steps=500
-                    #
-                    #         x0_b_manual = x0_lap_manual[b].copy()
-                    #
-                    #         while finished==0 and crashed==0:
-                    #             q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
-                    #             p_lap_manual_casadi = p_manual[:,idx_to_casadi].T
-                    #
-                    #             x_b_manual, u_b_manual = utils_new.solve_casadi(
-                    #                 q_lap_manual_casadi, p_lap_manual_casadi,
-                    #                 x0_b_manual, dx, du, control)
-                    #
-                    #             x0_b_manual = x_b_manual[1]
-                    #
-                    #             if x0_b_manual[0]>track_coord[2].max().numpy():
-                    #                 finished=1
-                    #
-                    #             if x0_b_manual[1]>0.17 or x0_b_manual[1]<-0.17 or steps>max_steps:
-                    #                 crashed=1
-                    #
-                    #             steps = steps+1
-                    #
-                    #         lap_time = dt*steps
-                    #
-                    #         finish_list[b] = finished
-                    #         lap_time_list[b] = lap_time
-                    #
-                    #     print('Manual finish: ', finish_list)
-                    #     print('Manual lap time: ', lap_time_list)
