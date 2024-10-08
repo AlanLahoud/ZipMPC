@@ -297,7 +297,7 @@ else:
 
 for ep in range(epochs):
 
-    print('Update reference path')
+    print(f'Epoch {ep}, Update reference path')
     x_star = np.transpose(x_current_full)
     
     for it in range(40):
