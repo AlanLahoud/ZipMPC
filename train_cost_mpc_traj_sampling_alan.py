@@ -365,7 +365,8 @@ for traj in range(num_traj_updates):
             + penalty_pred_v.sum(0).mean()
 
             print(progress.mean().detach(), penalty_pred_d.sum(0).mean().detach(), penalty_pred_v.sum(0).mean().detach())
-
+            
+            
             opt.zero_grad()
             loss.backward()
             opt.step()
