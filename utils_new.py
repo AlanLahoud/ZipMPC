@@ -376,8 +376,8 @@ def sample_init_traj_dist(BS, dyn, traj, num_patches, sn=None):
     # Note that we clamp the sampled d and v values to stay in their constraints. Sampling constraint violating
     # states would not make sense.
 
-    d_sample = torch.clamp(torch.from_numpy(traj_sample[:,1].reshape(-1,1))+torch.randint(int(-.05*di), int(.05*di), (BS,1), generator=gen)/di,-0.22,0.22)
-    phi_sample = torch.from_numpy(traj_sample[:,2].reshape(-1,1))+torch.randint(int(-0.05*di), int(0.05*di), (BS,1), generator=gen)/di
+    d_sample = torch.clamp(torch.from_numpy(traj_sample[:,1].reshape(-1,1))+torch.randint(int(-.02*di), int(.02*di), (BS,1), generator=gen)/di,-0.22,0.22)
+    phi_sample = torch.from_numpy(traj_sample[:,2].reshape(-1,1))+torch.randint(int(-0.02*di), int(0.02*di), (BS,1), generator=gen)/di
     v_sample = torch.clamp(torch.from_numpy(traj_sample[:,3].reshape(-1,1))+torch.randint(int(-0.2*di), int(0.2*di), (BS,1), generator=gen)/di,0.0,1.5)
 
     # and this part we can actually keep
@@ -517,6 +517,8 @@ class FrenetKinBicycleDx(nn.Module):
         d = d + self.dt * dd
         phi = phi + self.dt * dphi
         v = v + self.dt * dv
+
+        v = torch.clamp(v, 0, self.v_max)
 
         sigma_diff = sigma - sigma_0
 
