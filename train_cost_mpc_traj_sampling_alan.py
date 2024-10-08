@@ -302,17 +302,11 @@ for traj in range(num_traj_updates):
     for patch in range(num_patches):
         for it in range(20):
 
-            # update batch size such that data points from a later patch have the same weighting as from an earlier
-            BS = BS#*(patch+1)
-
             u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
             u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
             u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 
             x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, num_patches)
-
-            #import pdb
-            #pdb.set_trace()
             
             x0_diff = x0.clone().float()
 
@@ -372,70 +366,7 @@ for traj in range(num_traj_updates):
             opt.step()
 
 
-            if it%5==0:
-            # V A L I D A T I O N   (only casadi)
-                with torch.no_grad():
-
-                    BS_val = 32
-
-                    # This sampling should bring always the same set of initial states
-                    x0_val = utils_new.sample_init(BS_val, true_dx, sn=0).numpy()
-
-                    x0_val_pred = x0_val[:,:6]
-                    x0_val_manual = x0_val[:,:6]
-
-                    progress_val_pred = 0.
-                    progress_val_manual = 0.
-
-                    for sim in range(mpc_H//mpc_T):
-
-                        x0_val_pred_torch = torch.tensor(x0_val_pred, dtype=torch.float32)
-                        curv_val = utils_new.get_curve_hor_from_x(x0_val_pred_torch, track_coord, mpc_H)
-                        inp_val = torch.hstack((x0_val_pred_torch[:,1:4], curv_val))
-                        q_p_pred_val = model(inp_val)
-                        q_val, p_val = utils_new.q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
-
-                        #print('Qd, Qs:', q_val[:,:,[1,5]].mean(0).mean(0).detach().numpy())
-                        #print('Pd, Ps:', p_val[:,:,[1,5]].mean(0).mean(0).detach().numpy())
-
-                        q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-                        p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-                        x_pred_val, u_pred_val = utils_new.solve_casadi_parallel(
-                            q_val_np_casadi, p_val_np_casadi,
-                            x0_val_pred, BS_val, dx, du, control)
-
-
-                        q_manual_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
-                        p_manual_casadi = np.expand_dims((p_manual[:,idx_to_casadi].T), 1)
-                        x_manual, u_manual = utils_new.solve_casadi_parallel(
-                            np.repeat(q_manual_casadi, BS_val, 1),
-                            np.repeat(p_manual_casadi, BS_val, 1),
-                            x0_val_manual, BS_val, dx, du, control)
-
-                        x0_val_pred = x_pred_val[-1]
-                        x0_val_manual = x_manual[-1]
-
-                        x0_val_pred[:,4] = x_pred_val[-1,:,0]
-                        x0_val_manual[:,4] = x_manual[-1,:,0]
-
-                        progress_val_pred = progress_val_pred + x_pred_val[-1,:,5]
-                        progress_val_manual = progress_val_manual + x_manual[-1,:,5]
-
-                        x0_val_pred[:,5] = 0.
-                        x0_val_manual[:,5] = 0.
-
-
-                    progress_val = progress_val_pred - progress_val_manual
-
-                    if best_prog<progress_val.mean():
-                        torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
-
-                    print(f'{it}: Progress Diff: ', round(progress_val.mean(), 3),
-                          '\tProgress Pred: ', round(progress_val_pred.mean(), 3),
-                          '\tProgress Manual: ', round(progress_val_manual.mean(), 3)
-                         )
-
-            if it%5==0:
+            if it%10==0:
                 # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
                 with torch.no_grad():
 
