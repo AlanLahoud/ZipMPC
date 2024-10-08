@@ -136,7 +136,7 @@ lqr_iter = 70
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -363,6 +363,8 @@ for traj in range(num_traj_updates):
             loss = -progress.mean() \
             + penalty_pred_d.sum(0).mean() \
             + penalty_pred_v.sum(0).mean()
+
+            print(progress.mean().detach(), penalty_pred_d.sum(0).mean().detach(), penalty_pred_v.sum(0).mean().detach())
 
             opt.zero_grad()
             loss.backward()
