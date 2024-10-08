@@ -364,6 +364,8 @@ for traj in range(num_traj_updates):
             + penalty_pred_d.sum(0).mean() \
             + penalty_pred_v.sum(0).mean()
 
+            import pdb
+            pdb.set_trace()
             print(progress.mean().detach(), penalty_pred_d.sum(0).mean().detach(), penalty_pred_v.sum(0).mean().detach())
             
             
