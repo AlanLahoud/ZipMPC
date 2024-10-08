@@ -296,145 +296,145 @@ else:
 
 
 for ep in range(epochs):
-    
+
+    print('Update reference path')
     x_star = np.transpose(x_current_full)
+    
+    for it in range(40):
 
-    for patch in range(num_patches):
-        for it in range(20):
+        u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
+        u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
+        u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 
-            u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
-            u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
-            u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
+        x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, num_patches)
+        
+        x0_diff = x0.clone().float()
 
-            x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, num_patches)
-            
-            x0_diff = x0.clone().float()
+        x0_buffer = sample_x0_from_buffer(BS, buffer_x0).detach()
 
-            x0_buffer = sample_x0_from_buffer(BS, buffer_x0).detach()
+        x0_buffer_diff = x0_buffer.clone().float()
 
-            x0_buffer_diff = x0_buffer.clone().float()
+        progress_pred = torch.tensor(0.)
+        penalty_pred_d = torch.tensor(0.)
+        penalty_pred_v = torch.tensor(0.)
+        penalty_pred_phi = torch.tensor(0.)
 
-            progress_pred = torch.tensor(0.)
-            penalty_pred_d = torch.tensor(0.)
-            penalty_pred_v = torch.tensor(0.)
-            penalty_pred_phi = torch.tensor(0.)
+        curv = utils_new.get_curve_hor_from_x(x0_diff, track_coord, mpc_H)
+        inp = torch.hstack((x0_diff[:,1:4], curv))
+        q_p_pred = model(inp)
 
-            curv = utils_new.get_curve_hor_from_x(x0_diff, track_coord, mpc_H)
-            inp = torch.hstack((x0_diff[:,1:4], curv))
-            q_p_pred = model(inp)
+        q, p = utils_new.q_and_p(mpc_T, q_p_pred, Q_manual, p_manual)
+        Q = torch.diag_embed(q, offset=0, dim1=-2, dim2=-1)
 
-            q, p = utils_new.q_and_p(mpc_T, q_p_pred, Q_manual, p_manual)
-            Q = torch.diag_embed(q, offset=0, dim1=-2, dim2=-1)
+        for sim in range(0, mpc_H//mpc_T):
 
-            for sim in range(0, mpc_H//mpc_T):
+            pred_x, pred_u, pred_objs = mpc.MPC(
+                        true_dx.n_state, true_dx.n_ctrl, mpc_T,
+                        u_lower=u_lower, u_upper=u_upper, u_init=u_init,
+                        lqr_iter=lqr_iter,
+                        verbose=0,
+                        exit_unconverged=False,
+                        detach_unconverged=False,
+                        linesearch_decay=.8,
+                        max_linesearch_iter=4,
+                        grad_method=grad_method,
+                        eps=eps,
+                        n_batch=None,
+                    )(x0_diff, QuadCost(Q, p), true_dx)
 
-                pred_x, pred_u, pred_objs = mpc.MPC(
-                            true_dx.n_state, true_dx.n_ctrl, mpc_T,
-                            u_lower=u_lower, u_upper=u_upper, u_init=u_init,
-                            lqr_iter=lqr_iter,
-                            verbose=0,
-                            exit_unconverged=False,
-                            detach_unconverged=False,
-                            linesearch_decay=.8,
-                            max_linesearch_iter=4,
-                            grad_method=grad_method,
-                            eps=eps,
-                            n_batch=None,
-                        )(x0_diff, QuadCost(Q, p), true_dx)
+            x0_diff = pred_x[-1].clone()
+            x0_diff[:,4] = x0_diff[:,0]
+            x0_diff[:,5] = 0.
 
-                x0_diff = pred_x[-1].clone()
-                x0_diff[:,4] = x0_diff[:,0]
-                x0_diff[:,5] = 0.
-
-                progress_pred = progress_pred + pred_x[-1,:,5]
-                penalty_pred_d = penalty_pred_d + true_dx.penalty_d(pred_x[:,:,1])
-                penalty_pred_v = penalty_pred_v + true_dx.penalty_v(pred_x[:,:,3])
-                #import pdb
-                #pdb.set_trace()
-
-
-            progress = progress_pred
-            loss = -progress.mean() \
-            + 0.01*penalty_pred_d.sum(0).mean() \
-            + 0.01*penalty_pred_v.sum(0).mean()
-
-            print('Loss terms: ',
-                round(progress.mean().detach().item(), 3), 
-                round(penalty_pred_d.sum(0).mean().detach().item(), 3), 
-                round(penalty_pred_v.sum(0).mean().detach().item(), 3))
-            
-            
-            opt.zero_grad()
-            loss.backward()
-            opt.step()
+            progress_pred = progress_pred + pred_x[-1,:,5]
+            penalty_pred_d = penalty_pred_d + true_dx.penalty_d(pred_x[:,:,1])
+            penalty_pred_v = penalty_pred_v + true_dx.penalty_v(pred_x[:,:,3])
+            #import pdb
+            #pdb.set_trace()
 
 
-            if it%10==0:
-                # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
-                with torch.no_grad():
+        progress = progress_pred
+        loss = -progress.mean() \
+        + 0.01*penalty_pred_d.sum(0).mean() \
+        + 0.01*penalty_pred_v.sum(0).mean()
 
-                    print('LAP PERFORMANCE:')
-                    BS_test = 1
-
-                    # This sampling should bring always the same set of initial states
-                    x0_lap = utils_new.sample_init_test(BS_test, true_dx, sn=0).numpy()
-
-                    x0_lap_pred = x0_lap[:,:6]
-                    x0_lap_manual = x0_lap[:,:6]
-
-                    finish_list = np.zeros((BS_test,))
-                    lap_time_list = np.zeros((BS_test,))
-
-                    for b in range(BS_test):
-                        finished = 0
-                        crashed = 0
-                        steps = 0
-                        max_steps=500
-
-                        x0_b_pred = x0_lap_pred[b].copy()
-                        x_pred_full = x0_b_pred.reshape(-1,1)
-
-                        while finished==0 and crashed==0:
-
-                            x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
-                            curv_lap = utils_new.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
-                            inp_lap = torch.hstack((x0_lap_pred_torch[:,1:4], curv_lap))
-                            q_p_pred_lap = model(inp_lap)
-                            q_lap, p_lap = utils_new.q_and_p(mpc_T, q_p_pred_lap, Q_manual, p_manual)
-
-                            q_lap_np_casadi = torch.permute(q_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-                            p_lap_np_casadi = torch.permute(p_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+        print('Loss terms: ',
+            round(progress.mean().detach().item(), 3), 
+            round(penalty_pred_d.sum(0).mean().detach().item(), 3), 
+            round(penalty_pred_v.sum(0).mean().detach().item(), 3))
+        
+        
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
 
 
-                            x_b_pred, u_b_pred = utils_new.solve_casadi(
-                                q_lap_np_casadi[:,0,:], p_lap_np_casadi[:,0,:],
-                                x0_b_pred, dx, du, control)
+        if it%10==0:
+            # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
+            with torch.no_grad():
 
-                            x0_b_pred = x_b_pred[1]
-                            x_pred_full = np.append(x_pred_full, x0_b_pred.reshape(-1,1), axis=1)
+                print('LAP PERFORMANCE:')
+                BS_test = 1
 
-                            if x0_b_pred[0]>track_coord[2].max().numpy():
-                                finished=1
+                # This sampling should bring always the same set of initial states
+                x0_lap = utils_new.sample_init_test(BS_test, true_dx, sn=0).numpy()
 
-                            if x0_b_pred[1]>0.17 or x0_b_pred[1]<-0.17 or steps>max_steps:
-                                crashed=1
+                x0_lap_pred = x0_lap[:,:6]
+                x0_lap_manual = x0_lap[:,:6]
 
-                            steps = steps+1
+                finish_list = np.zeros((BS_test,))
+                lap_time_list = np.zeros((BS_test,))
 
-                        lap_time = dt*steps
+                for b in range(BS_test):
+                    finished = 0
+                    crashed = 0
+                    steps = 0
+                    max_steps=500
 
-                        print('current lap time: ', current_time)
-                        print('Pred lap time: ', lap_time)
+                    x0_b_pred = x0_lap_pred[b].copy()
+                    x_pred_full = x0_b_pred.reshape(-1,1)
 
-                        if finished == 1 and lap_time < current_time:
-                            current_time = lap_time
-                            q_current = q_lap_np_casadi
-                            p_current = p_lap
-                            x_current_full = x_pred_full
+                    while finished==0 and crashed==0:
 
-                        # Compare with previous best lap_time and potentially replace parameter estimate
+                        x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
+                        curv_lap = utils_new.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
+                        inp_lap = torch.hstack((x0_lap_pred_torch[:,1:4], curv_lap))
+                        q_p_pred_lap = model(inp_lap)
+                        q_lap, p_lap = utils_new.q_and_p(mpc_T, q_p_pred_lap, Q_manual, p_manual)
 
-                        finish_list[b] = finished
-                        lap_time_list[b] = lap_time
+                        q_lap_np_casadi = torch.permute(q_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+                        p_lap_np_casadi = torch.permute(p_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
 
-                    print('Pred finish: ', finish_list)
+
+                        x_b_pred, u_b_pred = utils_new.solve_casadi(
+                            q_lap_np_casadi[:,0,:], p_lap_np_casadi[:,0,:],
+                            x0_b_pred, dx, du, control)
+
+                        x0_b_pred = x_b_pred[1]
+                        x_pred_full = np.append(x_pred_full, x0_b_pred.reshape(-1,1), axis=1)
+
+                        if x0_b_pred[0]>track_coord[2].max().numpy():
+                            finished=1
+
+                        if x0_b_pred[1]>0.17 or x0_b_pred[1]<-0.17 or steps>max_steps:
+                            crashed=1
+
+                        steps = steps+1
+
+                    lap_time = dt*steps
+
+                    print('current lap time: ', current_time)
+                    print('Pred lap time: ', lap_time)
+
+                    if finished == 1 and lap_time < current_time:
+                        current_time = lap_time
+                        q_current = q_lap_np_casadi
+                        p_current = p_lap
+                        x_current_full = x_pred_full
+
+                    # Compare with previous best lap_time and potentially replace parameter estimate
+
+                    finish_list[b] = finished
+                    lap_time_list[b] = lap_time
+
+                print('Pred finish: ', finish_list)
