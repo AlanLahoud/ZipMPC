@@ -269,7 +269,7 @@ for b in range(BS_test):
         x0_b_manual = x_b_manual[1]
         x_manual_full = np.append(x_manual_full, x0_b_manual.reshape(-1,1), axis=1)
 
-        if x0_b_manual[0]>track_coord[2].max().numpy():
+        if x0_b_manual[0]>track_coord[2].max().numpy()/2:
             finished=1
 
         if x0_b_manual[1]>0.17 or x0_b_manual[1]<-0.17 or steps>max_steps:
@@ -413,7 +413,7 @@ for ep in range(epochs):
                         x0_b_pred = x_b_pred[1]
                         x_pred_full = np.append(x_pred_full, x0_b_pred.reshape(-1,1), axis=1)
 
-                        if x0_b_pred[0]>track_coord[2].max().numpy():
+                        if x0_b_pred[0]>track_coord[2].max().numpy()/2:
                             finished=1
 
                         if x0_b_pred[1]>0.17 or x0_b_pred[1]<-0.17 or steps>max_steps:
