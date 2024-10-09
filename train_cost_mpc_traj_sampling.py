@@ -431,6 +431,7 @@ for ep in range(epochs):
                         q_current = q_lap_np_casadi
                         p_current = p_lap
                         x_current_full = x_pred_full
+                        torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
 
                     # Compare with previous best lap_time and potentially replace parameter estimate
 
