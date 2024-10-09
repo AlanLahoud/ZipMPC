@@ -136,7 +136,7 @@ lqr_iter = 70
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.00008, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -232,7 +232,7 @@ best_prog = -999999.
 #x0 = torch.tensor([0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])
 #u0 = torch.tensor([0.0, 0.0])
 
-epochs = 50
+epochs = 15
 num_patches = 10
 BS_init = 40
 BS_val = 10
