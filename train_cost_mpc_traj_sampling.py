@@ -37,8 +37,8 @@ def parse_arguments():
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.5)
     parser.add_argument('--delta_max', type=float, default=0.4)
-    parser.add_argument('--eps_dyn', type=float, default=0.05)
-
+    parser.add_argument('--p_sigma_manual', type=float, default=0.1)
+    
     return parser.parse_args()
 
 
@@ -53,7 +53,7 @@ l_r = args.l_r
 v_max = args.v_max
 delta_max = args.delta_max
 
-eps_dyn = args.eps_dyn
+p_sigma_manual = args.p_sigma_manual
 
 seed_n = 0
 torch.manual_seed(seed_n)
@@ -88,7 +88,7 @@ init_track = [0,0,0]
 
 max_p = 100
 
-str_model = f'{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{eps_dyn}'
+str_model = f'{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_sigma_manual}'
 
 params = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_T])
 
@@ -126,7 +126,7 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 64
+BS = 100
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -136,12 +136,12 @@ lqr_iter = 70
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00008, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -0.1, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 idx_to_casadi = [5,1,2,3,8,9] # This is only to match the indices of Q from model to casadi
 
@@ -232,7 +232,7 @@ best_prog = -999999.
 #x0 = torch.tensor([0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])
 #u0 = torch.tensor([0.0, 0.0])
 
-epochs = 15
+epochs = 20
 num_patches = 10
 BS_init = 40
 BS_val = 10
