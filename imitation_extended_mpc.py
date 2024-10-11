@@ -103,7 +103,7 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 32
+BS = 128
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -113,7 +113,7 @@ lqr_iter = 70
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.00008, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -262,6 +262,8 @@ for ep in range(epochs):
 
         
         if it%10==0:
+            import pdb
+            pdb.set_trace()
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
             with torch.no_grad():
 
