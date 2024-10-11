@@ -228,43 +228,44 @@ for ep in range(epochs):
         loss_phi = torch.tensor(0.)
         loss_a = torch.tensor(0.)
         loss_delta = torch.tensor(0.)
-              
-        for sim in range(0, mpc_H//mpc_T):
-            
-            pred_x, pred_u, pred_objs = mpc.MPC(
-                        true_dx.n_state, true_dx.n_ctrl, mpc_T,
-                        u_lower=u_lower, u_upper=u_upper, u_init=u_init,
-                        lqr_iter=lqr_iter,
-                        verbose=0,
-                        exit_unconverged=False,
-                        detach_unconverged=False,
-                        linesearch_decay=.8,
-                        max_linesearch_iter=4,
-                        grad_method=grad_method,
-                        eps=eps,
-                        n_batch=None,
-                    )(x0_diff, QuadCost(Q, p), true_dx)
 
-            x0_diff = pred_x[-1].clone()
-            x0_diff[:,4] = x0_diff[:,0]
-            x0_diff[:,5] = 0.
+        sim = 0
+        #for sim in range(0, mpc_H//mpc_T):
+            
+        pred_x, pred_u, pred_objs = mpc.MPC(
+                    true_dx.n_state, true_dx.n_ctrl, mpc_T,
+                    u_lower=u_lower, u_upper=u_upper, u_init=u_init,
+                    lqr_iter=lqr_iter,
+                    verbose=0,
+                    exit_unconverged=False,
+                    detach_unconverged=False,
+                    linesearch_decay=.8,
+                    max_linesearch_iter=4,
+                    grad_method=grad_method,
+                    eps=eps,
+                    n_batch=None,
+                )(x0_diff, QuadCost(Q, p), true_dx)
 
-            lbx = sim*mpc_T
-            ubx = (sim+1)*mpc_T
-            
-            #loss_part = (x_true_torch[lbx:ubx, :, :4] - pred_x[:, :, :4])**2
+        x0_diff = pred_x[-1].clone()
+        x0_diff[:,4] = x0_diff[:,0]
+        x0_diff[:,5] = 0.
 
-            loss_part_d = (x_true_torch[lbx:ubx, :, 1] - pred_x[:, :, 1])**2
-            loss_part_phi = (x_true_torch[lbx:ubx, :, 2] - pred_x[:, :, 2])**2
-            loss_part_a = (u_true_torch[lbx:ubx, :, 0] - pred_u[:, :, 0])**2
-            loss_part_delta = (u_true_torch[lbx:ubx, :, 1] - pred_u[:, :, 1])**2
-            
-            loss_d = loss_d + loss_part_d.mean()
-            loss_phi = loss_phi + loss_part_phi.mean()
-            loss_a = loss_a + loss_part_a.mean()
-            loss_delta = loss_delta + loss_part_delta.mean()
-            
-            loss = 10*loss_d + loss_phi + 0.1*loss_a + loss_delta
+        lbx = sim*mpc_T
+        ubx = (sim+1)*mpc_T
+        
+        #loss_part = (x_true_torch[lbx:ubx, :, :4] - pred_x[:, :, :4])**2
+
+        loss_part_d = (x_true_torch[lbx:ubx, :, 1] - pred_x[:, :, 1])**2
+        loss_part_phi = (x_true_torch[lbx:ubx, :, 2] - pred_x[:, :, 2])**2
+        loss_part_a = (u_true_torch[lbx:ubx, :, 0] - pred_u[:, :, 0])**2
+        loss_part_delta = (u_true_torch[lbx:ubx, :, 1] - pred_u[:, :, 1])**2
+        
+        loss_d = loss_d + loss_part_d.mean()
+        loss_phi = loss_phi + loss_part_phi.mean()
+        loss_a = loss_a + loss_part_a.mean()
+        loss_delta = loss_delta + loss_part_delta.mean()
+        
+        loss = 10*loss_d + loss_phi + 0.1*loss_a + loss_delta
 
         print('Train loss:', 10*loss_d.item(), loss_phi.item(), 0.1*loss_a.item(), loss_delta.item(), loss.item())
         
@@ -272,8 +273,8 @@ for ep in range(epochs):
         loss.backward()
         opt.step()
 
-        import pdb
-        pdb.set_trace()
+        #import pdb
+        #pdb.set_trace()
 
         
         if it%10==0:
