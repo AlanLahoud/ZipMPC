@@ -223,8 +223,12 @@ for ep in range(epochs):
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
 
-        loss = torch.tensor(0.)
-        
+        #loss_sdiff = torch.tensor(0.)
+        loss_d = torch.tensor(0.)
+        loss_phi = torch.tensor(0.)
+        loss_a = torch.tensor(0.)
+        loss_delta = torch.tensor(0.)
+              
         for sim in range(0, mpc_H//mpc_T):
             
             pred_x, pred_u, pred_objs = mpc.MPC(
@@ -250,11 +254,19 @@ for ep in range(epochs):
             
             #loss_part = (x_true_torch[lbx:ubx, :, :4] - pred_x[:, :, :4])**2
 
-            loss_part = (u_true_torch[lbx:ubx, :] - pred_u)**2 + (x_true_torch[lbx:ubx, :, 1:3] - pred_x[:, :, 1:3])**2
+            loss_part_d = (x_true_torch[lbx:ubx, :, 1] - pred_x[:, :, 1])**2
+            loss_part_phi = (x_true_torch[lbx:ubx, :, 2] - pred_x[:, :, 2])**2
+            loss_part_a = (u_true_torch[lbx:ubx, :, 0] - pred_u[:, :, 0])**2
+            loss_part_delta = (u_true_torch[lbx:ubx, :, 1] - pred_u[:, :, 1])**2
             
-            loss = loss + loss_part.mean()
+            loss_d = loss_d + loss_part_d.mean()
+            loss_phi = loss_phi + loss_part_phi.mean()
+            loss_a = loss_a + loss_part_a.mean()
+            loss_delta = loss_delta + loss_part_delta.mean()
+            
+            loss = loss_d + loss_phi + 0.1*loss_a + loss_delta
 
-        print('Train loss:', loss.item())
+        print('Train loss:', loss_d.item(), loss_phi.item(), 0.1*loss_a.item(), loss_delta.item(), loss.item())
         
         opt.zero_grad()
         loss.backward()
@@ -262,8 +274,6 @@ for ep in range(epochs):
 
         
         if it%10==0:
-            import pdb
-            pdb.set_trace()
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
             with torch.no_grad():
 
