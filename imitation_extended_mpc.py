@@ -113,7 +113,7 @@ lqr_iter = 70
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00002, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -221,6 +221,7 @@ for ep in range(epochs):
             x0_diff.detach().numpy()[:,:6], BS, dx, du, control_full) 
 
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
+        u_true_torch = torch.tensor(u_true, dtype=torch.float32)
 
         loss = torch.tensor(0.)
         
@@ -247,7 +248,9 @@ for ep in range(epochs):
             lbx = sim*mpc_T
             ubx = (sim+1)*mpc_T
             
-            loss_part = (x_true_torch[lbx:ubx, :, :4] - pred_x[:, :, :4])**2
+            #loss_part = (x_true_torch[lbx:ubx, :, :4] - pred_x[:, :, :4])**2
+
+            loss_part = (u_true_torch[lbx:ubx, :] - pred_u)**2
             
             loss = loss + loss_part.mean()
 
