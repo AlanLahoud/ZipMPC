@@ -250,10 +250,12 @@ for ep in range(epochs):
             
             #loss_part = (x_true_torch[lbx:ubx, :, :4] - pred_x[:, :, :4])**2
 
-            loss_part = (u_true_torch[lbx:ubx, :] - pred_u)**2
+            loss_part = (u_true_torch[lbx:ubx, :] - pred_u)**2 + (x_true_torch[lbx:ubx, :, 1:3] - pred_x[:, :, 1:3])**2
             
             loss = loss + loss_part.mean()
 
+        print('Train loss:', loss.item())
+        
         opt.zero_grad()
         loss.backward()
         opt.step()
