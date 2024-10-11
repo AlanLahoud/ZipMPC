@@ -270,7 +270,11 @@ for ep in range(epochs):
 
         if it%5==0:
             print('Train loss:', 
-                  10*loss_d.item(), loss_phi.item(), 0.1*loss_a.item(), loss_delta.item(), loss.item())
+                  round(10*loss_d.item(), 6), 
+                  round(loss_phi.item(), 6), 
+                  round(0.1*loss_a.item(), 6), 
+                  round(loss_delta.item(), 6), 
+                  round(loss.item(), 6))
         
         opt.zero_grad()
         loss.backward()
