@@ -113,7 +113,7 @@ lqr_iter = 70
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00008, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0005)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -264,9 +264,9 @@ for ep in range(epochs):
             loss_a = loss_a + loss_part_a.mean()
             loss_delta = loss_delta + loss_part_delta.mean()
             
-            loss = loss_d + loss_phi + 0.1*loss_a + loss_delta
+            loss = 10*loss_d + loss_phi + 0.1*loss_a + loss_delta
 
-        print('Train loss:', loss_d.item(), loss_phi.item(), 0.1*loss_a.item(), loss_delta.item(), loss.item())
+        print('Train loss:', 10*loss_d.item(), loss_phi.item(), 0.1*loss_a.item(), loss_delta.item(), loss.item())
         
         opt.zero_grad()
         loss.backward()
