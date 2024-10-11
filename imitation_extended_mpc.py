@@ -68,7 +68,7 @@ max_p = 100
 str_model = f'im_{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_sigma_manual}'
 
 params = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_T])
-params_full = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_H])
+params_H = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_H])
 
 gen = simple_track_generator.trackGenerator(track_density,track_width)
 track_name = 'DEMO_TRACK'
@@ -120,9 +120,9 @@ control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
-control_full = utils_new.CasadiControl(track_coord, params_full)
-Q_manual_full = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_H, 0)
-p_manual_full = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
+control_H = utils_new.CasadiControl(track_coord, params_H)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_H, 0)
+p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [5,1,2,3,8,9]
 
@@ -213,12 +213,12 @@ for ep in range(epochs):
         q, p = utils_new.q_and_p(mpc_T, q_p_pred, Q_manual, p_manual)
         Q = torch.diag_embed(q, offset=0, dim1=-2, dim2=-1)
         
-        q_manual_casadi = np.expand_dims((Q_manual_full[:,idx_to_casadi].T), 1)
-        p_manual_casadi = np.expand_dims((p_manual_full[:,idx_to_casadi].T), 1)
+        q_manual_casadi = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
+        p_manual_casadi = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
         x_true, u_true = utils_new.solve_casadi_parallel(
             np.repeat(q_manual_casadi, BS, 1), 
             np.repeat(p_manual_casadi, BS, 1), 
-            x0_diff.detach().numpy()[:,:6], BS, dx, du, control_full) 
+            x0_diff.detach().numpy()[:,:6], BS, dx, du, control_H) 
 
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
@@ -271,6 +271,9 @@ for ep in range(epochs):
         opt.zero_grad()
         loss.backward()
         opt.step()
+
+        import pdb
+        pdb.set_trace()
 
         
         if it%10==0:
