@@ -264,10 +264,13 @@ for ep in range(epochs):
         loss_phi = loss_phi + loss_part_phi.mean()
         loss_a = loss_a + loss_part_a.mean()
         loss_delta = loss_delta + loss_part_delta.mean()
-        
+
+        # Ideal here would be to scale, but this is fine just to be in the same range
         loss = 10*loss_d + loss_phi + 0.1*loss_a + loss_delta
 
-        print('Train loss:', 10*loss_d.item(), loss_phi.item(), 0.1*loss_a.item(), loss_delta.item(), loss.item())
+        if it%5==0:
+            print('Train loss:', 
+                  10*loss_d.item(), loss_phi.item(), 0.1*loss_a.item(), loss_delta.item(), loss.item())
         
         opt.zero_grad()
         loss.backward()
@@ -281,7 +284,7 @@ for ep in range(epochs):
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
             with torch.no_grad():
 
-                print('LAP PERFORMANCE:')
+                #print('LAP PERFORMANCE:')
                 BS_test = 1
 
                 # This sampling should bring always the same set of initial states
