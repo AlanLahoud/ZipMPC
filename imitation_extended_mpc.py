@@ -179,6 +179,47 @@ for b in range(BS_test):
 
     print(f'Manual extended mpc_H = {mpc_H}, lap time: {lap_time}')
 
+
+finish_list = np.zeros((BS_test,))
+lap_time_list = np.zeros((BS_test,))
+
+for b in range(BS_test):
+    finished = 0
+    crashed = 0
+    steps = 0
+    max_steps=500
+
+    x0_b_manual = x0_lap_manual[b].copy()
+    x_manual_full = x0_b_manual.reshape(-1,1)
+
+    while finished==0 and crashed==0:
+        q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
+        p_lap_manual_casadi = p_manual[:,idx_to_casadi].T
+
+        x_b_manual, u_b_manual = utils_new.solve_casadi(
+            q_lap_manual_casadi, p_lap_manual_casadi,
+            x0_b_manual, dx, du, control)
+
+        x0_b_manual = x_b_manual[1]
+        x_manual_full = np.append(x_manual_full, x0_b_manual.reshape(-1,1), axis=1)
+
+        if x0_b_manual[0]>track_coord[2].max().numpy()/2:
+            finished=1
+
+        if x0_b_manual[1]>0.17 or x0_b_manual[1]<-0.17 or steps>max_steps:
+            crashed=1
+
+        steps = steps+1
+
+    lap_time = dt*steps
+
+    finish_list[b] = finished
+    lap_time_list[b] = lap_time
+
+    print(f'Manual mpc_T = {mpc_T}, lap time: {lap_time}')
+
+
+
 q_manual_casadi = Q_manual[:,idx_to_casadi].T
 p_manual_casadi = p_manual[:,idx_to_casadi].T
 
