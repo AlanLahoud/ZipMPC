@@ -177,7 +177,7 @@ for b in range(BS_test):
     finish_list[b] = finished
     lap_time_list[b] = lap_time
 
-    print('Manual extended lap time:', lap_time)
+    print(f'Manual extended mpc_H = {mpc_H}, lap time: {lap_time}')
 
 q_manual_casadi = Q_manual[:,idx_to_casadi].T
 p_manual_casadi = p_manual[:,idx_to_casadi].T
