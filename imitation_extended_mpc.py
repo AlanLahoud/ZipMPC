@@ -223,9 +223,10 @@ for ep in range(epochs):
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
 
-        #loss_sdiff = torch.tensor(0.)
+        loss_dsigma = torch.tensor(0.)
         loss_d = torch.tensor(0.)
         loss_phi = torch.tensor(0.)
+        loss_v = torch.tensor(0.)
         loss_a = torch.tensor(0.)
         loss_delta = torch.tensor(0.)
 
@@ -255,26 +256,33 @@ for ep in range(epochs):
         
         #loss_part = (x_true_torch[lbx:ubx, :, :4] - pred_x[:, :, :4])**2
 
+        loss_part_dsigma = (x_true_torch[lbx:ubx, :, 5] - pred_x[:, :, 5])**2
         loss_part_d = (x_true_torch[lbx:ubx, :, 1] - pred_x[:, :, 1])**2
         loss_part_phi = (x_true_torch[lbx:ubx, :, 2] - pred_x[:, :, 2])**2
+        loss_part_v = (x_true_torch[lbx:ubx, :, 3] - pred_x[:, :, 3])**2
+        
         loss_part_a = (u_true_torch[lbx:ubx, :, 0] - pred_u[:, :, 0])**2
         loss_part_delta = (u_true_torch[lbx:ubx, :, 1] - pred_u[:, :, 1])**2
         
+        loss_dsigma = loss_dsigma + loss_part_dsigma.mean()
         loss_d = loss_d + loss_part_d.mean()
         loss_phi = loss_phi + loss_part_phi.mean()
+        loss_v = loss_v + loss_part_v.mean()
         loss_a = loss_a + loss_part_a.mean()
         loss_delta = loss_delta + loss_part_delta.mean()
 
         # Ideal here would be to scale, but this is fine just to be in the same range
-        loss = 10*loss_d + loss_phi + 0.1*loss_a + loss_delta
+        loss = loss_dsigma + 10*loss_d + loss_phi + 0.1*loss_v + 0.1*loss_a + loss_delta
 
         if it%5==0:
             print('Train loss:', 
-                  round(10*loss_d.item(), 6), 
-                  round(loss_phi.item(), 6), 
-                  round(0.1*loss_a.item(), 6), 
-                  round(loss_delta.item(), 6), 
-                  round(loss.item(), 6))
+                  round(loss_dsigma.item(), 5),
+                  round(10*loss_d.item(), 5), 
+                  round(loss_phi.item(), 5), 
+                  round(0.1*loss_a.item(), 5), 
+                  round(0.1*loss_v.item(), 5), 
+                  round(loss_delta.item(), 5), 
+                  round(loss.item(), 5))
         
         opt.zero_grad()
         loss.backward()
