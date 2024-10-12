@@ -315,14 +315,14 @@ for ep in range(epochs):
         loss_delta = loss_delta + loss_part_delta.mean()
 
         # Ideal here would be to scale, but this is fine just to be in the same range
-        loss = loss_dsigma + 10*loss_d + loss_phi + 0.1*loss_v + 0.1*loss_a + loss_delta
+        loss = loss_dsigma + 10*loss_d + loss_phi + 0.1*loss_v + loss_delta
 
         if it%5==0:
             print('Train loss:', 
                   round(loss_dsigma.item(), 5),
                   round(10*loss_d.item(), 5), 
                   round(loss_phi.item(), 5), 
-                  round(0.1*loss_a.item(), 5), 
+                  #round(0.1*loss_a.item(), 5), 
                   round(0.1*loss_v.item(), 5), 
                   round(loss_delta.item(), 5), 
                   round(loss.item(), 5))
