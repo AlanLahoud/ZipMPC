@@ -154,12 +154,12 @@ for b in range(BS_test):
     x_manual_full = x0_b_manual.reshape(-1,1)
 
     while finished==0 and crashed==0:
-        q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
-        p_lap_manual_casadi = p_manual[:,idx_to_casadi].T
+        q_lap_manual_casadi = Q_manual_H[:,idx_to_casadi].T
+        p_lap_manual_casadi = p_manual_H[:,idx_to_casadi].T
 
         x_b_manual, u_b_manual = utils_new.solve_casadi(
             q_lap_manual_casadi, p_lap_manual_casadi,
-            x0_b_manual, dx, du, control)
+            x0_b_manual, dx, du, control_H)
 
         x0_b_manual = x_b_manual[1]
         x_manual_full = np.append(x_manual_full, x0_b_manual.reshape(-1,1), axis=1)
@@ -176,6 +176,8 @@ for b in range(BS_test):
 
     finish_list[b] = finished
     lap_time_list[b] = lap_time
+
+    print('Manual extended lap time:', lap_time)
 
 q_manual_casadi = Q_manual[:,idx_to_casadi].T
 p_manual_casadi = p_manual[:,idx_to_casadi].T
