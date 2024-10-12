@@ -127,7 +127,7 @@ p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 
 idx_to_casadi = [5,1,2,3,8,9]
 
 
-epochs = 20
+epochs = 10
 num_patches = 10
 BS_init = 40
 BS_val = 10
