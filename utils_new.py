@@ -321,9 +321,9 @@ class SimpleNN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K):
         super(SimpleNN, self).__init__()
         input_size = 3 + mpc_H
-        self.fc1 = nn.Linear(input_size, 64)
-        self.fc2 = nn.Linear(64, 64)
-        self.fc3 = nn.Linear(64, mpc_T*O)
+        self.fc1 = nn.Linear(input_size, 128)
+        self.fc2 = nn.Linear(128, 256)
+        self.fc3 = nn.Linear(128, mpc_T*O)
         self.activation = nn.ReLU()
         self.output_activation = nn.Tanh()
         self.K = K
