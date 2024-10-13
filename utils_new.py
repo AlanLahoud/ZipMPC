@@ -336,7 +336,7 @@ class SimpleNN(nn.Module):
         x = self.fc3(x)
         #x = self.output_activation(x) * self.K
         x = x.reshape(self.mpc_T, -1, self.O)
-        return x/5
+        return x
 
 def sample_init(BS, dyn, sn=None):
 
@@ -547,7 +547,7 @@ class FrenetKinBicycleDx(nn.Module):
 
         self.delta_max = params[6]
 
-        self.factor_pen = 500.
+        self.factor_pen = 50.
 
 
 
