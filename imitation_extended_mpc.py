@@ -269,16 +269,6 @@ for ep in range(epochs):
 
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
-
-        loss_dsigma = torch.tensor(0.)
-        loss_d = torch.tensor(0.)
-        loss_phi = torch.tensor(0.)
-        loss_v = torch.tensor(0.)
-        loss_a = torch.tensor(0.)
-        loss_delta = torch.tensor(0.)
-
-        sim = 0
-        #for sim in range(0, mpc_H//mpc_T):
             
         pred_x, pred_u, pred_objs = mpc.MPC(
                     true_dx.n_state, true_dx.n_ctrl, mpc_T,
@@ -293,43 +283,27 @@ for ep in range(epochs):
                     eps=eps,
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
-
-        x0_diff = pred_x[-1].clone()
-        x0_diff[:,4] = x0_diff[:,0]
-        x0_diff[:,5] = 0.
-
-        lbx = sim*mpc_T
-        ubx = (sim+1)*mpc_T
         
-        #loss_part = (x_true_torch[lbx:ubx, :, :4] - pred_x[:, :, :4])**2
-
-        loss_part_dsigma = (x_true_torch[lbx:ubx, :, 5] - pred_x[:, :, 5])**2
-        loss_part_d = (x_true_torch[lbx:ubx, :, 1] - pred_x[:, :, 1])**2
-        loss_part_phi = (x_true_torch[lbx:ubx, :, 2] - pred_x[:, :, 2])**2
-        loss_part_v = (x_true_torch[lbx:ubx, :, 3] - pred_x[:, :, 3])**2
+        loss_dsigma = (x_true_torch[:mpc_T, :, 5] - pred_x[:, :, 5])**2
+        loss_d = (x_true_torch[:mpc_T, :, 1] - pred_x[:, :, 1])**2
+        loss_phi = (x_true_torch[:mpc_T, :, 2] - pred_x[:, :, 2])**2
+        loss_v = (x_true_torch[:mpc_T, :, 3] - pred_x[:, :, 3])**2
         
-        loss_part_a = (u_true_torch[lbx:ubx, :, 0] - pred_u[:, :, 0])**2
-        loss_part_delta = (u_true_torch[lbx:ubx, :, 1] - pred_u[:, :, 1])**2
-        
-        loss_dsigma = loss_dsigma + loss_part_dsigma.mean()
-        loss_d = loss_d + loss_part_d.mean()
-        loss_phi = loss_phi + loss_part_phi.mean()
-        loss_v = loss_v + loss_part_v.mean()
-        loss_a = loss_a + loss_part_a.mean()
-        loss_delta = loss_delta + loss_part_delta.mean()
+        loss_a = (u_true_torch[:mpc_T, :, 0] - pred_u[:, :, 0])**2
+        loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1])**2
 
         # Ideal here would be to scale, but this is fine just to be in the same range
-        loss = loss_dsigma + 10*loss_d + loss_phi + 0.1*loss_v + loss_delta
+        loss = 10*loss_dsigma + 10*loss_d + 0.1*loss_v + loss_delta
 
-        if it%5==0:
-            print('Train loss:', 
-                  round(loss_dsigma.item(), 5),
-                  round(10*loss_d.item(), 5), 
-                  round(loss_phi.item(), 5), 
-                  #round(0.1*loss_a.item(), 5), 
-                  round(0.1*loss_v.item(), 5), 
-                  round(loss_delta.item(), 5), 
-                  round(loss.item(), 5))
+        #if it%5==0:
+        #    print('Train loss:', 
+        #          round(loss_dsigma.item(), 5),
+        #          round(10*loss_d.item(), 5), 
+        #          #round(loss_phi.item(), 5), 
+        #          #round(0.1*loss_a.item(), 5), 
+        #          round(0.1*loss_v.item(), 5), 
+        #          round(loss_delta.item(), 5), 
+        #          round(loss.item(), 5))
         
         opt.zero_grad()
         loss.backward()
@@ -337,6 +311,68 @@ for ep in range(epochs):
 
         
         if it%10==0:
+            # L O S S   V A LI D A T I O N
+            with torch.no_grad():
+
+                BS_val = 32
+    
+                # This sampling should bring always the same set of initial states
+                x0_val = utils_new.sample_init(BS_val, true_dx, sn=0)
+
+                curv_val = utils_new.get_curve_hor_from_x(x0_val, track_coord, mpc_H)
+                inp_val = torch.hstack((x0_val[:,1:4], curv_val))
+                q_p_pred_val = model(inp_val)
+        
+                q_val, p_val = utils_new.q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
+                Q_val = torch.diag_embed(q_val, offset=0, dim1=-2, dim2=-1)
+                
+                q_manual_casadi_val = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
+                p_manual_casadi_val = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
+                x_true_val, u_true_val = utils_new.solve_casadi_parallel(
+                    np.repeat(q_manual_casadi_val, BS_val, 1), 
+                    np.repeat(p_manual_casadi_val, BS_val, 1), 
+                    x0_val.detach().numpy()[:,:6], BS_val, dx, du, control_H) 
+        
+                x_true_val_torch = torch.tensor(x_true_val, dtype=torch.float32)
+                u_true_val_torch = torch.tensor(u_true_val, dtype=torch.float32)
+                    
+                pred_x_val, pred_u_val, pred_objs = mpc.MPC(
+                            true_dx.n_state, true_dx.n_ctrl, mpc_T,
+                            u_lower=u_lower, u_upper=u_upper, u_init=u_init,
+                            lqr_iter=lqr_iter,
+                            verbose=0,
+                            exit_unconverged=False,
+                            detach_unconverged=False,
+                            linesearch_decay=.8,
+                            max_linesearch_iter=4,
+                            grad_method=grad_method,
+                            eps=eps,
+                            n_batch=None,
+                        )(x0_val, QuadCost(Q_val, p_val), true_dx)
+                
+                loss_dsigma_val = (x_true_val_torch[:mpc_T, :, 5] - pred_x_val[:, :, 5])**2
+                loss_d_val = (x_true_val_torch[:mpc_T, :, 1] - pred_x_val[:, :, 1])**2
+                loss_phi_val = (x_true_val_torch[:mpc_T, :, 2] - pred_x_val[:, :, 2])**2
+                loss_v_val = (x_true_val_torch[:mpc_T, :, 3] - pred_x_val[:, :, 3])**2
+                
+                loss_a_val = (u_true_val_torch[:mpc_T, :, 0] - pred_u_val[:, :, 0])**2
+                loss_delta_val = (u_true_val_torch[:mpc_T, :, 1] - pred_u_val[:, :, 1])**2
+        
+                # Ideal here would be to scale, but this is fine just to be in the same range
+                loss_val = 10*loss_dsigma_val + 10*loss_d_val + 0.1*loss_v_val + loss_delta_val
+
+                print('Train loss:', 
+                      round(10*loss_dsigma_val.item(), 5),
+                      round(10*loss_d_val.item(), 5), 
+                      #round(loss_phi.item(), 5), 
+                      #round(0.1*loss_a.item(), 5), 
+                      round(0.1*loss_v_val.item(), 5), 
+                      round(loss_delta_val.item(), 5), 
+                      round(loss_val.item(), 5))
+                
+
+
+            
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
             with torch.no_grad():
 
