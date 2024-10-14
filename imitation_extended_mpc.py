@@ -354,9 +354,6 @@ for ep in range(epochs):
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
                 loss_val = 100*loss_dsigma_val.mean() + 100*loss_d_val.mean() + loss_v_val.mean() + loss_delta_val.mean()
-
-                import pdb
-                pdb.set_trace()
                 
                 print('Validation loss:', 
                       round(100*loss_dsigma_val.mean().item(), 5),
