@@ -358,7 +358,7 @@ for ep in range(epochs):
                 print('Validation loss:', 
                       round(loss_dsigma_val.mean().item(), 5),
                       round(loss_d_val.mean().item(), 5), 
-                      round(loss_phi_val.item(), 5), 
+                      round(loss_phi_val.mean().item(), 5), 
                       #round(0.1*loss_a.item(), 5), 
                       round(loss_v_val.mean().item(), 5), 
                       #round(loss_delta_val.mean().item(), 5), 
