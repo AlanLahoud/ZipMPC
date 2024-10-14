@@ -313,8 +313,12 @@ for ep in range(epochs):
         if it%10==0:
             # L O S S   V A LI D A T I O N
             with torch.no_grad():
-
+               
                 BS_val = 32
+
+                u_lower_val = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
+                u_upper_val = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
+                u_init_val = torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(device)
     
                 # This sampling should bring always the same set of initial states
                 x0_val = utils_new.sample_init(BS_val, true_dx, sn=0)
