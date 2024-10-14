@@ -60,6 +60,10 @@ a_max = 2.0
 
 track_density = 300
 track_width = 0.5
+max_track_width_perc = 0.75
+
+bound_d = 0.5*max_track_width_perc*track_width
+
 t_track = 0.3
 init_track = [0,0,0]
 
@@ -167,7 +171,7 @@ for b in range(BS_test):
         if x0_b_manual[0]>track_coord[2].max().numpy()/2:
             finished=1
 
-        if x0_b_manual[1]>0.17 or x0_b_manual[1]<-0.17 or steps>max_steps:
+        if x0_b_manual[1]>bound_d or x0_b_manual[1]<-bound_d or steps>max_steps:
             crashed=1
 
         steps = steps+1
@@ -206,7 +210,7 @@ for b in range(BS_test):
         if x0_b_manual[0]>track_coord[2].max().numpy()/2:
             finished=1
 
-        if x0_b_manual[1]>0.17 or x0_b_manual[1]<-0.17 or steps>max_steps:
+        if x0_b_manual[1]>bound_d or x0_b_manual[1]<-bound_d or steps>max_steps:
             crashed=1
 
         steps = steps+1
@@ -331,9 +335,6 @@ for ep in range(epochs):
         loss.backward()
         opt.step()
 
-        #import pdb
-        #pdb.set_trace()
-
         
         if it%10==0:
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
@@ -382,7 +383,7 @@ for ep in range(epochs):
                         if x0_b_pred[0]>track_coord[2].max().numpy()/2:
                             finished=1
 
-                        if x0_b_pred[1]>0.17 or x0_b_pred[1]<-0.17 or steps>max_steps:
+                        if x0_b_pred[1]>bound_d or x0_b_pred[1]<-bound_d or steps>max_steps:
                             crashed=1
 
                         steps = steps+1
@@ -403,8 +404,3 @@ for ep in range(epochs):
                     lap_time_list[b] = lap_time
 
                 print('Pred finish: ', finish_list)
-    
-
-
-
-

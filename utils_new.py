@@ -70,6 +70,8 @@ class CasadiControl():
 
         self.mpc_T = int(params[8])
 
+        self.max_track_width_perc = 0.75
+
     def sigmoid(self, x):
         return (tanh(x/2)+1.)/2
 
@@ -166,7 +168,7 @@ class CasadiControl():
                     np.zeros(mpc_T+1),
                     -self.a_max*np.ones(mpc_T),
                     -self.delta_max*np.ones(mpc_T),
-                    -0.3*self.track_width*np.ones(mpc_T+1),
+                    -0.5*self.max_track_width_perc*self.track_width*np.ones(mpc_T+1),
                     -0.1*np.ones(mpc_T+1)]
 
         ubg = np.r_[np.zeros(mpc_T+1),
@@ -175,7 +177,7 @@ class CasadiControl():
                     np.zeros(mpc_T+1),
                     self.a_max*np.ones(mpc_T),
                     self.delta_max*np.ones(mpc_T),
-                    0.3*self.track_width*np.ones(mpc_T+1),
+                    0.5*self.max_track_width_perc*self.track_width*np.ones(mpc_T+1),
                     self.v_max*np.ones(mpc_T+1)]
 
 
@@ -214,106 +216,6 @@ class CasadiControl():
         x = sol_evalf[:-du*mpc_T].reshape(-1,dx)
 
         return x, u
-
-    def mpc_casadi_linear(self,p,x0_np,dx,du):
-        mpc_T = self.mpc_T
-
-        x_sym = SX.sym('x_sym',dx,mpc_T+1)
-        u_sym = SX.sym('u_sym',du,mpc_T)
-
-        dt = self.dt
-
-        dyn1 = horzcat(
-            (x_sym[0,0] - x0_np[0]),
-            (x_sym[0,1:mpc_T+1] - x_sym[0,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T])/(1.-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
-
-        dyn2 = horzcat(
-            (x_sym[1,0] - x0_np[1]),
-            (x_sym[1,1:mpc_T+1] - x_sym[1,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*np.sin(x_sym[2,0:mpc_T]))))
-
-        dyn3 = horzcat(
-            (x_sym[2,0] - x0_np[2]),
-            (x_sym[2,1:mpc_T+1] - x_sym[2,0:mpc_T] - \
-             dt*(x_sym[3,0:mpc_T]*(1/(self.l_f+self.l_r))*np.tan(u_sym[1,0:mpc_T])\
-                 -self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T])/(1-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
-
-        dyn4 = horzcat(
-            (x_sym[3,0] - x0_np[3]),
-            (x_sym[3,1:mpc_T+1] - x_sym[3,0:mpc_T] - dt*(u_sym[0,0:mpc_T])))
-
-        feat = vertcat(x_sym[0,0:mpc_T]-x0_np[0],x_sym[1:,0:mpc_T],u_sym[:,0:mpc_T])
-
-        p_sym = SX.sym('p_sym',dx+du,mpc_T)
-        Q_sym = diag(q_sym)
-
-        l = sum2(sum1(p_sym*feat))
-        dl = substitute(l,p_sym,p)
-
-        const = vertcat(
-                transpose(dyn1),
-                transpose(dyn2),
-                transpose(dyn3),
-                transpose(dyn4),
-                transpose(u_sym[0,0:mpc_T]),
-                transpose(u_sym[1,0:mpc_T]),
-                transpose(x_sym[1,0:mpc_T+1]),
-                transpose(x_sym[3,0:mpc_T+1]))
-
-        lbg = np.r_[np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    -self.a_max*np.ones(mpc_T),
-                    -self.delta_max*np.ones(mpc_T),
-                    -0.3*self.track_width*np.ones(mpc_T+1),
-                    -0.1*np.ones(mpc_T+1)]
-
-        ubg = np.r_[np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    self.a_max*np.ones(mpc_T),
-                    self.delta_max*np.ones(mpc_T),
-                    0.3*self.track_width*np.ones(mpc_T+1),
-                    self.v_max*np.ones(mpc_T+1)]
-
-
-        lbx = -np.inf * np.ones(dx*(mpc_T+1)+du*mpc_T)
-        ubx = np.inf * np.ones(dx*(mpc_T+1)+du*mpc_T)
-
-        x = vertcat(reshape(x_sym[:,0:mpc_T+1],(dx*(mpc_T+1),1)),
-                    reshape(u_sym[:,0:mpc_T],(du*mpc_T,1)))
-
-        options = {
-                    'verbose': False,
-                    'ipopt.print_level': 0,
-                    'print_time': False,
-                    'ipopt.sb': 'yes',
-                    'print_time': 0,
-                    'ipopt.tol': 1e-4,
-                    'ipopt.max_iter': 4000,
-                    'ipopt.hessian_approximation': 'limited-memory'
-                }
-
-        nlp = {'x':x,'f':dl, 'g':const}
-        solver = nlpsol('solver','ipopt', nlp, options)
-
-        solver_input = {}
-        solver_input['lbx'] = lbx
-        solver_input['ubx'] = ubx
-        solver_input['lbg'] = lbg
-        solver_input['ubg'] = ubg
-
-        solver_output = solver(**solver_input)
-
-        sol = solver_output['x']
-
-        sol_evalf = np.squeeze(evalf(sol))
-        u = sol_evalf[-du*mpc_T:].reshape(-1,du)
-        x = sol_evalf[:-du*mpc_T].reshape(-1,dx)
-
-        return x, u
-
 
 
 
@@ -566,8 +468,8 @@ class FrenetKinBicycleDx(nn.Module):
 
 
     def penalty_d(self, d):
-        overshoot_pos = (d - 0.3*self.track_width).clamp(min=0)
-        overshoot_neg = (-d - 0.3*self.track_width).clamp(min=0)
+        overshoot_pos = (d - 0.5*self.max_track_width_perc*self.track_width).clamp(min=0)
+        overshoot_neg = (-d - 0.5*self.max_track_width_perc*self.track_width).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
         penalty_neg = torch.exp(overshoot_neg) - 1
         return self.factor_pen*(penalty_pos + penalty_neg)
@@ -647,25 +549,7 @@ def solve_casadi(q_np,p_np,x0_np,dx,du,control):
     u_star = u_curr_opt
 
     return x_star, u_star
-
-
-def solve_casadi_linear(p_np,x0_np,dx,du,control):
-
-    mpc_T = q_np.shape[1]
-
-    x_curr_opt, u_curr_opt = control.mpc_casadi_linear(p_np,x0_np,dx,du)
-
-    sigzero_curr_opt = np.expand_dims(x_curr_opt[[0],0].repeat(mpc_T+1), 1)
-    sigsiff_curr_opt = x_curr_opt[:,[0]]-x_curr_opt[0,0]
-
-    x_curr_opt_plus = np.concatenate((
-        x_curr_opt,sigzero_curr_opt,sigsiff_curr_opt), axis = 1)
-
-    x_star = x_curr_opt_plus[:-1]
-    u_star = u_curr_opt
-
-    return x_star, u_star
-    
+ 
 
 def process_single_casadi(sample, q, p, x0, dx, du, control):
     x, u = solve_casadi(
@@ -713,30 +597,3 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,1] = p[:,:,1] + q_p_pred[:,:,2]
 
     return q, p
-
-
-
-def q_and_p_linear(mpc_T, q_p_pred, p_manual):
-    # Cost order:
-    # [for casadi] sigma_diff, d, phi, v, a, delta
-    # [for model]  sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_pen, a, delta
-
-    n_Q, BS, _ = q_p_pred.shape
-
-    q_p_pred = q_p_pred.repeat(mpc_T//n_Q, 1, 1)
-
-    e = 1e-9
-
-    p = torch.zeros((mpc_T,BS,10)) + torch.tensor(p_manual).unsqueeze(1).float()
-
-    #sigma_diff
-    #q[:,:,5] = q[:,:,5] + q_p_pred[:,:,0].clamp(e)
-    p[:,:,5] = p[:,:,5] + q_p_pred[:,:,0]
-
-    #d
-    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,1]
-
-    #phi
-    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,2]
-
-    return p
