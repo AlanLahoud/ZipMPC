@@ -451,6 +451,8 @@ class FrenetKinBicycleDx(nn.Module):
 
         self.factor_pen = 50.
 
+        self.max_track_width_perc = 0.75
+
 
 
     def curv(self, sigma):
