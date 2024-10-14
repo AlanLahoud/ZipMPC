@@ -334,7 +334,7 @@ for ep in range(epochs):
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 x_pred_val, u_pred_val = utils_new.solve_casadi_parallel(
                     q_val_np_casadi, p_val_np_casadi, 
-                    x0_val, BS_val, dx, du, control) 
+                    x0_val.detach().numpy(), BS_val, dx, du, control) 
 
                 q_manual_casadi_val = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
                 p_manual_casadi_val = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
@@ -355,7 +355,7 @@ for ep in range(epochs):
                 # Ideal here would be to scale, but this is fine just to be in the same range
                 loss_val = 10*loss_dsigma_val.mean() + 10*loss_d_val.mean() + 0.1*loss_v_val.mean() + loss_delta_val.mean()
 
-                print('Train loss:', 
+                print('Validation loss:', 
                       round(10*loss_dsigma_val.mean().item(), 5),
                       round(10*loss_d_val.mean().item(), 5), 
                       #round(loss_phi.item(), 5), 
@@ -420,8 +420,7 @@ for ep in range(epochs):
 
                     lap_time = dt*steps
 
-                    print('current lap time: ', current_time)
-                    print('Pred lap time: ', lap_time)
+                    
 
                     if finished == 1 and lap_time < current_time:
                         current_time = lap_time
@@ -433,4 +432,7 @@ for ep in range(epochs):
                     finish_list[b] = finished
                     lap_time_list[b] = lap_time
 
+                
+                print('current lap time: ', current_time)
+                print('Pred lap time: ', lap_time)
                 print('Pred finish: ', finish_list)
