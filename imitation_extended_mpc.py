@@ -330,37 +330,27 @@ for ep in range(epochs):
                 q_val, p_val = utils_new.q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
                 Q_val = torch.diag_embed(q_val, offset=0, dim1=-2, dim2=-1)
                 
+                q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+                p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+                x_pred_val, u_pred_val = utils_new.solve_casadi_parallel(
+                    q_val_np_casadi, p_val_np_casadi, 
+                    x0_val, BS_val, dx, du, control) 
+
                 q_manual_casadi_val = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
                 p_manual_casadi_val = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
                 x_true_val, u_true_val = utils_new.solve_casadi_parallel(
                     np.repeat(q_manual_casadi_val, BS_val, 1), 
                     np.repeat(p_manual_casadi_val, BS_val, 1), 
                     x0_val.detach().numpy()[:,:6], BS_val, dx, du, control_H) 
-        
-                x_true_val_torch = torch.tensor(x_true_val, dtype=torch.float32)
-                u_true_val_torch = torch.tensor(u_true_val, dtype=torch.float32)
-                    
-                pred_x_val, pred_u_val, pred_objs = mpc.MPC(
-                            true_dx.n_state, true_dx.n_ctrl, mpc_T,
-                            u_lower=u_lower_val, u_upper=u_upper_val, u_init=u_init_val,
-                            lqr_iter=lqr_iter,
-                            verbose=0,
-                            exit_unconverged=False,
-                            detach_unconverged=False,
-                            linesearch_decay=.8,
-                            max_linesearch_iter=4,
-                            grad_method=grad_method,
-                            eps=eps,
-                            n_batch=None,
-                        )(x0_val, QuadCost(Q_val, p_val), true_dx)
+
                 
-                loss_dsigma_val = (x_true_val_torch[:mpc_T, :, 5] - pred_x_val[:, :, 5])**2
-                loss_d_val = (x_true_val_torch[:mpc_T, :, 1] - pred_x_val[:, :, 1])**2
-                loss_phi_val = (x_true_val_torch[:mpc_T, :, 2] - pred_x_val[:, :, 2])**2
-                loss_v_val = (x_true_val_torch[:mpc_T, :, 3] - pred_x_val[:, :, 3])**2
+                loss_dsigma_val = (x_true_val[:mpc_T, :, 5] - x_pred_val[:, :, 5])**2
+                loss_d_val = (x_true_val[:mpc_T, :, 1] - x_pred_val[:, :, 1])**2
+                loss_phi_val = (x_true_val[:mpc_T, :, 2] - x_pred_val[:, :, 2])**2
+                loss_v_val = (x_true_val[:mpc_T, :, 3] - x_pred_val[:, :, 3])**2
                 
-                loss_a_val = (u_true_val_torch[:mpc_T, :, 0] - pred_u_val[:, :, 0])**2
-                loss_delta_val = (u_true_val_torch[:mpc_T, :, 1] - pred_u_val[:, :, 1])**2
+                loss_a_val = (u_true_val[:mpc_T, :, 0] - u_pred_val[:, :, 0])**2
+                loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
                 loss_val = 10*loss_dsigma_val.mean() + 10*loss_d_val.mean() + 0.1*loss_v_val.mean() + loss_delta_val.mean()
