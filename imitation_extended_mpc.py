@@ -60,7 +60,7 @@ a_max = 2.0
 
 track_density = 300
 track_width = 0.5
-max_track_width_perc = 0.75
+max_track_width_perc = 0.70
 
 bound_d = 0.5*max_track_width_perc*track_width
 
