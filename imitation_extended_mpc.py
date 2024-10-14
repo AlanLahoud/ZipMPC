@@ -293,7 +293,7 @@ for ep in range(epochs):
         loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1])**2
 
         # Ideal here would be to scale, but this is fine just to be in the same range
-        loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_v.mean() + loss_delta.mean()
+        loss = loss_dsigma.mean() + loss_d.mean() #+ loss_v.mean() + loss_delta.mean()
 
         #if it%5==0:
         #    print('Train loss:', 
@@ -353,15 +353,15 @@ for ep in range(epochs):
                 loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = loss_dsigma_val.mean() + loss_d_val.mean() + loss_v_val.mean() + loss_delta_val.mean()
+                loss_val = loss_dsigma_val.mean() + loss_d_val.mean() #+ loss_v_val.mean() + loss_delta_val.mean()
                 
                 print('Validation loss:', 
                       round(loss_dsigma_val.mean().item(), 5),
                       round(loss_d_val.mean().item(), 5), 
                       #round(loss_phi.item(), 5), 
                       #round(0.1*loss_a.item(), 5), 
-                      round(loss_v_val.mean().item(), 5), 
-                      round(loss_delta_val.mean().item(), 5), 
+                      #round(loss_v_val.mean().item(), 5), 
+                      #round(loss_delta_val.mean().item(), 5), 
                       round(loss_val.item(), 5))
                 
 
