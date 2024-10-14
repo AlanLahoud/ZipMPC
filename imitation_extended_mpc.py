@@ -171,7 +171,7 @@ for b in range(BS_test):
         if x0_b_manual[0]>track_coord[2].max().numpy()/2:
             finished=1
 
-        if x0_b_manual[1]>bound_d or x0_b_manual[1]<-bound_d or steps>max_steps:
+        if x0_b_manual[1]>bound_d+0.001 or x0_b_manual[1]<-bound_d-0.001 or steps>max_steps:
             crashed=1
 
         steps = steps+1
@@ -210,7 +210,7 @@ for b in range(BS_test):
         if x0_b_manual[0]>track_coord[2].max().numpy()/2:
             finished=1
 
-        if x0_b_manual[1]>bound_d or x0_b_manual[1]<-bound_d or steps>max_steps:
+        if x0_b_manual[1]>bound_d+0.001 or x0_b_manual[1]<-bound_d-0.001 or steps>max_steps:
             crashed=1
 
         steps = steps+1
@@ -383,7 +383,7 @@ for ep in range(epochs):
                         if x0_b_pred[0]>track_coord[2].max().numpy()/2:
                             finished=1
 
-                        if x0_b_pred[1]>bound_d or x0_b_pred[1]<-bound_d or steps>max_steps:
+                        if x0_b_pred[1]>bound_d+0.001 or x0_b_pred[1]<-bound_d-0.001 or steps>max_steps:
                             crashed=1
 
                         steps = steps+1
