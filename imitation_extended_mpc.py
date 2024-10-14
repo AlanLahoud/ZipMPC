@@ -118,7 +118,7 @@ grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
 #opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-5)
-opt = torch.optim.RMSprop(model.parameters(), lr=0.00005)
+opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
@@ -353,11 +353,11 @@ for ep in range(epochs):
                 loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 10*loss_dsigma_val.mean() + 10*loss_d_val.mean() + loss_v_val.mean() + loss_delta_val.mean()
+                loss_val = loss_dsigma_val.mean() + loss_d_val.mean() + loss_v_val.mean() + loss_delta_val.mean()
                 
                 print('Validation loss:', 
-                      round(100*loss_dsigma_val.mean().item(), 5),
-                      round(100*loss_d_val.mean().item(), 5), 
+                      round(loss_dsigma_val.mean().item(), 5),
+                      round(loss_d_val.mean().item(), 5), 
                       #round(loss_phi.item(), 5), 
                       #round(0.1*loss_a.item(), 5), 
                       round(loss_v_val.mean().item(), 5), 
