@@ -334,7 +334,7 @@ for ep in range(epochs):
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 x_pred_val, u_pred_val = utils_new.solve_casadi_parallel(
                     q_val_np_casadi, p_val_np_casadi, 
-                    x0_val.detach().numpy(), BS_val, dx, du, control) 
+                    x0_val.detach().numpy()[:,:6], BS_val, dx, du, control) 
 
                 q_manual_casadi_val = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
                 p_manual_casadi_val = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
