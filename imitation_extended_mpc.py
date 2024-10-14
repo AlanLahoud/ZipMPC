@@ -342,7 +342,7 @@ for ep in range(epochs):
                     
                 pred_x_val, pred_u_val, pred_objs = mpc.MPC(
                             true_dx.n_state, true_dx.n_ctrl, mpc_T,
-                            u_lower=u_lower, u_upper=u_upper, u_init=u_init,
+                            u_lower=u_lower_val, u_upper=u_upper_val, u_init=u_init_val,
                             lqr_iter=lqr_iter,
                             verbose=0,
                             exit_unconverged=False,
