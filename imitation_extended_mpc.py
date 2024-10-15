@@ -294,6 +294,9 @@ for ep in range(epochs):
 
         # Ideal here would be to scale
         loss = loss_dsigma.mean() + loss_d.mean() + loss_phi.mean() + loss_v.mean() + loss_a.mean() + loss_delta.mean()
+
+        import pdb
+        pdb.set_trace()
         
         opt.zero_grad()
         loss.backward()
@@ -418,4 +421,4 @@ for ep in range(epochs):
                     finish_list[b] = finished
                     lap_time_list[b] = lap_time
      
-                print(f'current lap time: {current_time} \t Pred lap time: {lap_time[0]} \t Finished: {finished}')
+                print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
