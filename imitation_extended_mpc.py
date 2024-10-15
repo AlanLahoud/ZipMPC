@@ -277,7 +277,7 @@ for ep in range(epochs):
                     verbose=1,
                     exit_unconverged=False,
                     detach_unconverged=False,
-                    linesearch_decay=.1,
+                    linesearch_decay=2.0,
                     max_linesearch_iter=4,
                     grad_method=grad_method,
                     eps=eps,
