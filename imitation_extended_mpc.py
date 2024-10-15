@@ -295,8 +295,8 @@ for ep in range(epochs):
         # Ideal here would be to scale
         loss = loss_dsigma.mean() + loss_d.mean() + loss_phi.mean() + loss_v.mean() + loss_a.mean() + loss_delta.mean()
 
-        import pdb
-        pdb.set_trace()
+        #import pdb
+        #pdb.set_trace()
         
         opt.zero_grad()
         loss.backward()
