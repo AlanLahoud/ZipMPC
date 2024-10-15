@@ -524,7 +524,7 @@ class FrenetKinBicycleDx(nn.Module):
         phi = phi + self.dt * dphi
         v = v + self.dt * dv
 
-        #v = torch.clamp(v, 0, self.v_max)
+        v = torch.clamp(v, 0, self.v_max)
 
         sigma_diff = sigma - sigma_0
 
