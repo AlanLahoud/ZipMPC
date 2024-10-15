@@ -274,7 +274,7 @@ for ep in range(epochs):
                     true_dx.n_state, true_dx.n_ctrl, mpc_T,
                     u_lower=u_lower, u_upper=u_upper, u_init=u_init,
                     lqr_iter=lqr_iter,
-                    verbose=0,
+                    verbose=1,
                     exit_unconverged=False,
                     detach_unconverged=False,
                     linesearch_decay=.8,
@@ -292,18 +292,8 @@ for ep in range(epochs):
         loss_a = (u_true_torch[:mpc_T, :, 0] - pred_u[:, :, 0])**2
         loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1])**2
 
-        # Ideal here would be to scale, but this is fine just to be in the same range
+        # Ideal here would be to scale
         loss = loss_dsigma.mean() + loss_d.mean() + loss_phi.mean() + loss_v.mean() #+ loss_v.mean() + loss_delta.mean()
-
-        #if it%5==0:
-        #    print('Train loss:', 
-        #          round(loss_dsigma.item(), 5),
-        #          round(10*loss_d.item(), 5), 
-        #          #round(loss_phi.item(), 5), 
-        #          #round(0.1*loss_a.item(), 5), 
-        #          round(0.1*loss_v.item(), 5), 
-        #          round(loss_delta.item(), 5), 
-        #          round(loss.item(), 5))
         
         opt.zero_grad()
         loss.backward()
