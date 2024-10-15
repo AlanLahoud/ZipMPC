@@ -274,10 +274,10 @@ for ep in range(epochs):
                     true_dx.n_state, true_dx.n_ctrl, mpc_T,
                     u_lower=u_lower, u_upper=u_upper, u_init=u_init,
                     lqr_iter=lqr_iter,
-                    verbose=1,
+                    verbose=0,
                     exit_unconverged=False,
                     detach_unconverged=False,
-                    linesearch_decay=2.0,
+                    linesearch_decay=1.5,
                     max_linesearch_iter=4,
                     grad_method=grad_method,
                     eps=eps,
@@ -349,14 +349,11 @@ for ep in range(epochs):
                       round(loss_dsigma_val.mean().item(), 5),
                       round(loss_d_val.mean().item(), 5), 
                       round(loss_phi_val.mean().item(), 5), 
-                      round(loss_a.mean().item(), 5), 
                       round(loss_v_val.mean().item(), 5), 
+                      round(loss_a_val.mean().item(), 5), 
                       round(loss_delta_val.mean().item(), 5), 
                       round(loss_val.item(), 5))
-                
-
-
-            
+       
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
             with torch.no_grad():
 
@@ -409,8 +406,7 @@ for ep in range(epochs):
                         steps = steps+1
 
                     lap_time = dt*steps
-
-                    
+                  
 
                     if finished == 1 and lap_time < current_time:
                         current_time = lap_time
@@ -421,8 +417,5 @@ for ep in range(epochs):
 
                     finish_list[b] = finished
                     lap_time_list[b] = lap_time
-
-                
-                print('current lap time: ', current_time)
-                print('Pred lap time: ', lap_time)
-                print('Pred finish: ', finish_list)
+     
+                print(f'current lap time: {current_time} \t Pred lap time: {lap_time[0]} \t Finished: {finished}')
