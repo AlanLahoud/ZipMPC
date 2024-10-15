@@ -274,7 +274,7 @@ for ep in range(epochs):
                     true_dx.n_state, true_dx.n_ctrl, mpc_T,
                     u_lower=u_lower, u_upper=u_upper, u_init=u_init,
                     lqr_iter=lqr_iter,
-                    verbose=0,
+                    verbose=1,
                     exit_unconverged=False,
                     detach_unconverged=False,
                     linesearch_decay=1.5,
