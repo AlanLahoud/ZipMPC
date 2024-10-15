@@ -112,7 +112,7 @@ u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mp
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.01
-lqr_iter = 30
+lqr_iter = 50
 
 grad_method = GradMethods.AUTO_DIFF
 
@@ -274,7 +274,7 @@ for ep in range(epochs):
                     true_dx.n_state, true_dx.n_ctrl, mpc_T,
                     u_lower=u_lower, u_upper=u_upper, u_init=u_init,
                     lqr_iter=lqr_iter,
-                    verbose=1,
+                    verbose=0,
                     exit_unconverged=False,
                     detach_unconverged=False,
                     linesearch_decay=1.5,
