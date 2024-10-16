@@ -591,16 +591,16 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     p = torch.zeros((mpc_T,BS,10)) + torch.tensor(p_manual).unsqueeze(1).float()
 
     #sigma_diff
-    q[:,:,5] = q[:,:,5] + q_p_pred[:,:,0].clamp(e)
-    p[:,:,5] = p[:,:,5] + q_p_pred[:,:,1]
+    #q[:,:,5] = q[:,:,5] + q_p_pred[:,:,0].clamp(e)
+    #p[:,:,5] = p[:,:,5] + q_p_pred[:,:,1]
 
     #d
-    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,2]).clamp(e + 0.5)
-    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,3]
+    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,0]).clamp(e + 0.5)
+    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,1]
 
     #phi
-    q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,4]).clamp(e + 0.5)
-    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,5]
+    q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,0]).clamp(e + 0.5)
+    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,1]
 
     #a
     #q[:,:,8] = (q[:,:,1] + q_p_pred[:,:,6]).clamp(e + 0.5)
