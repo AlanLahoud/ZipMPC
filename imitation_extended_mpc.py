@@ -293,7 +293,7 @@ for ep in range(epochs):
         loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1])**2
 
         # Ideal here would be to scale
-        loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + 10*loss_phi.mean() + loss_v.mean() + loss_a.mean() + loss_delta.mean()
+        loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + 10*loss_phi.mean() + loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
         #import pdb
         #pdb.set_trace()
@@ -346,15 +346,15 @@ for ep in range(epochs):
                 loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 10*loss_dsigma_val.mean() + 10*loss_d_val.mean() + 10*loss_phi_val.mean() + loss_v_val.mean() + loss_a_val.mean() + loss_delta_val.mean()
+                loss_val = 10*loss_dsigma_val.mean() + 10*loss_d_val.mean() + 10*loss_phi_val.mean() + loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
                 
                 print('Validation loss:', 
                       round(10*loss_dsigma_val.mean().item(), 5),
                       round(10*loss_d_val.mean().item(), 5), 
                       round(10*loss_phi_val.mean().item(), 5), 
                       round(loss_v_val.mean().item(), 5), 
-                      round(loss_a_val.mean().item(), 5), 
-                      round(loss_delta_val.mean().item(), 5), 
+                      #round(loss_a_val.mean().item(), 5), 
+                      #round(loss_delta_val.mean().item(), 5), 
                       round(loss_val.item(), 5))
        
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
