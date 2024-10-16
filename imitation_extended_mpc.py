@@ -296,10 +296,10 @@ for ep in range(epochs):
         loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_phi.mean() + loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
         if it%10==0:
-            d_pen = true_dx.penalty_d(x_true_torch[:mpc_T, :, 1])
-            v_pen = true_dx.penalty_v(x_true_torch[:mpc_T, :, 3])
+            d_pen = true_dx.penalty_d(pred_x[:, :, 1])
+            v_pen = true_dx.penalty_v(pred_x[:, :, 3])
             print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
-            print(x_true_torch[:mpc_T, :, 3].max().item())
+            print(pred_x[:, :, 3].max().item())
 
         
         opt.zero_grad()
