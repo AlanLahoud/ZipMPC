@@ -428,6 +428,6 @@ for ep in range(epochs):
                     lap_time_list[b] = lap_time
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
-                #if lap_time>8.2:
-                #    import pdb
-                #    pdb.set_trace()
+                if lap_time>8.2:
+                    import pdb
+                    pdb.set_trace()
