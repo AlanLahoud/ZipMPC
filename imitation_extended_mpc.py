@@ -20,7 +20,7 @@ def parse_arguments():
 
     parser.add_argument('--mpc_T', type=int, default=15)
     parser.add_argument('--mpc_H', type=int, default=45)
-    parser.add_argument('--n_Q', type=int, default=15)
+    parser.add_argument('--n_Q', type=int, default=5)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.5)
     parser.add_argument('--delta_max', type=float, default=0.4)
@@ -117,7 +117,7 @@ lqr_iter = 60
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 6, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -302,6 +302,7 @@ for ep in range(epochs):
             v_pen = true_dx.penalty_v(pred_x[:, :, 3])
             print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
             print(pred_x[:, :, 3].max().item())
+            print(p.mean(0).mean(0))
 
         
         opt.zero_grad()
@@ -428,6 +429,6 @@ for ep in range(epochs):
                     lap_time_list[b] = lap_time
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
-                if lap_time>8.2:
-                    import pdb
-                    pdb.set_trace()
+                #if lap_time>8.2:
+                #    import pdb
+                #    pdb.set_trace()
