@@ -296,10 +296,9 @@ for ep in range(epochs):
         loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_phi.mean() + loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
         if it%10==0:
-            import pdb
-            pdb.set_trace()
-            d_pen = true_dx.penalty_d(x_true_torch[:mpc_T, 0, 1])
-            v_ub = true_dx.penalty_v(x_true_torch[:mpc_T, 0, 3])
+            d_pen = true_dx.penalty_d(x_true_torch[:mpc_T, :, 1])
+            v_pen = true_dx.penalty_v(x_true_torch[:mpc_T, :, 3])
+            print(f'd_pen: {d_pen.mean().item()} \t v_pen: {v_pen.mean().item()}')
 
         
         opt.zero_grad()
