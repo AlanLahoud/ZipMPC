@@ -299,7 +299,7 @@ for ep in range(epochs):
             d_pen = true_dx.penalty_d(x_true_torch[:mpc_T, :, 1])
             v_pen = true_dx.penalty_v(x_true_torch[:mpc_T, :, 3])
             print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
-            print(v_pen.max().item())
+            print(x_true_torch[:mpc_T, :, 3].max().item())
 
         
         opt.zero_grad()
