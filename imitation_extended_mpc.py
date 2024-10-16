@@ -295,8 +295,12 @@ for ep in range(epochs):
         # Ideal here would be to scale
         loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_phi.mean() + loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
-        #import pdb
-        #pdb.set_trace()
+        if it%10==0:
+            import pdb
+            pdb.set_trace()
+            d_pen = true_dx.penalty_d(x_true_torch[:mpc_T, 0, 1])
+            v_ub = true_dx.penalty_v(x_true_torch[:mpc_T, 0, 3])
+
         
         opt.zero_grad()
         loss.backward()
@@ -351,7 +355,7 @@ for ep in range(epochs):
                 print('Validation loss:', 
                       round(10*loss_dsigma_val.mean().item(), 5),
                       round(10*loss_d_val.mean().item(), 5), 
-                      round(loss_phi_val.mean().item(), 5), 
+                      round(10*loss_phi_val.mean().item(), 5), 
                       round(loss_v_val.mean().item(), 5), 
                       #round(loss_a_val.mean().item(), 5), 
                       #round(loss_delta_val.mean().item(), 5), 
