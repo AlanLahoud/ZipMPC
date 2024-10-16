@@ -117,7 +117,7 @@ lqr_iter = 60
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 6, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -413,9 +413,9 @@ for ep in range(epochs):
                             crashed=1
 
                         steps = steps+1
-
+                        
                     lap_time = dt*steps
-                  
+                    
 
                     if finished == 1 and lap_time < current_time:
                         current_time = lap_time
@@ -428,6 +428,6 @@ for ep in range(epochs):
                     lap_time_list[b] = lap_time
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
-                if lap_time>8.2:
-                    import pdb
-                    pdb.set_trace()
+                #if lap_time>8.2:
+                #    import pdb
+                #    pdb.set_trace()
