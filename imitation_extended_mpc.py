@@ -107,7 +107,7 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 8
+BS = 16
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -296,8 +296,8 @@ for ep in range(epochs):
         loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_phi.mean() + loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
         if it%10==0:
-            import pdb
-            pdb.set_trace()
+            #import pdb
+            #pdb.set_trace()
             d_pen = true_dx.penalty_d(pred_x[:, :, 1])
             v_pen = true_dx.penalty_v(pred_x[:, :, 3])
             print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
