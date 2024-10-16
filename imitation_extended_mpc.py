@@ -298,7 +298,7 @@ for ep in range(epochs):
         if it%10==0:
             d_pen = true_dx.penalty_d(x_true_torch[:mpc_T, :, 1])
             v_pen = true_dx.penalty_v(x_true_torch[:mpc_T, :, 3])
-            print(f'd_pen: {d_pen.mean().item()} \t v_pen: {v_pen.mean().item()}')
+            print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
 
         
         opt.zero_grad()
