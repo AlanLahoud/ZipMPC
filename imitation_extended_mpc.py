@@ -299,6 +299,7 @@ for ep in range(epochs):
             d_pen = true_dx.penalty_d(x_true_torch[:mpc_T, :, 1])
             v_pen = true_dx.penalty_v(x_true_torch[:mpc_T, :, 3])
             print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
+            print(v_pen.max().item())
 
         
         opt.zero_grad()
@@ -354,7 +355,7 @@ for ep in range(epochs):
                 print('Validation loss:', 
                       round(10*loss_dsigma_val.mean().item(), 5),
                       round(10*loss_d_val.mean().item(), 5), 
-                      round(10*loss_phi_val.mean().item(), 5), 
+                      round(loss_phi_val.mean().item(), 5), 
                       round(loss_v_val.mean().item(), 5), 
                       #round(loss_a_val.mean().item(), 5), 
                       #round(loss_delta_val.mean().item(), 5), 
