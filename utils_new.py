@@ -478,7 +478,7 @@ class FrenetKinBicycleDx(nn.Module):
 
     def penalty_v(self, v):
         overshoot_pos = (v - self.v_max).clamp(min=0)
-        overshoot_neg = (-v + 0.001).clamp(min=0)
+        overshoot_neg = (-v - 0.001).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
         penalty_neg = torch.exp(overshoot_neg) - 1
         return self.factor_pen*(penalty_pos + penalty_neg)
