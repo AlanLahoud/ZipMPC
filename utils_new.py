@@ -599,8 +599,8 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,1] = p[:,:,1] + q_p_pred[:,:,1]
 
     #phi
-    q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,0]).clamp(e + 0.5)
-    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,1]
+    q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,2]).clamp(e + 0.5)
+    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,3]
 
     #a
     #q[:,:,8] = (q[:,:,1] + q_p_pred[:,:,6]).clamp(e + 0.5)
