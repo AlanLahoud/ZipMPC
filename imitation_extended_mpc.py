@@ -249,7 +249,9 @@ for ep in range(epochs):
         u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
         u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 
-        x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, num_patches)
+        #x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, num_patches)
+
+        x0 = utils_new.sample_init(BS, true_dx)  
         
         x0_diff = x0.clone().float()
 
