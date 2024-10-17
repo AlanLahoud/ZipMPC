@@ -60,7 +60,7 @@ a_max = 2.0
 
 track_density = 300
 track_width = 0.5
-max_track_width_perc_casadi = 0.80
+max_track_width_perc_casadi = 0.75
 
 bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
 
@@ -296,8 +296,8 @@ for ep in range(epochs):
         loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_phi.mean() + loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
         if it%10==0:
-            #import pdb
-            #pdb.set_trace()
+            import pdb
+            pdb.set_trace()
             d_pen = true_dx.penalty_d(pred_x[:, :, 1])
             v_pen = true_dx.penalty_v(pred_x[:, :, 3])
             print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')

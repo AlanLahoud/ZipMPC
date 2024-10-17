@@ -70,7 +70,7 @@ class CasadiControl():
 
         self.mpc_T = int(params[8])
 
-        self.max_track_width_perc = 0.80
+        self.max_track_width_perc = 0.75
 
     def sigmoid(self, x):
         return (tanh(x/2)+1.)/2
