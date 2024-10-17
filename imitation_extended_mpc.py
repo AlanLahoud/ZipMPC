@@ -62,7 +62,7 @@ track_density = 300
 track_width = 0.5
 max_track_width_perc_casadi = 0.80
 
-bound_d_casadi = 0.5*max_track_width_perc*track_width
+bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
 
 t_track = 0.3
 init_track = [0,0,0]
