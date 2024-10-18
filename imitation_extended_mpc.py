@@ -277,8 +277,7 @@ for ep in range(epochs):
         q_manual_casadi_S = torch.permute(q[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
         p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
         x_true_S, u_true_S = utils_new.solve_casadi_parallel(
-            np.repeat(q_manual_casadi_S, BS, 1), 
-            np.repeat(p_manual_casadi_S, BS, 1), 
+            q_manual_casadi_S, p_manual_casadi_S, 
             x0_diff.detach().numpy()[:,:6], BS, dx, du, control) 
 
         x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
