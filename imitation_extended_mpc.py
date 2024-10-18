@@ -107,7 +107,7 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 64
+BS = 128
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -231,6 +231,7 @@ p_manual_casadi = p_manual[:,idx_to_casadi].T
 # set fastest lap_time and corresponding params
 if finished == 1:
     current_time = lap_time
+    q_manual_casadi = q_manual_casadi
     p_current_casadi = p_manual_casadi
     x_current_full = x_manual_full
 else:
@@ -308,7 +309,12 @@ for ep in range(epochs):
         # Ideal here would be to scale
         loss = 10*loss_dsigma.mean() + 10*loss_d.mean() #+ loss_phi.mean() + loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
-        print(((x_true_torch_S[:, :, 0] - pred_x[:, :, 0])**2).mean().item())
+        diff_sigs = ((x_true_torch_S[:, :, 0] - pred_x[:, :, 0])**2).mean().item()
+        print(diff_sigs)
+
+        if diff_sigs> 0.0001:
+            import pdb
+            pdb.set_trace()
         
         if it%10==0:
             #import pdb
