@@ -311,8 +311,8 @@ for ep in range(epochs):
         print(((x_true_torch_S[:, :, 0] - pred_x[:, :, 0])**2).mean().item())
         
         if it%10==0:
-            #import pdb
-            #pdb.set_trace()
+            import pdb
+            pdb.set_trace()
             d_pen = true_dx.penalty_d(pred_x[:, :, 1])
             v_pen = true_dx.penalty_v(pred_x[:, :, 3])
             print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
