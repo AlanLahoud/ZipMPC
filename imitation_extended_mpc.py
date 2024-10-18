@@ -249,9 +249,9 @@ for ep in range(epochs):
         u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
         u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 
-        #x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, num_patches)
+        x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, num_patches)
 
-        x0 = utils_new.sample_init(BS, true_dx)  
+        #x0 = utils_new.sample_init(BS, true_dx)  
         
         x0_diff = x0.clone().float()
 
@@ -271,6 +271,18 @@ for ep in range(epochs):
 
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
+
+
+        # T E S T  MPC SHORT
+        q_manual_casadi_S = torch.permute(q[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+        p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+        x_true_S, u_true_S = utils_new.solve_casadi_parallel(
+            np.repeat(q_manual_casadi_S, BS, 1), 
+            np.repeat(p_manual_casadi_S, BS, 1), 
+            x0_diff.detach().numpy()[:,:6], BS, dx, du, control) 
+
+        x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
+        u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)      
             
         pred_x, pred_u, pred_objs = mpc.MPC(
                     true_dx.n_state, true_dx.n_ctrl, mpc_T,
@@ -298,8 +310,8 @@ for ep in range(epochs):
         loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_phi.mean() + loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
         if it%10==0:
-            #import pdb
-            #pdb.set_trace()
+            import pdb
+            pdb.set_trace()
             d_pen = true_dx.penalty_d(pred_x[:, :, 1])
             v_pen = true_dx.penalty_v(pred_x[:, :, 3])
             print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
