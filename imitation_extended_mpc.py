@@ -312,9 +312,9 @@ for ep in range(epochs):
         diff_sigs = ((x_true_torch_S[:, :, 0] - pred_x[:, :, 0])**2).mean().item()
         print(diff_sigs)
 
-        if diff_sigs> 0.0001:
-            import pdb
-            pdb.set_trace()
+        #if diff_sigs> 0.0001:
+        #    import pdb
+        #    pdb.set_trace()
         
         if it%10==0:
             #import pdb
