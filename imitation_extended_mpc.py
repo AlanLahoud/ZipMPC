@@ -49,7 +49,7 @@ seed_n = 0
 torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
-k_curve = 30.
+k_curve = 15.
 dt = 0.04
 
 l_f = l_r
