@@ -70,7 +70,7 @@ class CasadiControl():
 
         self.mpc_T = int(params[8])
 
-        self.max_track_width_perc = 0.75
+        self.max_track_width_perc = 0.72
 
     def sigmoid(self, x):
         return (tanh(x/2)+1.)/2
@@ -451,7 +451,7 @@ class FrenetKinBicycleDx(nn.Module):
 
         self.factor_pen = 500000.
 
-        self.max_track_width_perc = 0.75
+        self.max_track_width_perc = 0.72
 
 
 
