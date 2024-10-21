@@ -100,7 +100,7 @@ track_coord = torch.from_numpy(np.vstack(
 true_dx = utils_new.FrenetKinBicycleDx(track_coord, params, 'cpu')
 
 
-x0 = torch.tensor([0.0, 0.1, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])
+x0 = torch.tensor([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])
 u0 = torch.tensor([0.0, 0.0])
 
 
@@ -112,12 +112,12 @@ u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mp
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.001
-lqr_iter = 50
+lqr_iter = 60
 
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 5, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-4)
+opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
