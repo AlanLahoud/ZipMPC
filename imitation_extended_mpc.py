@@ -275,14 +275,14 @@ for ep in range(epochs):
 
 
         # T E S T  MPC SHORT
-        q_manual_casadi_S = torch.permute(q[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-        p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-        x_true_S, u_true_S = utils_new.solve_casadi_parallel(
-            q_manual_casadi_S, p_manual_casadi_S, 
-            x0_diff.detach().numpy()[:,:6], BS, dx, du, control) 
+        #q_manual_casadi_S = torch.permute(q[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+        #p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+        #x_true_S, u_true_S = utils_new.solve_casadi_parallel(
+        #    q_manual_casadi_S, p_manual_casadi_S, 
+        #    x0_diff.detach().numpy()[:,:6], BS, dx, du, control) 
 
-        x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
-        u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)      
+        #x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
+        #u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)      
             
         pred_x, pred_u, pred_objs = mpc.MPC(
                     true_dx.n_state, true_dx.n_ctrl, mpc_T,
