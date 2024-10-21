@@ -298,13 +298,13 @@ for ep in range(epochs):
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
-        loss_dsigma = (x_true_torch[:mpc_T, :, 5] - pred_x[:, :, 5])**2
-        loss_d = (x_true_torch[:mpc_T, :, 1] - pred_x[:, :, 1])**2
-        loss_phi = (x_true_torch[:mpc_T, :, 2] - pred_x[:, :, 2])**2
-        loss_v = (x_true_torch[:mpc_T, :, 3] - pred_x[:, :, 3])**2
+        loss_dsigma = (x_true_torch[:mpc_T, :, 5] - pred_x[:, :, 5]).abs()
+        loss_d = (x_true_torch[:mpc_T, :, 1] - pred_x[:, :, 1]).abs()
+        loss_phi = (x_true_torch[:mpc_T, :, 2] - pred_x[:, :, 2]).abs()
+        loss_v = (x_true_torch[:mpc_T, :, 3] - pred_x[:, :, 3]).abs()
         
-        loss_a = (u_true_torch[:mpc_T, :, 0] - pred_u[:, :, 0])**2
-        loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1])**2
+        loss_a = (u_true_torch[:mpc_T, :, 0] - pred_u[:, :, 0]).abs()
+        loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1]).abs()
 
         # Ideal here would be to scale
         loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_phi.mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
