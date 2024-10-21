@@ -116,7 +116,7 @@ lqr_iter = 60
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.SimpleNN(mpc_H, n_Q, 9, max_p)
+model = utils_new.SimpleNN(mpc_H, n_Q, 3, max_p)
 opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
