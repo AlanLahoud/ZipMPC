@@ -380,7 +380,7 @@ def sample_init_traj_dist(BS, dyn, traj, num_patches, sn=None):
     # Note that we clamp the sampled d and v values to stay in their constraints. Sampling constraint violating
     # states would not make sense.
 
-    d_sample = torch.clamp(torch.from_numpy(traj_sample[:,1].reshape(-1,1))+torch.randint(int(-.02*di), int(.02*di), (BS,1), generator=gen)/di,-0.175,0.175)
+    d_sample = torch.clamp(torch.from_numpy(traj_sample[:,1].reshape(-1,1))+torch.randint(int(-.02*di), int(.02*di), (BS,1), generator=gen)/di,-0.18,0.18)
     phi_sample = torch.from_numpy(traj_sample[:,2].reshape(-1,1))+torch.randint(int(-0.04*di), int(0.04*di), (BS,1), generator=gen)/di
     v_sample = torch.clamp(torch.from_numpy(traj_sample[:,3].reshape(-1,1))+torch.randint(int(-0.1*di), int(0.1*di), (BS,1), generator=gen)/di,0.0,1.5)
 
@@ -451,7 +451,7 @@ class FrenetKinBicycleDx(nn.Module):
 
         self.factor_pen = 500000.
 
-        self.max_track_width_perc = 0.68
+        self.max_track_width_perc = 0.72
 
 
 
