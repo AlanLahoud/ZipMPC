@@ -309,8 +309,8 @@ for ep in range(epochs):
         # Ideal here would be to scale
         loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_phi.mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
-        diff_sigs = ((x_true_torch_S[:, :, 0] - pred_x[:, :, 0])**2).mean().item()
-        print(diff_sigs)
+        #diff_sigs = ((x_true_torch_S[:, :, 0] - pred_x[:, :, 0])**2).mean().item()
+        #print(diff_sigs)
 
         #if diff_sigs> 0.0001:
         #    import pdb
@@ -321,9 +321,9 @@ for ep in range(epochs):
             #pdb.set_trace()
             d_pen = true_dx.penalty_d(pred_x[:, :, 1])
             v_pen = true_dx.penalty_v(pred_x[:, :, 3])
-            print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
-            print(pred_x[:, :, 3].max().item())
-            print(pred_x[:, :, 1].max().item())
+            #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
+            #print(pred_x[:, :, 3].max().item())
+            #print(pred_x[:, :, 1].max().item())
             #print(p.mean(0).mean(0))
 
         
