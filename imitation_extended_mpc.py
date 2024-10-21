@@ -20,7 +20,7 @@ def parse_arguments():
 
     parser.add_argument('--mpc_T', type=int, default=20)
     parser.add_argument('--mpc_H', type=int, default=60)
-    parser.add_argument('--n_Q', type=int, default=5)
+    parser.add_argument('--n_Q', type=int, default=10)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.5)
     parser.add_argument('--delta_max', type=float, default=0.4)
@@ -117,12 +117,12 @@ lqr_iter = 60
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.SimpleNN(mpc_H, n_Q, 5, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-3)
+opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -0.1, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
 Q_manual_H = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_H, 0)
