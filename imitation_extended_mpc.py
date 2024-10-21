@@ -18,8 +18,8 @@ from sys import exit
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--mpc_T', type=int, default=15)
-    parser.add_argument('--mpc_H', type=int, default=45)
+    parser.add_argument('--mpc_T', type=int, default=20)
+    parser.add_argument('--mpc_H', type=int, default=60)
     parser.add_argument('--n_Q', type=int, default=5)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.5)
@@ -49,8 +49,8 @@ seed_n = 0
 torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
-k_curve = 20.
-dt = 0.04
+k_curve = 25.
+dt = 0.03
 
 l_f = l_r
 
