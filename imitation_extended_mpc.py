@@ -60,7 +60,7 @@ a_max = 2.0
 
 track_density = 300
 track_width = 0.5
-max_track_width_perc_casadi = 0.72
+max_track_width_perc_casadi = 0.68
 
 bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
 
@@ -323,6 +323,7 @@ for ep in range(epochs):
             v_pen = true_dx.penalty_v(pred_x[:, :, 3])
             print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
             print(pred_x[:, :, 3].max().item())
+            print(pred_x[:, :, 1].max().item())
             #print(p.mean(0).mean(0))
 
         
