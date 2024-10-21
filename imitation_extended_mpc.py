@@ -49,7 +49,7 @@ seed_n = 0
 torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
-k_curve = 15.
+k_curve = 20.
 dt = 0.04
 
 l_f = l_r
@@ -60,7 +60,7 @@ a_max = 2.0
 
 track_density = 300
 track_width = 0.5
-max_track_width_perc_casadi = 0.75
+max_track_width_perc_casadi = 0.72
 
 bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
 
@@ -107,12 +107,12 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 128
+BS = 64
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.001
-lqr_iter = 60
+lqr_iter = 50
 
 grad_method = GradMethods.AUTO_DIFF
 
