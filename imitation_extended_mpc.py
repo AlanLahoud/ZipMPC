@@ -238,7 +238,6 @@ else:
     sys.exit("Manual parameter choice not feasible")
 
 
-
 for ep in range(epochs):
 
     print(f'Epoch {ep}, Update reference path')
@@ -256,11 +255,11 @@ for ep in range(epochs):
         #pdb.set_trace()
 
         npat = num_patches
-        if it+2 < npat:
-            npat = it + 2
+        if ep+2 < npat:
+            npat = ep + 2
         
-        x0_1 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_star[:(it+2)*4], npat)
-        x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, np.transpose(x_manual_full_H)[:(it+2)*4], npat)
+        x0_1 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_star[:npat*30], npat)
+        x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, np.transpose(x_manual_full_H)[:npat*30], npat)
 
         x0 = torch.vstack((x0_1, x0_2))
         
