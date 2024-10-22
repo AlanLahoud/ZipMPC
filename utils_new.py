@@ -256,7 +256,7 @@ class ImprovedNN(nn.Module):
         self.mpc_T = mpc_T
 
     def forward(self, x):
-        time_series, global_context = x[:, :-3], x[:, -3:]
+        global_context, time_series = x[:, :3], x[:, 3:]
         time_series = time_series.unsqueeze(1)  # For Conv1D input [batch_size, channels, seq_len]
         time_series = self.activation(self.conv1(time_series)).view(time_series.size(0), -1)
         
