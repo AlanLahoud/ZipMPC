@@ -251,7 +251,7 @@ for ep in range(epochs):
         u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 
         x0_1 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_star, num_patches)
-        x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_manual_full_H, num_patches)
+        x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, np.transpose(x_manual_full_H), num_patches)
 
         x0 = torch.vstack((x0_1, x0_2))
         
