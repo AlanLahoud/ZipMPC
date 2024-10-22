@@ -265,7 +265,7 @@ class ImprovedNN(nn.Module):
         x = self.activation(self.fc2(x))
         x = self.fc3(x)
         x = x.reshape(self.mpc_T, -1, self.O)
-        return x / 5
+        return x
         
 
 def sample_init(BS, dyn, sn=None):
@@ -627,8 +627,8 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,1] = p[:,:,1] + q_p_pred[:,:,2]
 
     #phi
-    #q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,3]).clamp(e)
-    #p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
+    q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,3]).clamp(e)
+    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
 
     #a
     #q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)

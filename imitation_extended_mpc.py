@@ -116,8 +116,8 @@ lqr_iter = 60
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.ImprovedNN(mpc_H, n_Q, 3, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-3)
+model = utils_new.ImprovedNN(mpc_H, n_Q, 5, max_p)
+opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -246,6 +246,8 @@ for ep in range(epochs):
     
     for it in range(40):
 
+        model.train()
+        
         u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
         u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
         u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -337,6 +339,7 @@ for ep in range(epochs):
         
         if it%10==0:
             # L O S S   V A LI D A T I O N
+            model.eval()
             with torch.no_grad():
                
                 BS_val = 32
@@ -390,6 +393,7 @@ for ep in range(epochs):
                       round(loss_val.item(), 5))
        
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
+            model.eval()
             with torch.no_grad():
 
                 #print('LAP PERFORMANCE:')
