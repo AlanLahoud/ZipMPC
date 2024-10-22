@@ -311,15 +311,18 @@ for ep in range(epochs):
         loss_a = (u_true_torch[:mpc_T, :, 0] - pred_u[:, :, 0]).abs()
         loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1]).abs()
 
+        diff_shorts = ((x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).sum(0)
+        args_conv = torch.argwhere(diff_shorts<0.00001)
+        #print(diff_sigs)
+
         # Ideal here would be to scale
-        loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_phi.mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
+        loss = 10*loss_dsigma[:,args_conv].mean() + 10*loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
-        diff_sigs = ((x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).mean().item()
-        print(diff_sigs)
+        
 
-        if diff_sigs> 0.001:
-            import pdb
-            pdb.set_trace()
+        #if diff_sigs> 0.001:
+        #    import pdb
+        #    pdb.set_trace()
         
         if it%10==0:
             #import pdb
