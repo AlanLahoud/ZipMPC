@@ -117,7 +117,7 @@ lqr_iter = 60
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.ImprovedNN(mpc_H, n_Q, 5, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
+opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -280,14 +280,14 @@ for ep in range(epochs):
 
 
         # T E S T  MPC SHORT
-        #q_manual_casadi_S = torch.permute(q[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-        #p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-        #x_true_S, u_true_S = utils_new.solve_casadi_parallel(
-        #    q_manual_casadi_S, p_manual_casadi_S, 
-        #    x0_diff.detach().numpy()[:,:6], BS, dx, du, control) 
+        q_manual_casadi_S = torch.permute(q[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+        p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+        x_true_S, u_true_S = utils_new.solve_casadi_parallel(
+            q_manual_casadi_S, p_manual_casadi_S, 
+            x0_diff.detach().numpy()[:,:6], BS, dx, du, control) 
 
-        #x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
-        #u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)      
+        x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
+        u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)      
             
         pred_x, pred_u, pred_objs = mpc.MPC(
                     true_dx.n_state, true_dx.n_ctrl, mpc_T,
@@ -314,8 +314,8 @@ for ep in range(epochs):
         # Ideal here would be to scale
         loss = 10*loss_dsigma.mean() + 10*loss_d.mean() + loss_phi.mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
-        #diff_sigs = ((x_true_torch_S[:, :, 0] - pred_x[:, :, 0])**2).mean().item()
-        #print(diff_sigs)
+        diff_sigs = ((x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).mean().item()
+        print(diff_sigs)
 
         #if diff_sigs> 0.0001:
         #    import pdb

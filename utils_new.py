@@ -265,7 +265,7 @@ class ImprovedNN(nn.Module):
         x = self.activation(self.fc2(x))
         x = self.fc3(x)
         x = x.reshape(self.mpc_T, -1, self.O)
-        return x
+        return x/5
         
 
 def sample_init(BS, dyn, sn=None):
