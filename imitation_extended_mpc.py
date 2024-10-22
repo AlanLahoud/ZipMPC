@@ -155,7 +155,7 @@ for b in range(BS_test):
     max_steps=500
 
     x0_b_manual = x0_lap_manual[b].copy()
-    x_manual_full = x0_b_manual.reshape(-1,1)
+    x_manual_full_H = x0_b_manual.reshape(-1,1)
 
     while finished==0 and crashed==0:
         q_lap_manual_casadi = Q_manual_H[:,idx_to_casadi].T
@@ -166,7 +166,7 @@ for b in range(BS_test):
             x0_b_manual, dx, du, control_H)
 
         x0_b_manual = x_b_manual[1]
-        x_manual_full = np.append(x_manual_full, x0_b_manual.reshape(-1,1), axis=1)
+        x_manual_full_H = np.append(x_manual_full_H, x0_b_manual.reshape(-1,1), axis=1)
 
         if x0_b_manual[0]>track_coord[2].max().numpy()/2:
             finished=1
@@ -250,8 +250,11 @@ for ep in range(epochs):
         u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
         u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 
-        x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, num_patches)
+        x0_1 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_star, num_patches)
+        x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_manual_full_H, num_patches)
 
+        x0 = torch.vstack((x0_1, x0_2))
+        
         #x0 = utils_new.sample_init(BS, true_dx)  
         
         x0_diff = x0.clone().float()
