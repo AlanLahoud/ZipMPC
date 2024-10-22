@@ -309,20 +309,20 @@ for ep in range(epochs):
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
         
-        loss_dsigma = (x_true_torch[:mpc_T, :, 5] - pred_x[:, :, 5]).abs()
-        loss_d = (x_true_torch[:mpc_T, :, 1] - pred_x[:, :, 1]).abs()
-        loss_phi = (x_true_torch[:mpc_T, :, 2] - pred_x[:, :, 2]).abs()
-        loss_v = (x_true_torch[:mpc_T, :, 3] - pred_x[:, :, 3]).abs()
+        loss_dsigma = (x_true_torch[:mpc_T, :, 5] - pred_x[:, :, 5])**2
+        loss_d = (x_true_torch[:mpc_T, :, 1] - pred_x[:, :, 1])**2
+        loss_phi = (x_true_torch[:mpc_T, :, 2] - pred_x[:, :, 2])**2
+        loss_v = (x_true_torch[:mpc_T, :, 3] - pred_x[:, :, 3])**2
         
-        loss_a = (u_true_torch[:mpc_T, :, 0] - pred_u[:, :, 0]).abs()
-        loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1]).abs()
+        loss_a = (u_true_torch[:mpc_T, :, 0] - pred_u[:, :, 0])**2
+        loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1])**2
 
         diff_shorts = ((x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).sum(0)
         args_conv = torch.argwhere(diff_shorts<0.00001)
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        loss = 10*loss_dsigma[:,args_conv].mean() + 10*loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
+        loss = loss_dsigma[:,args_conv].mean() + loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
         
 
@@ -390,7 +390,7 @@ for ep in range(epochs):
                 loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 10*loss_dsigma_val.mean() + 10*loss_d_val.mean() + loss_phi_val.mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
+                loss_val = loss_dsigma_val.mean() + loss_d_val.mean() + loss_phi_val.mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
                 
                 print('Validation loss:', 
                       round(10*loss_dsigma_val.mean().item(), 5),
