@@ -467,7 +467,8 @@ for ep in range(epochs):
                     lap_time_list[b] = lap_time
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
-                print(x_pred_full[0,30], x_pred_full[0,60], x_pred_full[0,90], x_pred_full[0,120], x_pred_full[0,150])
+                print(x_pred_full[0,60], x_pred_full[0,90], x_pred_full[0,120], x_pred_full[0,150], x_pred_full[0,180])
+                print(x_manual_full_H[0,60], x_manual_full_H[0,90], x_manual_full_H[0,120], x_manual_full_H[0,150], x_manual_full_H[0,180])
 
                 
                 if ep>5:
