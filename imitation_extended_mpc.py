@@ -116,7 +116,7 @@ lqr_iter = 60
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.ImprovedNN(mpc_H, n_Q, 9, max_p)
+model = utils_new.ImprovedNN(mpc_H, n_Q, 6, max_p)
 opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
@@ -397,8 +397,8 @@ for ep in range(epochs):
                       round(loss_d_val.mean().item(), 5), 
                       round(loss_phi_val.mean().item(), 5), 
                       round(loss_v_val.mean().item(), 5), 
-                      round(loss_a_val.mean().item(), 5), 
-                      round(loss_delta_val.mean().item(), 5), 
+                      #round(loss_a_val.mean().item(), 5), 
+                      #round(loss_delta_val.mean().item(), 5), 
                       round(loss_val.item(), 5))
        
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
@@ -467,6 +467,11 @@ for ep in range(epochs):
                     lap_time_list[b] = lap_time
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
+
+                if ep>5:
+                    import pdb
+                    pdb.set_trace()
+                
                 #if lap_time>8.2:
                 #    import pdb
                 #    pdb.set_trace()
