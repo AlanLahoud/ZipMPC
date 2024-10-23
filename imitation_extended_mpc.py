@@ -116,13 +116,13 @@ lqr_iter = 60
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.ImprovedNN(mpc_H, n_Q, 5, max_p)
+model = utils_new.ImprovedNN(mpc_H, n_Q, 9, max_p)
 opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -0.1, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
 Q_manual_H = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_H, 0)
@@ -322,7 +322,7 @@ for ep in range(epochs):
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        loss = loss_dsigma[:,args_conv].mean() + loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
+        loss = loss_dsigma[:,args_conv].mean() + loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() + loss_v.mean() + loss_a.mean() + loss_delta.mean()
 
         
 
@@ -390,15 +390,15 @@ for ep in range(epochs):
                 loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = loss_dsigma_val.mean() + loss_d_val.mean() + loss_phi_val.mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
+                loss_val = loss_dsigma_val.mean() + loss_d_val.mean() + loss_phi_val.mean() + loss_v_val.mean() + loss_a_val.mean() + loss_delta_val.mean()
                 
                 print('Validation loss:', 
-                      round(10*loss_dsigma_val.mean().item(), 5),
-                      round(10*loss_d_val.mean().item(), 5), 
+                      round(loss_dsigma_val.mean().item(), 5),
+                      round(loss_d_val.mean().item(), 5), 
                       round(loss_phi_val.mean().item(), 5), 
-                      #round(loss_v_val.mean().item(), 5), 
-                      #round(loss_a_val.mean().item(), 5), 
-                      #round(loss_delta_val.mean().item(), 5), 
+                      round(loss_v_val.mean().item(), 5), 
+                      round(loss_a_val.mean().item(), 5), 
+                      round(loss_delta_val.mean().item(), 5), 
                       round(loss_val.item(), 5))
        
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
