@@ -408,6 +408,46 @@ class ImprovedNN(nn.Module):
         return x/5
 
 
+class ImprovedNN(nn.Module):
+    def __init__(self, mpc_H, mpc_T, O, K):
+        super(ImprovedNN, self).__init__()
+        input_size = 3  # Global context size
+        
+        # Dilated convolution with batch normalization and residual connection
+        self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
+        self.bn1 = nn.BatchNorm1d(16)
+        self.dropout = nn.Dropout(0.5)
+
+        self.fc1 = nn.Linear(16 * mpc_H + input_size, 512)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc3 = nn.Linear(512, mpc_T * O)
+        self.activation = nn.ReLU()
+        self.output_activation = nn.Tanh()
+        self.K = K
+        self.O = O
+        self.mpc_T = mpc_T
+
+    def forward(self, x):
+        global_context, time_series = x[:, :3], x[:, 3:]
+        time_series = time_series.unsqueeze(1)  # Conv1D expects [batch_size, channels, seq_len]
+        
+        # Residual connection
+        time_series_res = time_series
+        time_series = self.activation(self.conv1(time_series))
+        time_series = self.bn1(time_series)
+        time_series = self.dropout(time_series)
+        time_series += time_series_res  # Add the residual connection
+        
+        time_series = time_series.view(time_series.size(0), -1)  # Flatten for fully connected layers
+
+        x = torch.cat([time_series, global_context], dim=1)
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.fc3(x)
+        x = x.reshape(self.mpc_T, -1, self.O)
+        return x / 5
+
+
 def sample_init(BS, dyn, sn=None):
 
     # If sn!=None, we makesure that we always sample the same set of initial states
