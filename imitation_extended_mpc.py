@@ -117,7 +117,7 @@ lqr_iter = 60
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.ImprovedNN(mpc_H, n_Q, 6, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-3)
+opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -243,7 +243,7 @@ for ep in range(epochs):
     print(f'Epoch {ep}, Update reference path')
     x_star = np.transpose(x_current_full)
     
-    for it in range(30):
+    for it in range(120):
 
         model.train()
         
@@ -330,7 +330,7 @@ for ep in range(epochs):
         #    import pdb
         #    pdb.set_trace()
         
-        if it%10==0:
+        if it%40==0:
             #import pdb
             #pdb.set_trace()
             d_pen = true_dx.penalty_d(pred_x[:, :, 1])
@@ -475,9 +475,9 @@ for ep in range(epochs):
                     print('crash')
 
                 
-                if ep>5:
-                    import pdb
-                    pdb.set_trace()
+                #if ep>5:
+                #    import pdb
+                #    pdb.set_trace()
                 
                 #if lap_time>8.2:
                 #    import pdb
