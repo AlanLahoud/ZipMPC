@@ -467,7 +467,9 @@ for ep in range(epochs):
                     lap_time_list[b] = lap_time
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
+                print(x_pred_full[0,30], x_pred_full[0,60], x_pred_full[0,90], x_pred_full[0,120], x_pred_full[0,150])
 
+                
                 if ep>5:
                     import pdb
                     pdb.set_trace()
