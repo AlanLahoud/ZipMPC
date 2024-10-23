@@ -117,7 +117,7 @@ lqr_iter = 60
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.ImprovedNN(mpc_H, n_Q, 6, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-3)
+opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -255,11 +255,11 @@ for ep in range(epochs):
         #pdb.set_trace()
 
         npat = num_patches
-        if ep+2 < npat:
-            npat = ep + 2
+        #if ep+2 < npat:
+        #    npat = ep + 2
         
-        x0_1 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_star[:npat*30], npat)
-        x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, np.transpose(x_manual_full_H)[:npat*30], npat)
+        x0_1 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_star, npat)
+        x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, np.transpose(x_manual_full_H), npat)
 
         x0 = torch.vstack((x0_1, x0_2))
         
