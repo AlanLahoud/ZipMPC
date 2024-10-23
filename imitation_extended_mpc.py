@@ -117,7 +117,7 @@ lqr_iter = 60
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.ImprovedNN(mpc_H, n_Q, 6, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
+opt = torch.optim.Adam(model.parameters(), lr=0.00008, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -346,7 +346,7 @@ for ep in range(epochs):
         opt.step()
 
         
-        if it%10==0:
+        if it%40==0:
             # L O S S   V A LI D A T I O N
             model.eval()
             with torch.no_grad():
