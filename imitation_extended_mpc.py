@@ -243,7 +243,7 @@ for ep in range(epochs):
     print(f'Epoch {ep}, Update reference path')
     x_star = np.transpose(x_current_full)
     
-    for it in range(120):
+    for it in range(60):
 
         model.train()
         
@@ -330,7 +330,7 @@ for ep in range(epochs):
         #    import pdb
         #    pdb.set_trace()
         
-        if it%40==0:
+        if it%20==0:
             #import pdb
             #pdb.set_trace()
             d_pen = true_dx.penalty_d(pred_x[:, :, 1])
@@ -346,7 +346,7 @@ for ep in range(epochs):
         opt.step()
 
         
-        if it%40==0:
+        if it%20==0:
             # L O S S   V A LI D A T I O N
             model.eval()
             with torch.no_grad():
