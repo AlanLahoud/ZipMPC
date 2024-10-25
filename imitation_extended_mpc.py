@@ -412,7 +412,7 @@ for ep in range(epochs):
                       #round(loss_a_val.mean().item(), 5), 
                       #round(loss_delta_val.mean().item(), 5), 
                       round(loss_val.item(), 5))
-       
+
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
             model.eval()
             with torch.no_grad():
@@ -480,6 +480,9 @@ for ep in range(epochs):
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
 
+                import pdb
+                pdb.set_trace()
+                
                 try:
                     print(x_pred_full[0,60], x_pred_full[0,90], x_pred_full[0,120], x_pred_full[0,150], x_pred_full[0,180])
                     print(x_manual_full_H[0,60], x_manual_full_H[0,90], x_manual_full_H[0,120], x_manual_full_H[0,150], x_manual_full_H[0,180])
