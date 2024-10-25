@@ -369,7 +369,7 @@ for ep in range(epochs):
     
                 # This sampling should bring always the same set of initial states
                 x0_val = utils_new.sample_init_traj_dist(BS_val, true_dx, np.transpose(x_manual_full_H), npat, sn=0)
-                
+                x0_val = x0_val.float()
                 #x0_val = utils_new.sample_init(BS_val, true_dx, sn=0)
 
                 curv_val = utils_new.get_curve_hor_from_x(x0_val, track_coord, mpc_H)
