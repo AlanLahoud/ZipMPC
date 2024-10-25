@@ -117,7 +117,7 @@ lqr_iter = 40
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.ImprovedNN(mpc_H, n_Q, 6, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
+opt = torch.optim.Adam(model.parameters(), lr=0.00008, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
