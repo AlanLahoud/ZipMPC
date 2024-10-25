@@ -44,7 +44,7 @@ delta_max = args.delta_max
 p_sigma_manual = args.p_sigma_manual
 eps = args.eps
 
-load_model = True
+load_model = False
 
 
 seed_n = 0
@@ -118,7 +118,7 @@ lqr_iter = 40
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.ImprovedNN(mpc_H, n_Q, 6, max_p)
+model = utils_new.ImprovedNN(mpc_H, n_Q, 8, max_p)
 
 if load_model==True:
     try:

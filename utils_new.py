@@ -1125,12 +1125,12 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
 
     #a
-    #q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)
-    #p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
+    q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)
+    p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
 
     #delta
     #q[:,:,9] = (q[:,:,9] + q_p_pred[:,:,5]).clamp(e)
-    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,5]
+    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,7]
 
     return q, p
 
