@@ -311,9 +311,40 @@ class CasadiControl():
         l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat))
         dl = substitute(substitute(l,q_sym,q),p_sym,p)
 
-        const = vertcat(transpose(dyn1),transpose(dyn2),transpose(dyn3),transpose(dyn4),transpose(dyn5),transpose(dyn6),transpose(u_sym[0,0:N]),transpose(u_sym[1,0:N]),transpose(x_sym[1,0:N+1]),transpose(x_sym[4,0:N+1]))
-        lbg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),-2*np.ones(N),-0.4*np.ones(N),-0.4*self.track_width*0.75*np.ones(N+1),0.1*np.ones(N+1)]
-        ubg = np.r_[np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),np.zeros(N+1),2*np.ones(N),0.4*np.ones(N),0.4*self.track_width*0.75*np.ones(N+1),self.v_max*0.95*np.ones(N+1)]
+        const = vertcat(
+                transpose(dyn1),
+                transpose(dyn2),
+                transpose(dyn3),
+                transpose(dyn4),
+                transpose(dyn5),
+                transpose(dyn6),
+                transpose(u_sym[0,0:N]),
+                transpose(u_sym[1,0:N]),
+                transpose(x_sym[1,0:N+1]),
+                transpose(x_sym[4,0:N+1]))
+
+        lbg = np.r_[np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    -self.a_max*np.ones(N),
+                    -self.delta_max*np.ones(N),
+                    -0.5*self.max_track_width_perc*self.track_width*np.ones(N+1),
+                    0.1*np.ones(N+1)]
+
+        ubg = np.r_[np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    self.a_max*np.ones(N),
+                    self.delta_max*np.ones(N),
+                    0.5*self.max_track_width_perc*self.track_width*np.ones(N+1),
+                    self.v_max*np.ones(N+1)]
+
         lbx = -np.inf * np.ones(dx*(N+1)+du*N)
         ubx = np.inf * np.ones(dx*(N+1)+du*N)
 
@@ -435,6 +466,35 @@ def sample_init(BS, dyn, sn=None):
 
     return x_init_sample
 
+def sample_init_dyn(BS, dyn, sn=None):
+
+    # If sn!=None, we makesure that we always sample the same set of initial states
+    # We need that for validation to understand if our model is improving or not
+
+    gen=None
+    if sn != None:
+        gen = torch.Generator()
+        gen.manual_seed(sn)
+
+    di = 1000
+    sigma_sample = torch.randint(int(0.0*di), int(14.5*di), (BS,1), generator=gen)/di
+    d_sample = torch.randint(int(-0.06*di), int(0.06*di), (BS,1), generator=gen)/di
+    phi_sample = torch.randint(int(-0.06*di), int(0.06*di), (BS,1), generator=gen)/di
+    r_sample = torch.randint(int(-0.01*di), int(0.01*di), (BS,1), generator=gen)/di
+    vx_sample = torch.randint(int(1.0*di), int(1.5*di), (BS,1), generator=gen)/di
+    vy_sample = torch.randint(int(0.0*di), int(0.03*di), (BS,1), generator=gen)/di
+
+    sigma_diff_sample = torch.zeros((BS,1))
+
+    d_pen = dyn.penalty_d(d_sample)
+    v_pen = dyn.penalty_v(vx_sample)
+
+    x_init_sample = torch.hstack((
+        sigma_sample, d_sample, phi_sample, r_sample, vx_sample, vy_sample,
+        sigma_sample, sigma_diff_sample, d_pen, v_pen))
+
+    return x_init_sample
+
 
 def sample_init_test(BS, dyn, sn=None):
 
@@ -478,7 +538,7 @@ def sample_init_test_dyn(BS, dyn, sn=None):
     d_sample = torch.randint(int(-0.01*di), int(0.01*di), (BS,1), generator=gen)/di
     phi_sample = torch.randint(int(-0.002*di), int(0.002*di), (BS,1), generator=gen)/di
     r_sample = torch.ones((BS,1))*0.0
-    vx_sample = torch.ones((BS,1))*0.5
+    vx_sample = torch.ones((BS,1))*0.0
     vy_sample = torch.ones((BS,1))*0.0
 
     sigma_diff_sample = torch.zeros((BS,1))
@@ -1015,6 +1075,28 @@ def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
 
     return x, u
 
+def process_single_casadi_dyn(sample, q, p, x0, dx, du, control):
+    x, u = solve_casadi_dyn(
+        q[:,sample], p[:,sample],
+        x0[sample], dx, du, control)
+    return sample, x, u
+
+def solve_casadi_parallel_dyn(q, p, x0, BS, dx, du, control):
+    x = np.zeros((q.shape[2],q.shape[1],x0.shape[-1]))
+    u = np.zeros((q.shape[2],q.shape[1],du))
+
+    with ProcessPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(
+            process_single_casadi_dyn,
+            sample, q, p, x0, dx, du, control) for sample in range(BS)]
+
+        for future in futures:
+            sample, x_sample, u_sample = future.result()
+            x[:, sample] = x_sample
+            u[:, sample] = u_sample
+
+    return x, u
+
 
 def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     # Cost order:
@@ -1071,7 +1153,19 @@ def q_and_p_dyn(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,7] = p[:,:,7] + q_p_pred[:,:,0]
 
     #d
-    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,1]).clamp(e + 0.5)
+    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,1]).clamp(e)
     p[:,:,1] = p[:,:,1] + q_p_pred[:,:,2]
+
+    #phi
+    q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,3]).clamp(e)
+    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
+
+    #a
+    #q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)
+    #p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
+
+    #delta
+    #q[:,:,9] = (q[:,:,9] + q_p_pred[:,:,5]).clamp(e)
+    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,5]
 
     return q, p
