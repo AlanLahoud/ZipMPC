@@ -480,7 +480,7 @@ for ep in range(epochs):
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
 
-                if loss<0.00059:
+                if loss_val<0.00059:
                     import pdb
                     pdb.set_trace()
                 
