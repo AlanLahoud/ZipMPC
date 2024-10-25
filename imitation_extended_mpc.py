@@ -121,8 +121,12 @@ grad_method = GradMethods.AUTO_DIFF
 model = utils_new.ImprovedNN(mpc_H, n_Q, 6, max_p)
 
 if load_model==True:
-    model.load_state_dict(torch.load(f'./saved_models/model_{str_model}.pkl'))
-
+    try:
+        model.load_state_dict(torch.load(f'./saved_models/model_{str_model}.pkl'))
+        print('Model loaded')
+    except:
+        print('No model found to load')
+        
 opt = torch.optim.Adam(model.parameters(), lr=0.00008, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
@@ -364,7 +368,9 @@ for ep in range(epochs):
                 u_init_val = torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(device)
     
                 # This sampling should bring always the same set of initial states
-                x0_val = utils_new.sample_init(BS_val, true_dx, sn=0)
+                x0_val = utils_new.sample_init_traj_dist(BS_val, true_dx, np.transpose(x_manual_full_H), npat, sn=0)
+                
+                #x0_val = utils_new.sample_init(BS_val, true_dx, sn=0)
 
                 curv_val = utils_new.get_curve_hor_from_x(x0_val, track_coord, mpc_H)
                 inp_val = torch.hstack((x0_val[:,1:4], curv_val))
