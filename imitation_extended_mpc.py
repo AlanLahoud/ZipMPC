@@ -322,7 +322,7 @@ for ep in range(epochs):
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        loss = 10*loss_dsigma[:,args_conv].mean() + 10*loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
+        loss = loss_dsigma[:,args_conv].mean() + loss_d[:,args_conv].mean() #+ loss_phi[:,args_conv].mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
         
 
@@ -390,12 +390,12 @@ for ep in range(epochs):
                 loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 10*loss_dsigma_val.mean() + 10*loss_d_val.mean() + loss_phi_val.mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
+                loss_val = loss_dsigma_val.mean() + loss_d_val.mean() #+ loss_phi_val.mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
                 
                 print('Validation loss:', 
-                      round(10*loss_dsigma_val.mean().item(), 5),
-                      round(10*loss_d_val.mean().item(), 5), 
-                      round(loss_phi_val.mean().item(), 5), 
+                      round(loss_dsigma_val.mean().item(), 5),
+                      round(loss_d_val.mean().item(), 5), 
+                      #round(loss_phi_val.mean().item(), 5), 
                       #round(loss_v_val.mean().item(), 5), 
                       #round(loss_a_val.mean().item(), 5), 
                       #round(loss_delta_val.mean().item(), 5), 
