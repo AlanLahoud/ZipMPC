@@ -44,6 +44,8 @@ delta_max = args.delta_max
 p_sigma_manual = args.p_sigma_manual
 eps = args.eps
 
+load_model = True
+
 
 seed_n = 0
 torch.manual_seed(seed_n)
@@ -117,6 +119,10 @@ lqr_iter = 40
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.ImprovedNN(mpc_H, n_Q, 6, max_p)
+
+if load_model==True:
+    model.load_state_dict(torch.load(f'./models/model_im_{str_model}.pkl'))
+
 opt = torch.optim.Adam(model.parameters(), lr=0.00008, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 

@@ -152,13 +152,13 @@ class trackGenerator:
         
     ##Plots the track
     def plotPoints(self, ax):
-        ax.plot(self.xCoords,self.yCoords,'o', label='Track', markersize=1)
+        ax.plot(self.xCoords,self.yCoords,'o', markersize=0.05)
         mean_x = (np.max(self.xCoords)+np.min(self.xCoords))/2.0
         mean_y = (np.max(self.yCoords)+np.min(self.yCoords))/2.0
-        ax.plot(mean_x,mean_y,'go',label='Center',markersize=5)
-        ax.plot(self.xCoords + self.yRate*self.track_width/2,self.yCoords-self.xRate*self.track_width/2,'ko',markersize=1)
-        ax.plot(self.xCoords - self.yRate*self.track_width/2,self.yCoords+self.xRate*self.track_width/2,'ko',markersize=1)
-        ax.legend()
+        #ax.plot(mean_x,mean_y,'go',label='Center',markersize=1)
+        ax.plot(self.xCoords + self.yRate*self.track_width/2,self.yCoords-self.xRate*self.track_width/2,'ko',markersize=0.3)
+        ax.plot(self.xCoords - self.yRate*self.track_width/2,self.yCoords+self.xRate*self.track_width/2,'ko',markersize=0.3)
+        #ax.legend()
         ax.set_xlabel("Position x [m]")
         ax.set_ylabel("Position y [m]")
         ax.set_aspect('equal', 'box')
