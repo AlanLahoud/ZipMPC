@@ -141,7 +141,7 @@ p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 
 idx_to_casadi = [5,1,2,3,8,9]
 
 
-epochs = 10
+epochs = 12
 num_patches = 10
 BS_init = 40
 BS_val = 10
@@ -482,9 +482,9 @@ for ep in range(epochs):
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
 
-                if ep>8:
-                    import pdb
-                    pdb.set_trace()
+                #if ep>8:
+                #    import pdb
+                #    pdb.set_trace()
                 
                 try:
                     print(x_pred_full[0,60], x_pred_full[0,90], x_pred_full[0,120], x_pred_full[0,150], x_pred_full[0,180])
