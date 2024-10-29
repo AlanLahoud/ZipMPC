@@ -418,9 +418,9 @@ class ImprovedNN(nn.Module):
         input_size = 3  # For the global context variables
         self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=1)  # Adding a temporal conv layer
         self.fc1 = nn.Linear(16 * mpc_H + input_size, 1000)
-        self.fc2 = nn.Linear(512, 1024)
-        self.fc3 = nn.Linear(1024, 512)
-        self.fc4 = nn.Linear(512, mpc_T * O)
+        self.fc2 = nn.Linear(1000, 1000)
+        self.fc3 = nn.Linear(1000, 500)
+        self.fc4 = nn.Linear(500, mpc_T * O)
         self.activation = nn.ReLU()
         self.output_activation = nn.Tanh()
         self.K = K
