@@ -332,9 +332,10 @@ for ep in range(epochs):
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        loss = 10*loss_dsigma[:,args_conv].mean() + 10*loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() \
-        + loss_v[:,args_conv].mean() + 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
+        #loss = 10*loss_dsigma[:,args_conv].mean() + 10*loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() \
+        #+ loss_v[:,args_conv].mean() + 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
 
+        loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
         
 
         #if diff_sigs> 0.001:
@@ -411,8 +412,8 @@ for ep in range(epochs):
                       round(10*loss_d_val.mean().item(), 5), 
                       round(loss_phi_val.mean().item(), 5), 
                       round(loss_v_val.mean().item(), 5), 
-                      round(loss_a_val.mean().item(), 5), 
-                      round(loss_delta_val.mean().item(), 5), 
+                      round(0.1*loss_a_val.mean().item(), 5), 
+                      round(0.1*loss_delta_val.mean().item(), 5), 
                       round(loss_val.item(), 5))
 
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
