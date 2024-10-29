@@ -332,10 +332,10 @@ for ep in range(epochs):
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        #loss = 10*loss_dsigma[:,args_conv].mean() + 10*loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() \
+        loss = loss_dsigma[:,args_conv].sum(0).mean() + loss_d[:,args_conv].sum(0).mean() #+ loss_phi[:,args_conv].mean() \
         #+ loss_v[:,args_conv].mean() + 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
 
-        loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
+        #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
         
 
         #if diff_sigs> 0.001:
