@@ -333,7 +333,7 @@ for ep in range(epochs):
 
         # Ideal here would be to scale
         loss = 10*loss_dsigma[:,args_conv].mean() + 10*loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() \
-        + loss_v[:,args_conv].mean() + loss_a[:,args_conv].mean() + loss_delta[:,args_conv].mean()
+        + loss_v[:,args_conv].mean() + 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
 
         
 
@@ -404,7 +404,7 @@ for ep in range(epochs):
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
                 loss_val = 10*loss_dsigma_val.mean() + 10*loss_d_val.mean() + loss_phi_val.mean() \
-                + loss_v_val.mean() + loss_a_val.mean() + loss_delta_val.mean()
+                + loss_v_val.mean() + 0.1*loss_a_val.mean() + 0.1*loss_delta_val.mean()
                 
                 print('Validation loss:', 
                       round(10*loss_dsigma_val.mean().item(), 5),
