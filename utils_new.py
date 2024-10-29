@@ -417,9 +417,10 @@ class ImprovedNN(nn.Module):
         super(ImprovedNN, self).__init__()
         input_size = 3  # For the global context variables
         self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=1)  # Adding a temporal conv layer
-        self.fc1 = nn.Linear(16 * mpc_H + input_size, 512)
-        self.fc2 = nn.Linear(512, 512)
-        self.fc3 = nn.Linear(512, mpc_T * O)
+        self.fc1 = nn.Linear(16 * mpc_H + input_size, 1000)
+        self.fc2 = nn.Linear(512, 1024)
+        self.fc3 = nn.Linear(1024, 512)
+        self.fc4 = nn.Linear(512, mpc_T * O)
         self.activation = nn.ReLU()
         self.output_activation = nn.Tanh()
         self.K = K
@@ -434,7 +435,8 @@ class ImprovedNN(nn.Module):
         x = torch.cat([time_series, global_context], dim=1)
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
-        x = self.fc3(x)
+        x = self.activation(self.fc3(x))
+        x = self.fc4(x)
         x = x.reshape(self.mpc_T, -1, self.O)
         return x/5
 
