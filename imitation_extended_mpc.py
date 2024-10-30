@@ -333,7 +333,7 @@ for ep in range(epochs):
 
         # Ideal here would be to scale
         loss = 10*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() + loss_phi[:,args_conv].sum(0).mean() \
-        + loss_v[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+        + loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
         #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
         
@@ -408,12 +408,12 @@ for ep in range(epochs):
                 + loss_v_val.sum(0).mean() + 0.1*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
                 
                 print('Validation loss:', 
-                      round(10*loss_dsigma_val.mean().item(), 5),
-                      round(10*loss_d_val.mean().item(), 5), 
-                      round(loss_phi_val.mean().item(), 5), 
-                      round(loss_v_val.mean().item(), 5), 
-                      round(0.1*loss_a_val.mean().item(), 5), 
-                      round(0.1*loss_delta_val.mean().item(), 5), 
+                      round(10*loss_dsigma_val.sum(0).mean().item(), 5),
+                      round(10*loss_d_val.sum(0).mean().item(), 5), 
+                      round(loss_phi_val.sum(0).mean().item(), 5), 
+                      round(loss_v_val.sum(0).mean().item(), 5), 
+                      round(0.01*loss_a_val.sum(0).mean().item(), 5), 
+                      round(0.1*loss_delta_val.sum(0).mean().item(), 5), 
                       round(loss_val.item(), 5))
 
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
