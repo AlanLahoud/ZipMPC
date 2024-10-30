@@ -128,7 +128,7 @@ if load_model==True:
         print('No model found to load')
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.00001, weight_decay=1e-4)
-opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
+opt = torch.optim.RMSprop(model.parameters(), lr=0.00008)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
@@ -483,9 +483,6 @@ for ep in range(epochs):
                     lap_time_list[b] = lap_time
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
-
-                import pdb
-                pdb.set_trace()
                 
                 #if ep>25:
                 #    import pdb
