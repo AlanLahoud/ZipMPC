@@ -405,7 +405,7 @@ for ep in range(epochs):
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
                 loss_val = 10*loss_dsigma_val.sum(0).mean() + 10*loss_d_val.sum(0).mean() + loss_phi_val.sum(0).mean() \
-                + loss_v_val.sum(0).mean() + 0.1*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
+                + loss_v_val.sum(0).mean() + 0.01*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
                 
                 print('Validation loss:', 
                       round(10*loss_dsigma_val.sum(0).mean().item(), 5),
