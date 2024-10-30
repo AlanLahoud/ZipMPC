@@ -1127,12 +1127,12 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
 
     #a
-    #q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)
-    #p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
+    q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)
+    p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
 
     #delta
-    #q[:,:,9] = (q[:,:,9] + q_p_pred[:,:,5]).clamp(e)
-    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,5]
+    q[:,:,9] = (q[:,:,9] + q_p_pred[:,:,7]).clamp(e)
+    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,8]
 
     return q, p
 
@@ -1151,23 +1151,23 @@ def q_and_p_dyn(mpc_T, q_p_pred, Q_manual, p_manual):
     p = torch.zeros((mpc_T,BS,12)) + torch.tensor(p_manual).unsqueeze(1).float()
 
     #sigma_diff
-    q[:,:,5] = q[:,:,5] + q_p_pred[:,:,0].clamp(e)
-    p[:,:,7] = p[:,:,7] + q_p_pred[:,:,1]
+    #q[:,:,5] = q[:,:,5] + q_p_pred[:,:,0].clamp(e)
+    p[:,:,7] = p[:,:,7] + q_p_pred[:,:,0]
 
     #d
-    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,2]).clamp(e)
-    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,3]
+    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,1]).clamp(e)
+    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,2]
 
     #phi
-    #q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,3]).clamp(e)
-    #p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
+    q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,3]).clamp(e)
+    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
 
     #a
-    #q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)
-    #p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
+    q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)
+    p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
 
     #delta
-    #q[:,:,9] = (q[:,:,9] + q_p_pred[:,:,7]).clamp(e)
-    #p[:,:,9] = p[:,:,9] + q_p_pred[:,:,8]
+    q[:,:,9] = (q[:,:,9] + q_p_pred[:,:,7]).clamp(e)
+    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,8]
 
     return q, p
