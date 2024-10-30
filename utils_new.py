@@ -641,7 +641,7 @@ def sample_init_traj_dist(BS, dyn, traj, num_patches, sn=None):
 
     d_sample = torch.clamp(torch.from_numpy(traj_sample[:,1].reshape(-1,1))+torch.randint(int(-.01*di), int(.01*di), (BS,1), generator=gen)/di,-0.17,0.17)
     phi_sample = torch.from_numpy(traj_sample[:,2].reshape(-1,1))+torch.randint(int(-0.005*di), int(0.005*di), (BS,1), generator=gen)/di
-    v_sample = torch.clamp(torch.from_numpy(traj_sample[:,3].reshape(-1,1))+torch.randint(int(-0.001*di), int(0.001*di), (BS,1), generator=gen)/di,0.0,1.5)
+    v_sample = torch.clamp(torch.from_numpy(traj_sample[:,3].reshape(-1,1))+torch.randint(int(-0.001*di), int(0.001*di), (BS,1), generator=gen)/di,0.0,1.8)
 
     # and this part we can actually keep
 
@@ -1151,23 +1151,23 @@ def q_and_p_dyn(mpc_T, q_p_pred, Q_manual, p_manual):
     p = torch.zeros((mpc_T,BS,12)) + torch.tensor(p_manual).unsqueeze(1).float()
 
     #sigma_diff
-    #q[:,:,5] = q[:,:,5] + q_p_pred[:,:,0].clamp(e)
-    p[:,:,7] = p[:,:,7] + q_p_pred[:,:,0]
+    q[:,:,5] = q[:,:,5] + q_p_pred[:,:,0].clamp(e)
+    p[:,:,7] = p[:,:,7] + q_p_pred[:,:,1]
 
     #d
-    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,1]).clamp(e)
-    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,2]
+    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,2]).clamp(e)
+    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,3]
 
     #phi
-    q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,3]).clamp(e)
-    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
+    #q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,3]).clamp(e)
+    #p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
 
     #a
-    q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)
-    p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
+    #q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)
+    #p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
 
     #delta
-    q[:,:,9] = (q[:,:,9] + q_p_pred[:,:,7]).clamp(e)
-    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,8]
+    #q[:,:,9] = (q[:,:,9] + q_p_pred[:,:,7]).clamp(e)
+    #p[:,:,9] = p[:,:,9] + q_p_pred[:,:,8]
 
     return q, p
