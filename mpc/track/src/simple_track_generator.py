@@ -152,7 +152,7 @@ class trackGenerator:
         
     ##Plots the track
     def plotPoints(self, ax):
-        ax.plot(self.xCoords,self.yCoords,'o', markersize=0.05)
+        #ax.plot(self.xCoords,self.yCoords,'o', markersize=0.05)
         mean_x = (np.max(self.xCoords)+np.min(self.xCoords))/2.0
         mean_y = (np.max(self.yCoords)+np.min(self.yCoords))/2.0
         #ax.plot(mean_x,mean_y,'go',label='Center',markersize=1)

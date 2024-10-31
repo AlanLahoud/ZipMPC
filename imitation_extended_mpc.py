@@ -18,14 +18,13 @@ from sys import exit
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--mpc_T', type=int, default=20)
-    parser.add_argument('--mpc_H', type=int, default=60)
+    parser.add_argument('--mpc_T', type=int, default=15)
+    parser.add_argument('--mpc_H', type=int, default=30)
     parser.add_argument('--n_Q', type=int, default=5)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
-    parser.add_argument('--delta_max', type=float, default=0.4)
-    parser.add_argument('--p_sigma_manual', type=float, default=0.1)
-    parser.add_argument('--eps', type=float, default=0.02)
+    parser.add_argument('--delta_max', type=float, default=0.43)
+    parser.add_argument('--p_sigma_manual', type=float, default=0.2)
     
     return parser.parse_args()
 
@@ -42,7 +41,6 @@ v_max = args.v_max
 delta_max = args.delta_max
 
 p_sigma_manual = args.p_sigma_manual
-eps = args.eps
 
 load_model = False
 
@@ -127,7 +125,7 @@ if load_model==True:
     except:
         print('No model found to load')
         
-opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-4)
+opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.00008)
 
 control = utils_new.CasadiControl(track_coord, params)
