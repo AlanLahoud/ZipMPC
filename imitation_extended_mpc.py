@@ -253,6 +253,10 @@ for ep in range(epochs):
 
     print(f'Epoch {ep}, Update reference path')
     x_star = np.transpose(x_current_full)
+
+    # We are saving three models
+    if flag_finish_training_iter == 2:
+        break
     
     for it in range(60):
 
@@ -502,7 +506,3 @@ for ep in range(epochs):
                     print(x_manual_full_H[0,60], x_manual_full_H[0,90], x_manual_full_H[0,120], x_manual_full_H[0,150], x_manual_full_H[0,180])
                 except:
                     print('crash')
-
-                # We are saving three models
-                if flag_finish_training_iter == 2:
-                    break
