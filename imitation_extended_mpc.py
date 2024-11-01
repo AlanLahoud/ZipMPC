@@ -24,7 +24,7 @@ def parse_arguments():
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
     parser.add_argument('--delta_max', type=float, default=0.43)
-    parser.add_argument('--p_sigma_manual', type=float, default=0.2)
+    parser.add_argument('--p_sigma_manual', type=float, default=0.4)
     
     return parser.parse_args()
 
@@ -184,12 +184,12 @@ for b in range(BS_test):
 
         steps = steps+1
 
-    lap_time = dt*steps
+    lap_time_H = dt*steps
 
     finish_list[b] = finished
     lap_time_list[b] = lap_time
 
-    print(f'Manual extended mpc_H = {mpc_H}, lap time: {lap_time}')
+    print(f'Manual extended mpc_H = {mpc_H}, lap time: {lap_time_H}')
 
 
 finish_list = np.zeros((BS_test,))
@@ -245,6 +245,9 @@ if finished == 1:
 else:
     sys.exit("Manual parameter choice not feasible")
 
+
+flag_finish_training = 0
+flag_finish_training_iter = 0
 
 for ep in range(epochs):
 
@@ -475,13 +478,21 @@ for ep in range(epochs):
                         q_current = q_lap_np_casadi
                         p_current = p_lap
                         x_current_full = x_pred_full
-                        torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
+
+                    # Early stop based on the target trajectory. If it is never satisfied, it goes until the last epoch.
+                    if finished == 1 and lap_time < lap_time_H + 0.00001:
+                        flag_finish_training = 1
+                        print('Achieved a good enough lap performance!!!')
+
+                    if flag_finish_training == 1 or ep==epochs-1:                        
+                        torch.save(model.state_dict(), f'./saved_models/model_{str_model}_{flag_finish_training_iter}.pkl')
+                        flag_finish_training_iter = flag_finish_training_iter + 1
 
                     finish_list[b] = finished
                     lap_time_list[b] = lap_time
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
-                
+
                 #if ep>25:
                 #    import pdb
                 #    pdb.set_trace()
@@ -492,11 +503,6 @@ for ep in range(epochs):
                 except:
                     print('crash')
 
-                
-                #if ep>5:
-                #    import pdb
-                #    pdb.set_trace()
-                
-                #if lap_time>8.2:
-                #    import pdb
-                #    pdb.set_trace()
+                # We are saving three models
+                if flag_finish_training_iter == 2:
+                    break
