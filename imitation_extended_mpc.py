@@ -255,7 +255,7 @@ for ep in range(epochs):
     x_star = np.transpose(x_current_full)
 
     # We are saving three models
-    if flag_finish_training_iter == 2:
+    if flag_finish_training_iter >= 2:
         break
     
     for it in range(60):
