@@ -346,13 +346,13 @@ for ep in range(epochs):
         if it%5==0:
             loss = loss_dsigma[:,args_conv].sum(0).mean()
         elif it%5==1:
-            loss_d[:,args_conv].sum(0).mean()
+            loss = loss_d[:,args_conv].sum(0).mean()
         elif it%5==2:
-            loss_v[:,args_conv].sum(0).mean()
+            loss = loss_v[:,args_conv].sum(0).mean()
         elif it%5==3:
-            loss_a[:,args_conv].sum(0).mean()
+            loss = loss_a[:,args_conv].sum(0).mean()
         elif it%5==4:
-            loss_delta[:,args_conv].sum(0).mean()
+            loss = loss_delta[:,args_conv].sum(0).mean()
         
         #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
         
