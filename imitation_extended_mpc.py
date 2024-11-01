@@ -187,7 +187,7 @@ for b in range(BS_test):
     lap_time_H = dt*steps
 
     finish_list[b] = finished
-    lap_time_list[b] = lap_time
+    lap_time_list[b] = lap_time_H
 
     print(f'Manual extended mpc_H = {mpc_H}, lap time: {lap_time_H}')
 
