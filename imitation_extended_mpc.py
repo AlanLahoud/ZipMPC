@@ -340,9 +340,20 @@ for ep in range(epochs):
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        loss = 10*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
-        + loss_v[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+        #loss = 10*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
+        #+ loss_v[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
+        if it%5==0:
+            loss = loss_dsigma[:,args_conv].sum(0).mean()
+        elif it%5==1:
+            loss_d[:,args_conv].sum(0).mean()
+        elif it%5==2:
+            loss_v[:,args_conv].sum(0).mean()
+        elif it%5==3:
+            loss_a[:,args_conv].sum(0).mean()
+        elif it%5==4:
+            loss_delta[:,args_conv].sum(0).mean()
+        
         #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
         
 
