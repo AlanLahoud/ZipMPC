@@ -36,7 +36,7 @@ mpc_T = args.mpc_T
 mpc_H = args.mpc_H
 n_Q = args.n_Q
 
-n_Q = mpc_T
+#n_Q = mpc_T
 
 l_r = args.l_r
 v_max = args.v_max
