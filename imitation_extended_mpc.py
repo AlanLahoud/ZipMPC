@@ -18,7 +18,7 @@ from sys import exit
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--mpc_T', type=int, default=15)
+    parser.add_argument('--mpc_T', type=int, default=10)
     parser.add_argument('--mpc_H', type=int, default=30)
     parser.add_argument('--n_Q', type=int, default=5)
     parser.add_argument('--l_r', type=float, default=0.10)
