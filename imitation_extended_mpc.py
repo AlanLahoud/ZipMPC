@@ -259,7 +259,8 @@ for ep in range(epochs):
     # We are saving three models
     if flag_finish_training_iter >= 2:
         break
-    
+
+    loss_train_avg = 0.
     for it in range(60):
 
         model.train()
@@ -342,6 +343,8 @@ for ep in range(epochs):
         # Ideal here would be to scale
         loss = 10*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
         + loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+
+        loss_train_avg = loss_train_avg + loss.detach().item()/60.
         
         #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
         
@@ -414,6 +417,8 @@ for ep in range(epochs):
                 # Ideal here would be to scale, but this is fine just to be in the same range
                 loss_val = 10*loss_dsigma_val.sum(0).mean() + 10*loss_d_val.sum(0).mean() \
                 + loss_v_val.sum(0).mean() + 0.01*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
+
+                print('Train loss:', loss_train_avg)
                 
                 print('Validation loss:', 
                       round(10*loss_dsigma_val.sum(0).mean().item(), 5),
@@ -500,7 +505,7 @@ for ep in range(epochs):
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
 
-                if ep>5:
+                if ep>10:
                     import pdb
                     pdb.set_trace()
                 
