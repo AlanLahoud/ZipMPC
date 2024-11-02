@@ -127,7 +127,7 @@ if load_model==True:
     except:
         print('No model found to load')
         
-opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -344,7 +344,7 @@ for ep in range(epochs):
         loss = 1000*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
         #+ loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
-        if loss.detach().item()>0.1 and ep>32:
+        if ep>32:
             import pdb
             pdb.set_trace()
 
@@ -508,10 +508,6 @@ for ep in range(epochs):
                     lap_time_list[b] = lap_time
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
-
-                if ep>10:
-                    import pdb
-                    pdb.set_trace()
                 
                 try:
                     print(x_pred_full[0,60], x_pred_full[0,90], x_pred_full[0,120], x_pred_full[0,150], x_pred_full[0,180])
