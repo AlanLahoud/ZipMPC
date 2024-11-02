@@ -344,6 +344,10 @@ for ep in range(epochs):
         loss = 10*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
         + loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
+        if loss.detach().item()>0.1:
+            import pdb
+            pdb.set_trace()
+
         loss_train_avg = loss_train_avg + loss.detach().item()/60.
         
         #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
