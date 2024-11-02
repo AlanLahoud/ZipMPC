@@ -20,7 +20,7 @@ def parse_arguments():
 
     parser.add_argument('--mpc_T', type=int, default=10)
     parser.add_argument('--mpc_H', type=int, default=30)
-    parser.add_argument('--n_Q', type=int, default=5)
+    parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
     parser.add_argument('--delta_max', type=float, default=0.43)
