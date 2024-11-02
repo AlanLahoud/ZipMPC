@@ -446,7 +446,8 @@ for ep in range(epochs):
                     steps = 0
                     max_steps=500
 
-                    x0_b_pred = x0_lap_pred[b].copy()
+                    x0_b_pred = x0_lap_pred[b].copy() 
+                    
                     x_pred_full = x0_b_pred.reshape(-1,1)
 
                     while finished==0 and crashed==0:
@@ -499,9 +500,9 @@ for ep in range(epochs):
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
 
-                #if ep>25:
-                #    import pdb
-                #    pdb.set_trace()
+                if ep>5:
+                    import pdb
+                    pdb.set_trace()
                 
                 try:
                     print(x_pred_full[0,60], x_pred_full[0,90], x_pred_full[0,120], x_pred_full[0,150], x_pred_full[0,180])
