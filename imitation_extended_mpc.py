@@ -109,7 +109,7 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 150
+BS = 90
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -344,7 +344,7 @@ for ep in range(epochs):
         loss = 10*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
         + loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
-        if loss.detach().item()>0.1 and ep>10:
+        if loss.detach().item()>0.1 and ep>6:
             import pdb
             pdb.set_trace()
 
