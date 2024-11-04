@@ -344,7 +344,7 @@ for ep in range(epochs):
         loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
         + 10*loss_v[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
-        if ep>20:
+        if ep>30:
             import pdb
             pdb.set_trace()
 
