@@ -357,7 +357,7 @@ for ep in range(epochs):
         #    import pdb
         #    pdb.set_trace()
         
-        if it%20==0:
+        if it%30==0:
             #import pdb
             #pdb.set_trace()
             d_pen = true_dx.penalty_d(pred_x[:, :, 1])
@@ -373,12 +373,12 @@ for ep in range(epochs):
         opt.step()
 
         
-        if it%20==0:
+        if it%30==0:
             # L O S S   V A LI D A T I O N
             model.eval()
             with torch.no_grad():
                
-                BS_val = 32
+                BS_val = 64
 
                 u_lower_val = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
                 u_upper_val = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
