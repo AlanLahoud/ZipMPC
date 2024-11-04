@@ -114,7 +114,7 @@ u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mp
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.001
-lqr_iter = 40
+lqr_iter = 60
 
 grad_method = GradMethods.AUTO_DIFF
 
@@ -363,7 +363,7 @@ for ep in range(epochs):
             d_pen = true_dx.penalty_d(pred_x[:, :, 1])
             v_pen = true_dx.penalty_v(pred_x[:, :, 3])
             #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
-            #print(pred_x[:, :, 3].max().item())
+            print(pred_x[:, :, 3].max().item())
             #print(pred_x[:, :, 1].max().item())
             #print(p.mean(0).mean(0))
 
