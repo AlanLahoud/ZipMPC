@@ -344,7 +344,7 @@ for ep in range(epochs):
         loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
         + 10*loss_v[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
-        if ep>10:
+        if ep>20:
             import pdb
             pdb.set_trace()
 
@@ -489,11 +489,12 @@ for ep in range(epochs):
                     lap_time = dt*steps
                     
 
+                    x_current_full = x_pred_full
                     if finished == 1 and lap_time < current_time:
                         current_time = lap_time
                         q_current = q_lap_np_casadi
                         p_current = p_lap
-                        x_current_full = x_pred_full
+                        
 
                     # Early stop based on the target trajectory. If it is never satisfied, it goes until the last epoch.
                     if finished == 1 and lap_time < lap_time_H + 0.00001:
