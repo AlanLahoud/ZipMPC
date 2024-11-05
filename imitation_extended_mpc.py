@@ -336,14 +336,16 @@ for ep in range(epochs):
         loss_a = (u_true_torch[:mpc_T, :, 0] - pred_u[:, :, 0])**2
         loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1])**2
 
-        diff_shorts = ((x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).sum(0)
-        args_conv = torch.argwhere(diff_shorts<0.00001)
+        diff_shorts = ((x_true_torch_S[:, :, 1] - pred_x[:, :, 1])**2 + (x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).mean(0)
+        args_conv = torch.argwhere(diff_shorts<0.0001)
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
-        + 10*loss_v[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+        #loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
+        #+ 10*loss_v[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
+        loss = 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+        
         if ep>30:
             import pdb
             pdb.set_trace()
