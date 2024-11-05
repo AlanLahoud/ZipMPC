@@ -444,7 +444,7 @@ class ImprovedNN(nn.Module):
 
 class ImprovedNN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K):
-        super(ImprovedTemporalNN, self).__init__()
+        super(ImprovedNN, self).__init__()
         input_size = 3 
         
         self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
@@ -470,7 +470,7 @@ class ImprovedNN(nn.Module):
         time_series = self.activation(self.conv1(time_series))
         time_series = self.bn1(time_series)
         time_series = self.dropout(time_series)
-        time_series += time_series_res  # Add the residual connection
+        time_series += time_series_res
         
         time_series = time_series.view(time_series.size(0), -1) 
 
