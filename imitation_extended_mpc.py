@@ -127,7 +127,7 @@ if load_model==True:
     except:
         print('No model found to load')
         
-opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -141,7 +141,7 @@ p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 
 idx_to_casadi = [5,1,2,3,8,9]
 
 
-epochs = 35
+epochs = 50
 num_patches = 10
 BS_init = 40
 BS_val = 10
@@ -341,12 +341,11 @@ for ep in range(epochs):
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        #loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() \
-        #+ 10*loss_v[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() + 10*loss_v[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
-        loss = 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+        #loss = 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
         
-        if ep%5==4 and it==0:
+        if ep>45:
             import pdb
             pdb.set_trace()
 
@@ -422,8 +421,7 @@ for ep in range(epochs):
                 loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 100*loss_dsigma_val.sum(0).mean() + 10*loss_d_val.sum(0).mean() #\
-                + 10*loss_v_val.sum(0).mean() + 0.1*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
+                loss_val = 100*loss_dsigma_val.sum(0).mean() + 10*loss_d_val.sum(0).mean() + 10*loss_v_val.sum(0).mean() + 0.1*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
 
                 print('Train loss:', loss_train_avg)
                 
