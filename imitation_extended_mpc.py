@@ -366,7 +366,7 @@ for ep in range(epochs):
             v_pen = true_dx.penalty_v(pred_x[:, :, 3])
             #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
             print('V max: ', pred_x[:, :, 3].max().item())
-            print('N useful samples: ', loss_a.detach().[:,args_conv].shape)
+            print('N useful samples: ', loss_a.detach()[:,args_conv].shape)
             #print(pred_x[:, :, 1].max().item())
             #print(p.mean(0).mean(0))
 
