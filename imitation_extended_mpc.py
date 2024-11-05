@@ -18,9 +18,9 @@ from sys import exit
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--mpc_T', type=int, default=10)
-    parser.add_argument('--mpc_H', type=int, default=30)
-    parser.add_argument('--n_Q', type=int, default=5)
+    parser.add_argument('--mpc_T', type=int, default=9)
+    parser.add_argument('--mpc_H', type=int, default=20)
+    parser.add_argument('--n_Q', type=int, default=3)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
     parser.add_argument('--delta_max', type=float, default=0.43)
@@ -346,7 +346,7 @@ for ep in range(epochs):
 
         loss = 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
         
-        if ep>30:
+        if ep%5==4 and it==0:
             import pdb
             pdb.set_trace()
 
@@ -365,7 +365,8 @@ for ep in range(epochs):
             d_pen = true_dx.penalty_d(pred_x[:, :, 1])
             v_pen = true_dx.penalty_v(pred_x[:, :, 3])
             #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
-            print(pred_x[:, :, 3].max().item())
+            print('V max: ', pred_x[:, :, 3].max().item())
+            print('N useful samples: ', loss_a.detach().[:,args_conv].shape)
             #print(pred_x[:, :, 1].max().item())
             #print(p.mean(0).mean(0))
 
