@@ -141,7 +141,7 @@ p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 
 idx_to_casadi = [5,1,2,3,8,9]
 
 
-epochs = 10
+epochs = 15
 num_patches = 10
 BS_init = 40
 BS_val = 10
@@ -251,8 +251,12 @@ else:
 flag_finish_training = 0
 flag_finish_training_iter = 0
 
+scheduler = StepLR(optimizer, step_size=1, gamma=0.2)
+
 for ep in range(epochs):
 
+    scheduler.step()
+    
     print(f'Epoch {ep}, Update reference path')
     x_star = np.transpose(x_current_full)
 
@@ -349,9 +353,9 @@ for ep in range(epochs):
         
         #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
 
-        if it==0 and ep%2==1:
-            import pdb
-            pdb.set_trace()
+        #if it==0 and ep%2==1:
+        #    import pdb
+        #    pdb.set_trace()
         
         if it%30==0:
             #import pdb
