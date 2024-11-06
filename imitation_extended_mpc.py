@@ -122,7 +122,7 @@ model = utils_new.ImprovedNN(mpc_H, n_Q, 9, max_p)
 
 if load_model==True:
     try:
-        model.load_state_dict(torch.load(f'./saved_models/model_{str_model}.pkl'))
+        model.load_state_dict(torch.load(f'./saved_models/model_{str_model}_2.pkl'))
         print('Model loaded')
     except:
         print('No model found to load')
