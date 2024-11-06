@@ -349,10 +349,8 @@ for ep in range(epochs):
         
         #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
         
-
-        #if diff_sigs> 0.001:
-        #    import pdb
-        #    pdb.set_trace()
+        import pdb
+        pdb.set_trace()
         
         if it%30==0:
             #import pdb
