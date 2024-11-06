@@ -237,10 +237,10 @@ class CasadiControl():
         # lateral force params
         Df = 0.43
         Cf = 1.4
-        Bf = 8.0
+        Bf = 0.5
         Dr = 0.6
         Cr = 1.7
-        Br = 8.0
+        Br = 0.5
 
         # longitudinal force params
         Cm1 = 0.98028992
@@ -445,8 +445,8 @@ class ImprovedNN(nn.Module):
 class ImprovedNN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K):
         super(ImprovedNN, self).__init__()
-        input_size = 3 
-        
+        input_size = 3
+
         self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
         self.bn1 = nn.BatchNorm1d(16)
         self.dropout = nn.Dropout(0.2)
@@ -460,19 +460,19 @@ class ImprovedNN(nn.Module):
         self.O = O
         self.mpc_T = mpc_T
 
-    
+
     def forward(self, x):
         global_context, time_series = x[:, :3], x[:, 3:]
-        
-        time_series = time_series.unsqueeze(1) 
-        
+
+        time_series = time_series.unsqueeze(1)
+
         time_series_res = time_series
         time_series = self.activation(self.conv1(time_series))
         time_series = self.bn1(time_series)
         time_series = self.dropout(time_series)
         time_series += time_series_res
-        
-        time_series = time_series.view(time_series.size(0), -1) 
+
+        time_series = time_series.view(time_series.size(0), -1)
 
         x = torch.cat([time_series, global_context], dim=1)
         x = self.activation(self.fc1(x))
@@ -1016,10 +1016,10 @@ class FrenetDynBicycleDx(nn.Module):
         # lateral force params
         Df = 0.43
         Cf = 1.4
-        Bf = 8.0
+        Bf = 0.5
         Dr = 0.6
         Cr = 1.7
-        Br = 8.0
+        Br = 0.5
 
         # longitudinal force params
         Cm1 = 0.98028992
@@ -1210,11 +1210,11 @@ def q_and_p_dyn(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
 
     #a
-    q[:,:,8] = (q[:,:,8] + q_p_pred[:,:,5]).clamp(e)
-    p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
+    q[:,:,10] = (q[:,:,10] + q_p_pred[:,:,5]).clamp(e)
+    p[:,:,10] = p[:,:,10] + q_p_pred[:,:,6]
 
     #delta
-    q[:,:,9] = (q[:,:,9] + q_p_pred[:,:,7]).clamp(e)
-    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,8]
+    q[:,:,11] = (q[:,:,11] + q_p_pred[:,:,7]).clamp(e)
+    p[:,:,11] = p[:,:,11] + q_p_pred[:,:,8]
 
     return q, p

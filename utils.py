@@ -12,10 +12,10 @@ from matplotlib import pyplot as plt
 class NN(nn.Module):
     def __init__(self, H, S, O, mpc_T):
         super(NN, self).__init__()
-        self.fc1 = nn.Linear(H + S, 1024)  
-        self.fc2 = nn.Linear(1024, 512)  
-        self.output1 = nn.Linear(512, O*mpc_T) 
-        self.output2 = nn.Linear(512, O*mpc_T) 
+        self.fc1 = nn.Linear(H + S, 1024)
+        self.fc2 = nn.Linear(1024, 512)
+        self.output1 = nn.Linear(512, O*mpc_T)
+        self.output2 = nn.Linear(512, O*mpc_T)
         self.mpc_T = mpc_T
         self.O = O
 
@@ -28,15 +28,15 @@ class NN(nn.Module):
         q = q.reshape(self.mpc_T, -1, self.O)
         p = p.reshape(self.mpc_T, -1, self.O)
         return q, p
-    
-    
+
+
 class NN2(nn.Module):
     def __init__(self, H, S, O, mpc_T):
         super(NN, self).__init__()
-        self.fc1 = nn.Linear(H + S, 1024)  
-        self.fc2 = nn.Linear(1024, 512)  
-        self.output1 = nn.Linear(512, O) 
-        self.output2 = nn.Linear(512, O) 
+        self.fc1 = nn.Linear(H + S, 1024)
+        self.fc2 = nn.Linear(1024, 512)
+        self.output1 = nn.Linear(512, O)
+        self.output2 = nn.Linear(512, O)
         self.mpc_T = mpc_T
         self.O = O
 
@@ -47,7 +47,7 @@ class NN2(nn.Module):
         q = F.relu(self.output1(x)) + 0.00001
         p = self.output2(x)
         return q, p
-        
+
 
 def sample_xinit(n_batch, track_width, v_max, true_dx):
     def uniform(shape, low, high):
@@ -57,7 +57,7 @@ def sample_xinit(n_batch, track_width, v_max, true_dx):
     d = uniform(n_batch, -track_width*0.27, track_width*0.27)
     phi = uniform(n_batch, -0.37*np.pi, 0.37*np.pi)
     v = uniform(n_batch, .01, 0.99*v_max)
-    
+
     #sigma = uniform(n_batch, 6.01, 8.05)
     #d = uniform(n_batch, -track_width*0.35, track_width*0.35)
     #phi = uniform(n_batch, -0.4*np.pi, 0.4*np.pi)
@@ -65,36 +65,36 @@ def sample_xinit(n_batch, track_width, v_max, true_dx):
 
     sigma_0 = sigma
     sigma_diff = sigma-sigma_0
-    
+
     d_pen = penalty_d(d, 0.30*track_width)
     v_ub = penalty_v(v, v_max)
-    
+
     k = true_dx.curv(sigma)
 
     xinit = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), dim=1)
     return xinit
 
-    
-def penalty_d(d, th, factor=1000):  
+
+def penalty_d(d, th, factor=1000):
     overshoot_pos = (d - th).clamp(min=0)
     overshoot_neg = (-d - th).clamp(min=0)
     penalty_pos = torch.exp(overshoot_pos) - 1
-    penalty_neg = torch.exp(overshoot_neg) - 1 
+    penalty_neg = torch.exp(overshoot_neg) - 1
     return factor*(penalty_pos + penalty_neg)
 
 
-def penalty_v(v, th, factor=1000): 
+def penalty_v(v, th, factor=1000):
     overshoot_pos = (v - th).clamp(min=0)
     overshoot_neg = (-v + 0.001).clamp(min=0)
     penalty_pos = torch.exp(overshoot_pos) - 1
-    penalty_neg = torch.exp(overshoot_neg) - 1 
+    penalty_neg = torch.exp(overshoot_neg) - 1
     return factor*(penalty_pos + penalty_neg)
 
 
 def get_nearest_index(point_f, ref_path):
     return ((point_f[0] - ref_path[2,:])**2).argmin()
-  
-    
+
+
 def compute_x_coord(point_f, ref_path, nearest_index):
     return ref_path[0,nearest_index] - point_f[1]*torch.sin(ref_path[3,nearest_index])
 
@@ -103,14 +103,14 @@ def compute_y_coord(point_f, ref_path, nearest_index):
     return ref_path[1,nearest_index] + point_f[1]*torch.cos(ref_path[3,nearest_index])
 
 
-def frenet_to_cartesian(point_f, ref_path):     
+def frenet_to_cartesian(point_f, ref_path):
     nearest_index = get_nearest_index(point_f, ref_path)
     x = compute_x_coord(point_f, ref_path, nearest_index)
-    y = compute_y_coord(point_f, ref_path, nearest_index)    
+    y = compute_y_coord(point_f, ref_path, nearest_index)
     return torch.tensor([x, y])
 
 
-def get_loss_progress(x_init, dx, _Q, _p, mpc_T):     
+def get_loss_progress(x_init, dx, _Q, _p, mpc_T):
         pred_x, pred_u, pred_objs = mpc.MPC(
             dx.n_state, dx.n_ctrl, mpc_T,
             u_lower=u_lower, u_upper=u_upper, u_init=u_init,
@@ -123,31 +123,31 @@ def get_loss_progress(x_init, dx, _Q, _p, mpc_T):
             grad_method=grad_method,
             eps=eps,
             n_batch=n_batch,
-        )(x_init, QuadCost(_Q, _p), dx)        
-        progress_loss = torch.mean(-pred_x[mpc_T-1,:,0] + pred_x[0,:,0])                    
+        )(x_init, QuadCost(_Q, _p), dx)
+        progress_loss = torch.mean(-pred_x[mpc_T-1,:,0] + pred_x[0,:,0])
         return progress_loss
-    
-    
-    
-def get_loss_progress_new(x_init_train, x_init_sim, 
+
+
+
+def get_loss_progress_new(x_init_train, x_init_sim,
                           dx, dx_sim, true_sim_dx,
                           _Q, _p, u_lower, u_upper, u_init,
                           lqr_iter, eps, n_batch, grad_method,
-                          mpc_T, H_curve):    
-               
+                          mpc_T, H_curve):
+
         assert H_curve%mpc_T == 0
-        
+
         x_curr_sim = x_init_sim
         x_curr_train = x_init_train
-        
+
         #if np.random.random()<0.05:
         #    import pdb
         #    pdb.set_trace()
-        
+
         progress_loss_ = 0.
-        
+
         for s in range(H_curve//mpc_T):
-                    
+
             pred_x, pred_u, pred_objs = mpc.MPC(
                 dx.n_state, dx.n_ctrl, mpc_T,
                 u_lower=u_lower, u_upper=u_upper, u_init=u_init,
@@ -161,7 +161,7 @@ def get_loss_progress_new(x_init_train, x_init_sim,
                 eps=eps,
                 n_batch=n_batch,
             )(x_curr_train, QuadCost(_Q, _p), dx)
-            
+
             for ss in range(mpc_T):
                 x_curr_sim_ = x_curr_sim.clone()
                 x_curr_sim = true_sim_dx.forward(x_curr_sim_, pred_u[ss])
@@ -170,21 +170,21 @@ def get_loss_progress_new(x_init_train, x_init_sim,
             x_curr_train = x_curr_sim
             x_curr_train[:,4] = x_curr_train[:,0]
             x_curr_train[:,5] = 0.
-        
+
         #progress_loss = -progress_loss_.mean()
-        
+
         progress_loss = torch.mean(-x_curr_train[:,0] + x_init_train[:,0])
-         
-        # Below is to check if negative sigma isbeing outputted    
+
+        # Below is to check if negative sigma isbeing outputted
         #mask_weird = x_curr_train[:,0]<x_init_train[:,0]
         #print(x_init_train[mask_weird].shape)
-            
-            
+
+
         d_loss = torch.mean(x_curr_train[:,1]**2)
-            
+
         return progress_loss, d_loss
-       
-    
+
+
 def get_curve_hor_from_x(x, track_coord, H_curve):
     idx_track_batch = ((x[:,0]-track_coord[[2],:].T)**2).argmin(0)
     idcs_track_batch = idx_track_batch[:, None] + torch.arange(H_curve)
@@ -194,18 +194,18 @@ def get_curve_hor_from_x(x, track_coord, H_curve):
 
 #def cost_to_batch_NN(q, p, n_batch, mpc_T):
 #    Q_batch = torch.zeros(n_batch, q.shape[1], q.shape[1])
-#    rows, cols = torch.arange(q.shape[1]), torch.arange(q.shape[1])  
-#    Q_batch[:, rows, cols] = q 
+#    rows, cols = torch.arange(q.shape[1]), torch.arange(q.shape[1])
+#    Q_batch[:, rows, cols] = q
 #    Q_batch = Q_batch.unsqueeze(0).repeat(
-#                mpc_T, 1, 1, 1)    
+#                mpc_T, 1, 1, 1)
 #    p_batch = p.unsqueeze(0).repeat(mpc_T, 1, 1)
 #    return Q_batch, p_batch
 
 
 def cost_to_batch_NN(q, p, n_batch, mpc_T):
     Q_batch = torch.zeros(mpc_T, n_batch, q.shape[2], q.shape[2])
-    rows, cols = torch.arange(q.shape[2]), torch.arange(q.shape[2])  
-    Q_batch[:, :, rows, cols] = q 
+    rows, cols = torch.arange(q.shape[2]), torch.arange(q.shape[2])
+    Q_batch[:, :, rows, cols] = q
     return Q_batch, p
 
 
@@ -213,7 +213,7 @@ def cost_to_batch(q, p, n_batch, mpc_T):
     Q_batch = torch.diag(q).unsqueeze(0).unsqueeze(0).repeat(
                 mpc_T, n_batch, 1, 1
             )
-    p_batch = p.unsqueeze(0).repeat(mpc_T, n_batch, 1)   
+    p_batch = p.unsqueeze(0).repeat(mpc_T, n_batch, 1)
     return Q_batch, p_batch
 
 
@@ -244,7 +244,7 @@ def bound_params(q, p):
     #q[:,:,1] = 0.1
     #q[:,:,2] = 0.1
     #q[:,:,3] = 0.00001
-    #q = q + 1.   
+    #q = q + 1.
     q[:,:,4] = 0.00001
     #q[:,:,5] = 0.00001
     #q[:,:,-1] = 0.00001
@@ -292,7 +292,7 @@ def inference_params(x_in, track_coord, H_curve, model, q_pen, p_pen, N, mpc_T):
     q, p = model(curvs, x_in[:,1:4])
     q = torch.cat((q[:,:,:6], q_pen, q[:,:,6:]), dim=2)
     p = torch.cat((p[:,:,:6], p_pen, p[:,:,6:]), dim=2)
-    q2, p2 = bound_params(q, p) 
+    q2, p2 = bound_params(q, p)
     Q_batch, p_batch = cost_to_batch_NN(q2, p2, N, mpc_T)
     return Q_batch, p_batch
 
@@ -302,12 +302,12 @@ def inference_params_paj(x_in, track_coord, H_curve, model, q_pen, p_pen, N, mpc
     q, p = model(curvs, x_in[:,1:6])
     q = torch.cat((q[:,:8], q_pen, q[:,8:]), dim=1)
     p = torch.cat((p[:,:8], p_pen, p[:,8:]), dim=1)
-    q2, p2 = bound_params(q, p) 
+    q2, p2 = bound_params(q, p)
     Q_batch, p_batch = cost_to_batch_NN(q2, p2, N, mpc_T)
     return Q_batch, p_batch
 
 
-def plot_traj(x_sim, track_coord, dim_color=3):
+def plot_traj(x_sim, track_coord, gen, dim_color=4):
     x_list = []
     y_list = []
 
@@ -326,7 +326,7 @@ def plot_traj(x_sim, track_coord, dim_color=3):
     sct = ax.scatter(x_plot, y_plot, c=x_sim[:,dim_color], cmap=custom_cmap, s=1)
 
     cbar = plt.colorbar(sct)
-    cbar.set_label('Velocity') 
+    cbar.set_label('Velocity')
 
     print('x_init: ' + str(gen.xCoords[0]))
     print('y_init: ' + str(gen.yCoords[0]))
