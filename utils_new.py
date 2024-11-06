@@ -1178,6 +1178,11 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
 
     return q, p
 
+
+
+
+
+
 def q_and_p_dyn(mpc_T, q_p_pred, Q_manual, p_manual):
     # Cost order:
     # [for casadi] sigma_diff, d, phi, v, a, delta
