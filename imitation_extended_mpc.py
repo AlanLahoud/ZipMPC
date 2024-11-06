@@ -23,8 +23,8 @@ def parse_arguments():
     parser.add_argument('--n_Q', type=int, default=3)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
-    parser.add_argument('--delta_max', type=float, default=0.43)
-    parser.add_argument('--p_sigma_manual', type=float, default=0.2)
+    parser.add_argument('--delta_max', type=float, default=0.40)
+    parser.add_argument('--p_sigma_manual', type=float, default=0.3)
     
     return parser.parse_args()
 
@@ -58,7 +58,7 @@ l_f = l_r
 
 assert mpc_T%n_Q==0
 
-a_max = 2.0
+a_max = 1.5
 
 track_density = 300
 track_width = 0.5
@@ -114,7 +114,7 @@ u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mp
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.001
-lqr_iter = 60
+lqr_iter = 50
 
 grad_method = GradMethods.AUTO_DIFF
 
@@ -141,7 +141,7 @@ p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 
 idx_to_casadi = [5,1,2,3,8,9]
 
 
-epochs = 50
+epochs = 10
 num_patches = 10
 BS_init = 40
 BS_val = 10
@@ -344,10 +344,6 @@ for ep in range(epochs):
         loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() + 10*loss_v[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
         #loss = 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
-        
-        if ep>4:
-            import pdb
-            pdb.set_trace()
 
         loss_train_avg = loss_train_avg + loss.detach().item()/60.
         
