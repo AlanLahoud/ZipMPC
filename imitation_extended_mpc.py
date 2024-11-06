@@ -127,7 +127,7 @@ if load_model==True:
     except:
         print('No model found to load')
         
-opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -348,9 +348,10 @@ for ep in range(epochs):
         loss_train_avg = loss_train_avg + loss.detach().item()/60.
         
         #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
-        
-        import pdb
-        pdb.set_trace()
+
+        if it==0 and ep%2==1:
+            import pdb
+            pdb.set_trace()
         
         if it%30==0:
             #import pdb
