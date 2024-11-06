@@ -44,7 +44,7 @@ delta_max = args.delta_max
 
 p_sigma_manual = args.p_sigma_manual
 
-load_model = True
+load_model = False
 
 
 seed_n = 0
@@ -345,7 +345,7 @@ for ep in range(epochs):
 
         #loss = 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
         
-        if ep>0:
+        if ep>4:
             import pdb
             pdb.set_trace()
 
