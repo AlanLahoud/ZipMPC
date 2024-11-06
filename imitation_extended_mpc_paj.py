@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+import utils
 import utils_new
 import torch.autograd.functional as F
 
@@ -18,10 +19,10 @@ from sys import exit
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--mpc_T', type=int, default=20)
+    parser.add_argument('--mpc_T', type=int, default=50)
     parser.add_argument('--mpc_H', type=int, default=60)
     parser.add_argument('--n_Q', type=int, default=10)
-    parser.add_argument('--l_r', type=float, default=0.10)
+    parser.add_argument('--l_r', type=float, default=0.03)
     parser.add_argument('--v_max', type=float, default=1.5)
     parser.add_argument('--delta_max', type=float, default=0.4)
     parser.add_argument('--p_sigma_manual', type=float, default=0.1)
@@ -32,6 +33,8 @@ def parse_arguments():
 
 # Parsing arguments
 args = parse_arguments()
+
+mpc_L = 10
 
 mpc_T = args.mpc_T
 mpc_H = args.mpc_H
@@ -50,7 +53,7 @@ torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
 k_curve = 25.
-dt = 0.02
+dt = 0.03
 
 l_f = l_r
 
@@ -116,7 +119,7 @@ lqr_iter = 40
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.ImprovedNN(mpc_H, n_Q, 6, max_p)
+model = utils_new.ImprovedNN(mpc_H, n_Q, 9, max_p)
 opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
@@ -152,7 +155,7 @@ for b in range(BS_test):
     finished = 0
     crashed = 0
     steps = 0
-    max_steps=1500
+    max_steps=500
 
     x0_b_manual = x0_lap_manual[b].copy()
     x_manual_full_H = x0_b_manual.reshape(-1,1)
@@ -167,6 +170,7 @@ for b in range(BS_test):
 
         x0_b_manual = x_b_manual[1]
         x_manual_full_H = np.append(x_manual_full_H, x0_b_manual.reshape(-1,1), axis=1)
+        print("x_manual:", x_b_manual[1])
 
         if x0_b_manual[0]>track_coord[2].max().numpy()/2:
             finished=1
@@ -175,6 +179,7 @@ for b in range(BS_test):
             crashed=1
 
         steps = steps+1
+        print("long horizon step:", steps)
 
     lap_time = dt*steps
 
@@ -182,6 +187,8 @@ for b in range(BS_test):
     lap_time_list[b] = lap_time
 
     print(f'Manual extended mpc_H = {mpc_H}, lap time: {lap_time}')
+
+    utils.plot_traj(np.transpose(x_manual_full_H),track_coord,gen)
 
 
 finish_list = np.zeros((BS_test,))
@@ -214,6 +221,7 @@ for b in range(BS_test):
             crashed=1
 
         steps = steps+1
+        print("short horizon step:", steps)
 
     lap_time = dt*steps
 
@@ -221,6 +229,8 @@ for b in range(BS_test):
     lap_time_list[b] = lap_time
 
     print(f'Manual mpc_T = {mpc_T}, lap time: {lap_time}')
+
+    utils.plot_traj(np.transpose(x_manual_full),track_coord,gen)
 
 
 
@@ -309,20 +319,20 @@ for ep in range(epochs):
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
 
-        loss_dsigma = (x_true_torch[:mpc_T, :, 7] - pred_x[:, :, 7])**2
-        loss_d = (x_true_torch[:mpc_T, :, 1] - pred_x[:, :, 1])**2
-        loss_phi = (x_true_torch[:mpc_T, :, 2] - pred_x[:, :, 2])**2
-        loss_v = (x_true_torch[:mpc_T, :, 4] - pred_x[:, :, 4])**2
+        loss_dsigma = (x_true_torch[:mpc_L, :, 7] - pred_x[:mpc_L, :, 7])**2
+        loss_d = (x_true_torch[:mpc_L, :, 1] - pred_x[:mpc_L, :, 1])**2
+        loss_phi = (x_true_torch[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2
+        loss_v = (x_true_torch[:mpc_L, :, 4] - pred_x[:mpc_L, :, 4])**2
 
-        loss_a = (u_true_torch[:mpc_T, :, 0] - pred_u[:, :, 0])**2
-        loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1])**2
+        loss_a = (u_true_torch[:mpc_L, :, 0] - pred_u[:mpc_L, :, 0])**2
+        loss_delta = (u_true_torch[:mpc_L, :, 1] - pred_u[:mpc_L, :, 1])**2
 
-        diff_shorts = ((x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).sum(0)
+        diff_shorts = ((x_true_torch_S[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2).sum(0)
         args_conv = torch.argwhere(diff_shorts<0.00001)
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        loss = 10*loss_dsigma[:,args_conv].mean() + 10*loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
+        loss = 1000*loss_dsigma[:,args_conv].mean() + 1000*loss_d[:,args_conv].mean() + loss_phi[:,args_conv].mean() #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
 
 
@@ -348,6 +358,7 @@ for ep in range(epochs):
 
         if it%20==0:
             # L O S S   V A LI D A T I O N
+            print("validation loss start")
             model.eval()
             with torch.no_grad():
 
@@ -381,31 +392,32 @@ for ep in range(epochs):
                     x0_val.detach().numpy()[:,:8], BS_val, dx, du, control_H)
 
 
-                loss_dsigma_val = (x_true_val[:mpc_T, :, 7] - x_pred_val[:, :, 7])**2
-                loss_d_val = (x_true_val[:mpc_T, :, 1] - x_pred_val[:, :, 1])**2
-                loss_phi_val = (x_true_val[:mpc_T, :, 2] - x_pred_val[:, :, 2])**2
-                loss_v_val = (x_true_val[:mpc_T, :, 4] - x_pred_val[:, :, 4])**2
+                loss_dsigma_val = (x_true_val[:mpc_L, :, 7] - x_pred_val[:mpc_L, :, 7])**2
+                loss_d_val = (x_true_val[:mpc_L, :, 1] - x_pred_val[:mpc_L, :, 1])**2
+                loss_phi_val = (x_true_val[:mpc_L, :, 2] - x_pred_val[:mpc_L, :, 2])**2
+                loss_v_val = (x_true_val[:mpc_L, :, 4] - x_pred_val[:mpc_L, :, 4])**2
 
-                loss_a_val = (u_true_val[:mpc_T, :, 0] - u_pred_val[:, :, 0])**2
-                loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
+                loss_a_val = (u_true_val[:mpc_L, :, 0] - u_pred_val[:mpc_L, :, 0])**2
+                loss_delta_val = (u_true_val[:mpc_L, :, 1] - u_pred_val[:mpc_L, :, 1])**2
 
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 10*loss_dsigma_val.mean() + 10*loss_d_val.mean() + loss_phi_val.mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
+                loss_val = 1000*loss_dsigma_val.mean() + 1000*loss_d_val.mean() + loss_phi_val.mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
 
                 print('Validation loss:',
-                      round(10*loss_dsigma_val.mean().item(), 5),
-                      round(10*loss_d_val.mean().item(), 5),
+                      round(1000*loss_dsigma_val.mean().item(), 5),
+                      round(1000*loss_d_val.mean().item(), 5),
                       round(loss_phi_val.mean().item(), 5),
                       #round(loss_v_val.mean().item(), 5),
                       #round(loss_a_val.mean().item(), 5),
                       #round(loss_delta_val.mean().item(), 5),
                       round(loss_val.item(), 5))
 
+            print("validation loss end")
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
             model.eval()
             with torch.no_grad():
 
-                #print('LAP PERFORMANCE:')
+                print('LAP PERFORMANCE:')
                 BS_test = 1
 
                 # This sampling should bring always the same set of initial states
