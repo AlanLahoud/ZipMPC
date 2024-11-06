@@ -253,7 +253,7 @@ else:
 flag_finish_training = 0
 flag_finish_training_iter = 0
 
-scheduler = StepLR(optimizer, step_size=1, gamma=0.2)
+scheduler = StepLR(opt, step_size=1, gamma=0.2)
 
 for ep in range(epochs):
 
