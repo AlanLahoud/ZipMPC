@@ -1161,15 +1161,15 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,5] = p[:,:,5] + q_p_pred[:,:,0]
 
     #d
-    q[:,:,1] = 10*torch.sigmoid((q[:,:,1] + q_p_pred[:,:,1]))
+    q[:,:,1] = torch.sigmoid((q[:,:,1] + q_p_pred[:,:,1]))
     p[:,:,1] = p[:,:,1] + q_p_pred[:,:,2]
 
     #phi
-    q[:,:,2] = 10*torch.sigmoid((q[:,:,2] + q_p_pred[:,:,3]))
+    q[:,:,2] = torch.sigmoid((q[:,:,2] + q_p_pred[:,:,3]))
     p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
 
     #a
-    q[:,:,8] = torch.sigmoid((q[:,:,8] + q_p_pred[:,:,5]))
+    q[:,:,8] = torch.sigmoid((q[:,:,8] + q_p_pred[:,:,5] - 5.))
     p[:,:,8] = p[:,:,8] + q_p_pred[:,:,6]
 
     #delta
