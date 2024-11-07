@@ -129,7 +129,7 @@ if load_model==True:
     except:
         print('No model found to load')
         
-opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
@@ -253,7 +253,7 @@ else:
 flag_finish_training = 0
 flag_finish_training_iter = 0
 
-scheduler = StepLR(opt, step_size=1, gamma=0.2)
+scheduler = StepLR(opt, step_size=1, gamma=0.5)
 
 for ep in range(epochs):
 
