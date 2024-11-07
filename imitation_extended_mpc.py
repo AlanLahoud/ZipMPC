@@ -133,11 +133,11 @@ opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0, 1.0, 1.0, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0.01, 1.0, 1.0, 0.01, 0, 0, 0, 0, 0.1, 0.1]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0, 1.0, 1.0, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0.01, 1.0, 1.0, 0.01, 0, 0, 0, 0, 0.1, 0.1]), 0), mpc_H, 0)
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [5,1,2,3,8,9]
