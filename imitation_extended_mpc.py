@@ -131,7 +131,7 @@ if load_model==True:
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=8e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.01, 1.0, 1.0, 0.01, 0, 0, 0, 0, 0.1, 0.1]), 0), mpc_T, 0)
@@ -254,11 +254,7 @@ else:
 flag_finish_training = 0
 flag_finish_training_iter = 0
 
-scheduler = StepLR(opt, step_size=1, gamma=0.5)
-
 for ep in range(epochs):
-
-    scheduler.step()
     
     print(f'Epoch {ep}, Update reference path')
     x_star = np.transpose(x_current_full)
