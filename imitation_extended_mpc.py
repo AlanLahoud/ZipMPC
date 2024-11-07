@@ -26,7 +26,7 @@ def parse_arguments():
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
     parser.add_argument('--delta_max', type=float, default=0.40)
-    parser.add_argument('--p_sigma_manual', type=float, default=0.3)
+    parser.add_argument('--p_sigma_manual', type=float, default=1.0)
     
     return parser.parse_args()
 
@@ -133,11 +133,11 @@ opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0, 1.0, 1.0, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0, 1.0, 1.0, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_H, 0)
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [5,1,2,3,8,9]
@@ -347,7 +347,7 @@ for ep in range(epochs):
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        loss = 1000*loss_dsigma[:,args_conv].sum(0).mean() + 100*loss_d[:,args_conv].sum(0).mean() + 10*loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 100*loss_d[:,args_conv].sum(0).mean() #+ 10*loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
         #loss = 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
@@ -422,12 +422,12 @@ for ep in range(epochs):
                 loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 1000*loss_dsigma_val.sum(0).mean() + 100*loss_d_val.sum(0).mean() + 10*loss_v_val.sum(0).mean() + 0.01*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
+                loss_val = 100*loss_dsigma_val.sum(0).mean() + 100*loss_d_val.sum(0).mean() #+ 10*loss_v_val.sum(0).mean() + 0.01*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
 
                 print('Train loss:', loss_train_avg)
                 
                 print('Validation loss:', 
-                      round(1000*loss_dsigma_val.sum(0).mean().item(), 5),
+                      round(100*loss_dsigma_val.sum(0).mean().item(), 5),
                       round(100*loss_d_val.sum(0).mean().item(), 5), 
                       #round(loss_phi_val.sum(0).mean().item(), 5), 
                       round(10*loss_v_val.sum(0).mean().item(), 5), 
