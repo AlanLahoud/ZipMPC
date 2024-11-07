@@ -111,7 +111,7 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 120
+BS = 132
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -131,7 +131,7 @@ if load_model==True:
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=1e-5)
+opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-5)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.0, 0, 0, 0, 0, 0.1, 0.1]), 0), mpc_T, 0)
@@ -419,7 +419,7 @@ for ep in range(epochs):
                 loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 100*loss_dsigma_val.sum(0).mean() + 100*loss_d_val.sum(0).mean() #+ 10*loss_v_val.sum(0).mean() + 0.01*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
+                loss_val = 100*loss_dsigma_val.sum(0).mean() + 100*loss_d_val.sum(0).mean() + 10*loss_v_val.sum(0).mean() + 0.01*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
 
                 print('Train loss:', loss_train_avg)
                 
