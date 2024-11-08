@@ -451,10 +451,10 @@ class ImprovedNN(nn.Module):
         self.bn1 = nn.BatchNorm1d(16)
         self.dropout = nn.Dropout(0.3)
 
-        self.fc1 = nn.Linear(16 * mpc_H + input_size, 1024)
-        self.fc2 = nn.Linear(1024, 1024)
-        self.fc3 = nn.Linear(1024, 1024)
-        self.fc4 = nn.Linear(1024, mpc_T * O)
+        self.fc1 = nn.Linear(16 * mpc_H + input_size, 2000)
+        self.fc2 = nn.Linear(2000, 2000)
+        self.fc3 = nn.Linear(2000, 2000)
+        self.fc4 = nn.Linear(2000, mpc_T * O)
         self.activation = nn.ReLU()
         self.output_activation = nn.Tanh()
         self.K = K
@@ -481,7 +481,7 @@ class ImprovedNN(nn.Module):
         x = self.activation(self.fc3(x))
         x = self.fc4(x)
         x = x.reshape(self.mpc_T, -1, self.O)
-        return x / 5
+        return x
 
 
 
