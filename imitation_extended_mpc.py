@@ -279,7 +279,7 @@ for ep in range(epochs):
         #if ep+2 < npat:
         #    npat = ep + 2
         
-        x0 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_star, npat)
+        x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, npat)
         #x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, np.transpose(x_manual_full_H), npat)
         #x0_3 = utils_new.sample_init(BS - BS//3 - BS//3, true_dx)
 
