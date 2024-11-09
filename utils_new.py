@@ -699,7 +699,8 @@ def sample_init_traj_dist(BS, dyn, traj, num_patches, sn=None):
     v_pen = dyn.penalty_v(v_sample)
 
     x_init_sample = torch.hstack((
-        torch.from_numpy(traj_sample[:,0].reshape(-1,1)), d_sample, phi_sample, v_sample, traj_sample[:,4].reshape(-1,1)),
+        torch.from_numpy(traj_sample[:,0].reshape(-1,1)), d_sample, phi_sample, v_sample,
+        torch.from_numpy(traj_sample[:,4].reshape(-1,1)),
         torch.from_numpy(traj_sample[:,0].reshape(-1,1)), sigma_diff_sample, d_pen, v_pen))
 
     return x_init_sample
