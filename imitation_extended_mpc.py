@@ -46,7 +46,7 @@ delta_max = args.delta_max
 
 p_sigma_manual = args.p_sigma_manual
 
-load_model = False
+load_model = True
 
 
 seed_n = 0
