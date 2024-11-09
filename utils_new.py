@@ -149,7 +149,11 @@ class CasadiControl():
         p_sym = SX.sym('p_sym',dx+du,mpc_T)
         Q_sym = diag(q_sym)
 
-        l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat))
+        #l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat))
+        delta_diff = u_sym[1, 1:mpc_T] - u_sym[1, 0:mpc_T-1]
+        delta_smoothness_penalty = 0.1 * sum2(delta_diff ** 2)
+        l = sum2(sum1(0.5 * q_sym * feat * feat + p_sym * feat)) + delta_smoothness_penalty
+  
         dl = substitute(substitute(l,q_sym,q),p_sym,p)
 
         const = vertcat(
@@ -445,7 +449,7 @@ class ImprovedNN(nn.Module):
 class ImprovedNN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K):
         super(ImprovedNN, self).__init__()
-        input_size = 3
+        input_size = 4
 
         self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
         self.bn1 = nn.BatchNorm1d(16)
@@ -695,7 +699,7 @@ def sample_init_traj_dist(BS, dyn, traj, num_patches, sn=None):
     v_pen = dyn.penalty_v(v_sample)
 
     x_init_sample = torch.hstack((
-        torch.from_numpy(traj_sample[:,0].reshape(-1,1)), d_sample, phi_sample, v_sample,
+        torch.from_numpy(traj_sample[:,0].reshape(-1,1)), d_sample, phi_sample, v_sample, traj_sample[:,4].reshape(-1,1)),
         torch.from_numpy(traj_sample[:,0].reshape(-1,1)), sigma_diff_sample, d_pen, v_pen))
 
     return x_init_sample
@@ -858,7 +862,7 @@ class FrenetKinBicycleDx(nn.Module):
         a, delta = torch.unbind(u, dim=1)
 
         try:
-            sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
+            sigma, d, phi, v, delta_prev, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
         except:
             sigma, d, phi, v, sigma_0, sigma_diff = torch.unbind(state, dim=1)
 
@@ -884,10 +888,12 @@ class FrenetKinBicycleDx(nn.Module):
 
         sigma_diff = sigma - sigma_0
 
+        delta_prev = delta
+
         d_pen = self.penalty_d(d)
         v_ub = self.penalty_v(v)
 
-        state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), 1)
+        state = torch.stack((sigma, d, phi, v, delta_prev, sigma_0, sigma_diff, d_pen, v_ub), 1)
 
         return state
 
@@ -1172,11 +1178,11 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
 
     #a
     #q[:,:,8] = torch.sigmoid((q[:,:,8] + q_p_pred[:,:,5]))
-    p[:,:,8] = p[:,:,8] + q_p_pred[:,:,3]
+    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,3]
 
     #delta
     #q[:,:,9] = torch.sigmoid((q[:,:,9] + q_p_pred[:,:,7]))
-    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,4]
+    p[:,:,10] = p[:,:,10] + q_p_pred[:,:,4]
 
     return q, p
 

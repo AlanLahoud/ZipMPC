@@ -134,14 +134,14 @@ opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 #opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.0, 0, 0, 0, 0, 0.1, 0.1]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.0, 0.1, 0, 0, 0, 0, 0.1, 0.1]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.0, 0, 0, 0, 0, 0.1, 0.1]), 0), mpc_H, 0)
-p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.0, 0.1, 0, 0, 0, 0, 0.1, 0.1]), 0), mpc_H, 0)
+p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
-idx_to_casadi = [5,1,2,3,8,9]
+idx_to_casadi = [6,1,2,3,9,10]
 
 
 epochs = 40
@@ -294,7 +294,7 @@ for ep in range(epochs):
         x0_diff = x0.clone().float()
 
         curv = utils_new.get_curve_hor_from_x(x0_diff, track_coord, mpc_H)
-        inp = torch.hstack((x0_diff[:,1:4], curv))
+        inp = torch.hstack((x0_diff[:,1:5], curv))
         q_p_pred = model(inp)
 
         q, p = utils_new.q_and_p(mpc_T, q_p_pred, Q_manual, p_manual)
@@ -348,9 +348,9 @@ for ep in range(epochs):
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        #loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 100*loss_d[:,args_conv].sum(0).mean() + 10*loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 100*loss_d[:,args_conv].sum(0).mean() + 10*loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
-        loss = loss_a[:,args_conv].sum(0).mean() + 10*loss_delta[:,args_conv].sum(0).mean()
+        #loss = loss_a[:,args_conv].sum(0).mean() + 10*loss_delta[:,args_conv].sum(0).mean()
 
         loss_train_avg = loss_train_avg + loss.detach().item()/60.
         
@@ -394,7 +394,7 @@ for ep in range(epochs):
                 #x0_val = utils_new.sample_init(BS_val, true_dx, sn=0)
 
                 curv_val = utils_new.get_curve_hor_from_x(x0_val, track_coord, mpc_H)
-                inp_val = torch.hstack((x0_val[:,1:4], curv_val))
+                inp_val = torch.hstack((x0_val[:,1:5], curv_val))
                 q_p_pred_val = model(inp_val)
         
                 q_val, p_val = utils_new.q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
