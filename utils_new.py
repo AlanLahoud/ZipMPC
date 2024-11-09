@@ -467,7 +467,7 @@ class ImprovedNN(nn.Module):
 
 
     def forward(self, x):
-        global_context, time_series = x[:, :3], x[:, 3:]
+        global_context, time_series = x[:, :4], x[:, 4:]
 
         time_series = time_series.unsqueeze(1)
 
