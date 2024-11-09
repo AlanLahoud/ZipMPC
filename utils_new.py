@@ -1162,8 +1162,8 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
 
     e = 1e-9
 
-    q = e*torch.ones((mpc_T,BS,10)) + torch.tensor(Q_manual).unsqueeze(1).float()
-    p = torch.zeros((mpc_T,BS,10)) + torch.tensor(p_manual).unsqueeze(1).float()
+    q = e*torch.ones((mpc_T,BS,11)) + torch.tensor(Q_manual).unsqueeze(1).float()
+    p = torch.zeros((mpc_T,BS,11)) + torch.tensor(p_manual).unsqueeze(1).float()
 
     #sigma_diff
     #q[:,:,5] = q[:,:,5] + q_p_pred[:,:,0].clamp(e)
