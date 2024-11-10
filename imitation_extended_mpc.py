@@ -354,6 +354,10 @@ for ep in range(epochs):
 
         loss = loss_a[:,args_conv].sum(0).mean() + 10*loss_delta[:,args_conv].sum(0).mean()
 
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+        
         loss_train_avg = loss_train_avg + loss.detach().item()/60.
         
         #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
@@ -365,18 +369,13 @@ for ep in range(epochs):
         if it%30==0:
             #import pdb
             #pdb.set_trace()
-            d_pen = true_dx.penalty_d(pred_x[:, :, 1])
-            v_pen = true_dx.penalty_v(pred_x[:, :, 3])
+            d_pen = true_dx.penalty_d(pred_x[:, :, 1].detach())
+            v_pen = true_dx.penalty_v(pred_x[:, :, 3].detach())
             #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
-            print('V max: ', pred_x[:, :, 3].max().item())
+            print('V max: ', pred_x[:, :, 3].detach().max().item())
             print('N useful samples: ', loss_a.detach()[:,args_conv].shape)
             #print(pred_x[:, :, 1].max().item())
             #print(p.mean(0).mean(0))
-
-        
-        opt.zero_grad()
-        loss.backward()
-        opt.step()
 
         
         if it%30==0:
