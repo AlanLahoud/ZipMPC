@@ -484,6 +484,60 @@ class ImprovedNN(nn.Module):
         return x
 
 
+class ImprovedNN(nn.Module):
+    def __init__(self, mpc_H, mpc_T, O, K):
+        super(ImprovedNN, self).__init__()
+        input_size = 3
+
+        # Convolutional layers
+        self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
+        self.bn1 = nn.BatchNorm1d(16)
+        self.conv2 = nn.Conv1d(16, 32, kernel_size=3, padding=2, dilation=2)
+        self.bn2 = nn.BatchNorm1d(32)
+        self.dropout = nn.Dropout(0.2)
+
+        # Fully connected layers
+        self.fc1 = nn.Linear(32 * mpc_H + input_size, 3000)
+        self.ln1 = nn.LayerNorm(3000)
+        self.fc2 = nn.Linear(3000, 3000)
+        self.ln2 = nn.LayerNorm(3000)
+        self.fc3 = nn.Linear(3000, 3000)
+        self.ln3 = nn.LayerNorm(3000)
+        self.fc4 = nn.Linear(3000, mpc_T * O)
+
+        # Activation functions
+        self.activation = nn.LeakyReLU(0.1)
+        self.output_activation = nn.Tanh()
+
+        self.K = K
+        self.O = O
+        self.mpc_T = mpc_T
+
+    def forward(self, x):
+        global_context, time_series = x[:, :3], x[:, 3:]
+
+        # Convolutional processing of time series
+        time_series = time_series.unsqueeze(1)
+        time_series_res = time_series
+        time_series = self.activation(self.bn1(self.conv1(time_series)))
+        time_series = self.activation(self.bn2(self.conv2(time_series)))
+        time_series = self.dropout(time_series)
+        time_series += time_series_res
+
+        time_series = time_series.view(time_series.size(0), -1)
+
+        # Combine time series with global context and pass through fully connected layers
+        x = torch.cat([time_series, global_context], dim=1)
+        x = self.activation(self.ln1(self.fc1(x)))
+        x = self.activation(self.ln2(self.fc2(x)))
+        x = self.activation(self.ln3(self.fc3(x)))
+        x = self.fc4(x)
+
+        x = x.reshape(self.mpc_T, -1, self.O)
+        return x/10
+
+
+
 
 def sample_init(BS, dyn, sn=None):
 
