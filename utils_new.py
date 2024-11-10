@@ -484,57 +484,75 @@ class ImprovedNN(nn.Module):
         return x
 
 
-class ImprovedNN(nn.Module):
-    def __init__(self, mpc_H, mpc_T, O, K):
-        super(ImprovedNN, self).__init__()
-        input_size = 3
+import torch
+import torch.nn as nn
 
-        # Convolutional layers
+class EnhancedMPCParameterModel(nn.Module):
+    def __init__(self, mpc_H, mpc_T, O_state, O_control):
+        super(EnhancedMPCParameterModel, self).__init__()
+        input_size = 3  # global context variables
+
+        # Convolutional layers for time series processing
         self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
         self.bn1 = nn.BatchNorm1d(16)
-        self.conv2 = nn.Conv1d(16, 32, kernel_size=3, padding=2, dilation=2)
+        self.conv2 = nn.Conv1d(16, 32, kernel_size=2, padding=1)
         self.bn2 = nn.BatchNorm1d(32)
-        self.dropout = nn.Dropout(0.2)
 
+        # Recurrent layer to capture temporal dependencies
+        self.rnn = nn.LSTM(input_size=32, hidden_size=64, num_layers=1, batch_first=True)
+        
         # Fully connected layers
-        self.fc1 = nn.Linear(32 * mpc_H + input_size, 3000)
+        self.fc1 = nn.Linear(64 * mpc_H + input_size, 3000)
         self.ln1 = nn.LayerNorm(3000)
         self.fc2 = nn.Linear(3000, 3000)
         self.ln2 = nn.LayerNorm(3000)
         self.fc3 = nn.Linear(3000, 3000)
         self.ln3 = nn.LayerNorm(3000)
-        self.fc4 = nn.Linear(3000, mpc_T * O)
+        
+        # Separate heads for state and control parameters
+        self.fc_state = nn.Linear(3000, mpc_T * O_state)  # State parameters
+        self.fc_control = nn.Linear(3000, mpc_T * O_control)  # Control parameters
 
         # Activation functions
         self.activation = nn.LeakyReLU(0.1)
-        self.output_activation = nn.Tanh()
+        self.output_activation = nn.Tanh()  # for final output scaling if needed
 
-        self.K = K
-        self.O = O
         self.mpc_T = mpc_T
+        self.O_state = O_state
+        self.O_control = O_control
 
+    
     def forward(self, x):
         global_context, time_series = x[:, :3], x[:, 3:]
 
-        # Convolutional processing of time series
-        time_series = time_series.unsqueeze(1)
+        # Reshape time series for convolutional processing
+        time_series = time_series.unsqueeze(1)  # Add channel dimension for Conv1d
         time_series_res = time_series
+
+        # Apply convolutions
         time_series = self.activation(self.bn1(self.conv1(time_series)))
         time_series = self.activation(self.bn2(self.conv2(time_series)))
-        time_series = self.dropout(time_series)
-        time_series += time_series_res
+        time_series = time_series + time_series_res  # Residual connection
 
-        time_series = time_series.view(time_series.size(0), -1)
+        # Flatten for LSTM input
+        time_series = time_series.permute(0, 2, 1)  # Switch to (batch, time, channel) for LSTM
+        time_series, _ = self.rnn(time_series)  # LSTM captures temporal dependencies
+        time_series = time_series.contiguous().view(time_series.size(0), -1)
 
-        # Combine time series with global context and pass through fully connected layers
+        # Combine global context with processed time series features
         x = torch.cat([time_series, global_context], dim=1)
         x = self.activation(self.ln1(self.fc1(x)))
         x = self.activation(self.ln2(self.fc2(x)))
         x = self.activation(self.ln3(self.fc3(x)))
-        x = self.fc4(x)
 
-        x = x.reshape(self.mpc_T, -1, self.O)
-        return x/10
+        # Separate outputs for state and control parameters
+        p_state = self.fc_state(x).reshape(-1, self.mpc_T, self.O_state)
+        p_control = self.fc_control(x).reshape(-1, self.mpc_T, self.O_control)
+
+        # Concatenate state and control outputs
+        output = torch.cat([p_state, p_control], dim=-1)
+        return 5*self.output_activation(output)
+
 
 
 
