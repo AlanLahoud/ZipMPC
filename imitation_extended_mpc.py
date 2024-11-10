@@ -288,7 +288,7 @@ for ep in range(epochs):
 
         #x0 = torch.vstack((x0_1, x0_2, x0_3))
 
-        x0 = torch.vstack((x0_1, x0_2))
+        x0 = torch.vstack((x0_1, x0_2)).float()
 
         #x0 = torch.vstack((x0_1, x0_2))
         
