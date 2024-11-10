@@ -283,8 +283,7 @@ for ep in range(epochs):
         
         x0_1 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_star, npat, sn=0)
         x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, np.transpose(x_manual_full_H), npat, sn=0)
-        import pdb
-        pdb.set_trace()
+
         #x0_3 = utils_new.sample_init(BS - BS//3 - BS//3, true_dx)
 
         #x0 = torch.vstack((x0_1, x0_2, x0_3))
@@ -295,10 +294,9 @@ for ep in range(epochs):
         
         #x0 = utils_new.sample_init(BS, true_dx)  
         
-        x0_diff = x0.clone().float()
 
-        curv = utils_new.get_curve_hor_from_x(x0_diff, track_coord, mpc_H)
-        inp = torch.hstack((x0_diff[:,1:4], curv))
+        curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
+        inp = torch.hstack((x0[:,1:4], curv))
         q_p_pred = model(inp)
 
         q, p = utils_new.q_and_p(mpc_T, q_p_pred, Q_manual, p_manual)
@@ -309,7 +307,7 @@ for ep in range(epochs):
         x_true, u_true = utils_new.solve_casadi_parallel(
             np.repeat(q_manual_casadi, BS, 1), 
             np.repeat(p_manual_casadi, BS, 1), 
-            x0_diff.detach().numpy()[:,:6], BS, dx, du, control_H) 
+            x0.detach().numpy()[:,:6], BS, dx, du, control_H) 
 
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
@@ -320,7 +318,7 @@ for ep in range(epochs):
         p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
         x_true_S, u_true_S = utils_new.solve_casadi_parallel(
             q_manual_casadi_S, p_manual_casadi_S, 
-            x0_diff.detach().numpy()[:,:6], BS, dx, du, control) 
+            x0.detach().numpy()[:,:6], BS, dx, du, control) 
 
         x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
         u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)      
@@ -337,7 +335,7 @@ for ep in range(epochs):
                     grad_method=grad_method,
                     eps=eps,
                     n_batch=None,
-                )(x0_diff, QuadCost(Q, p), true_dx)
+                )(x0, QuadCost(Q, p), true_dx)
         
         loss_dsigma = (x_true_torch[:mpc_T, :, 5] - pred_x[:, :, 5])**2
         loss_d = (x_true_torch[:mpc_T, :, 1] - pred_x[:, :, 1])**2
