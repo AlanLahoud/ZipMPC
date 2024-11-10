@@ -320,7 +320,9 @@ for ep in range(epochs):
 
         x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
         u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)      
-            
+
+        import pdb
+        pdb.set_trace()
         pred_x, pred_u, pred_objs = mpc.MPC(
                     true_dx.n_state, true_dx.n_ctrl, mpc_T,
                     u_lower=u_lower, u_upper=u_upper, u_init=u_init,
