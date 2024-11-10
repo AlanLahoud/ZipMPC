@@ -15,7 +15,9 @@ import time
 
 import argparse
 
+import sys
 from sys import exit
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
@@ -134,7 +136,7 @@ opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 #opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3.0, 3.0, 0.0, 0, 0, 0, 0, 1.0, 1.0]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0.0, 2.0, 2.0, 0.0, 0, 0, 0, 0, 0.5, 0.5]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
