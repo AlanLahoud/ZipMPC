@@ -775,8 +775,8 @@ class FrenetKinBicycleDx(nn.Module):
 
         self.params = params
 
-        # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1)
-        self.n_state = 4+2+1+1
+        # states: sigma, d, phi, v (4), + deltaprev, + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1)
+        self.n_state = 4+1+2+1+1
         #print('Number of states:', self.n_state)
 
         self.n_ctrl = 2 # control: a, delta
