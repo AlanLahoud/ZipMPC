@@ -131,7 +131,7 @@ if load_model==True:
     except:
         print('No model found to load')
         
-opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.001)
 #opt = torch.optim.AdamW(model.parameters(), lr=6e-5, weight_decay=1e-4)
 
