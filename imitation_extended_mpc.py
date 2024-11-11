@@ -352,11 +352,11 @@ for ep in range(epochs):
         # Ideal here would be to scale
         #loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 100*loss_d[:,args_conv].sum(0).mean() + loss_phi[:,args_conv].sum(0).mean() + 10*loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
-        if i<10:
+        if it<10:
             idx_steps = [0,1]
-        elif i<30:
+        elif it<30:
             idx_steps = [0,1,2,3]
-        elif i<40:
+        elif it<40:
             idx_steps = [0,1,2,3,4,5]
         else:
             idx_steps = list(np.arange(mpc_T))
