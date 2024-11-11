@@ -131,7 +131,7 @@ if load_model==True:
     except:
         print('No model found to load')
         
-opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.001)
 #opt = torch.optim.AdamW(model.parameters(), lr=6e-5, weight_decay=1e-4)
 
@@ -352,7 +352,16 @@ for ep in range(epochs):
         # Ideal here would be to scale
         #loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 100*loss_d[:,args_conv].sum(0).mean() + loss_phi[:,args_conv].sum(0).mean() + 10*loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
-        loss = loss_a[:,args_conv].sum(0).mean() + 10*loss_delta[:,args_conv].sum(0).mean()
+        if i<10:
+            idx_steps = [0,1]
+        elif i<30:
+            idx_steps = [0,1,2,3]
+        elif i<40:
+            idx_steps = [0,1,2,3,4,5]
+        else:
+            idx_steps = list(np.arange(mpc_T))
+
+        loss = loss_a[idx_steps,args_conv].sum(0).mean() + 10*loss_delta[idx_steps,args_conv].sum(0).mean()
 
         opt.zero_grad()
         loss.backward()
