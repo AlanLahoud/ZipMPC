@@ -118,7 +118,7 @@ u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mp
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.00001
-lqr_iter = 25
+lqr_iter = 35
 
 grad_method = GradMethods.AUTO_DIFF
 
@@ -365,7 +365,7 @@ for ep in range(epochs):
 
         #loss = 10*loss_a[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean()
 
-        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean() + loss_a[:,args_conv].sum(0).mean() + 10*loss_delta[:,args_conv].sum(0).mean()
+        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean() + loss_a[:,args_conv].sum(0).mean() + loss_delta[:,args_conv].sum(0).mean()
 
         
         #loss = loss_a.sum(0).mean() + 10000*loss_delta.sum(0).mean()
