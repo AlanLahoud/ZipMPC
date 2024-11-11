@@ -481,7 +481,8 @@ class ImprovedNN(nn.Module):
         x = self.activation(self.fc3(x))
         x = self.fc4(x)
         x = x.reshape(self.mpc_T, -1, self.O)
-        return x/10
+        x = 5*self.output_activation(x)
+        return x
 
 
 
