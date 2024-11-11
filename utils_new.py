@@ -481,7 +481,7 @@ class ImprovedNN(nn.Module):
         x = self.activation(self.fc3(x))
         x = self.fc4(x)
         x = x.reshape(self.mpc_T, -1, self.O)
-        x = 5*self.output_activation(x/5)
+        x = 5*self.output_activation(x/10)
         return x
 
 
@@ -807,7 +807,7 @@ class FrenetKinBicycleDx(nn.Module):
 
         self.delta_max = params[6]
 
-        self.factor_pen = 10000000.
+        self.factor_pen = 10.
 
         self.max_track_width_perc = 0.68
 

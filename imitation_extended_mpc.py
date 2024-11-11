@@ -363,6 +363,8 @@ for ep in range(epochs):
 
         loss = loss_a[:,args_conv].sum(0).mean() + 10*loss_delta[:,args_conv].sum(0).mean()
 
+        loss = loss_a.sum(0).mean() + 10*loss_delta.sum(0).mean()
+
         opt.zero_grad()
         loss.backward()
         opt.step()
