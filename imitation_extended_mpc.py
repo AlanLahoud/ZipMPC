@@ -133,14 +133,14 @@ if load_model==True:
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.001)
-opt = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-3)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.01, 0, 0., 0, 0, 0.1, 1.0]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3.0, 3.0, 0.0, 0, 0., 0, 0, 0.1, 3.0]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.01, 0, 0, 0, 0, 0.1, 1.0]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 3.0, 3.0, 0.0, 0, 0, 0, 0, 0.1, 3.0]), 0), mpc_H, 0)
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [5,1,2,3,8,9]
