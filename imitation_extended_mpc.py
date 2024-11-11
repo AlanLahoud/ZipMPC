@@ -131,9 +131,9 @@ if load_model==True:
     except:
         print('No model found to load')
         
-opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
+#opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.001)
-#opt = torch.optim.AdamW(model.parameters(), lr=6e-5, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=2e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.01, 0, 0., 0, 0, 0.1, 1.0]), 0), mpc_T, 0)
@@ -363,7 +363,10 @@ for ep in range(epochs):
 
         #loss = loss_a[:,args_conv].sum(0).mean() + 10*loss_delta[:,args_conv].sum(0).mean()
 
-        loss = 10*loss_a[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean()
+        #loss = 10*loss_a[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean()
+
+        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean() + loss_a[:,args_conv].sum(0).mean() + 10*loss_delta[:,args_conv].sum(0).mean()
+
         
         #loss = loss_a.sum(0).mean() + 10000*loss_delta.sum(0).mean()
 
