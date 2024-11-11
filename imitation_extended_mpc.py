@@ -27,8 +27,8 @@ def parse_arguments():
     parser.add_argument('--n_Q', type=int, default=3)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
-    parser.add_argument('--delta_max', type=float, default=0.40)
-    parser.add_argument('--p_sigma_manual', type=float, default=10.0)
+    parser.add_argument('--delta_max', type=float, default=0.42)
+    parser.add_argument('--p_sigma_manual', type=float, default=6.0)
     
     return parser.parse_args()
 
@@ -133,20 +133,20 @@ if load_model==True:
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.001)
-opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-3)
+opt = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=1e-3)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3.0, 3.0, 0.0, 0, 0., 0, 0, 0.1, 3.0]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0.0, 2.0, 2.0, 0.0, 0, 0., 0, 0, 0.1, 2.0]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 3.0, 3.0, 0.0, 0, 0, 0, 0, 0.1, 3.0]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 2.0, 2.0, 0.0, 0, 0, 0, 0, 0.1, 2.0]), 0), mpc_H, 0)
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [5,1,2,3,8,9]
 
 
-epochs = 20
+epochs = 40
 num_patches = 20
 BS_init = 40
 BS_val = 10
@@ -376,15 +376,8 @@ for ep in range(epochs):
         
         loss_train_avg = loss_train_avg + loss.detach().item()/60.
         
-        #loss = 0.1*loss_a[:,args_conv].mean() + 0.1*loss_delta[:,args_conv].mean()
-
-        #if it==0 and ep%2==1:
-        #    import pdb
-        #    pdb.set_trace()
         
-        if it%30==0:
-            #import pdb
-            #pdb.set_trace()
+        if it%60==59:
             d_pen = true_dx.penalty_d(pred_x[:, :, 1].detach())
             v_pen = true_dx.penalty_v(pred_x[:, :, 3].detach())
             #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
@@ -392,9 +385,7 @@ for ep in range(epochs):
             print('N useful samples: ', loss_a.detach()[:,args_conv].shape)
             #print(pred_x[:, :, 1].max().item())
             #print(p.mean(0).mean(0))
-
-        
-        if it%30==0:
+            
             # L O S S   V A LI D A T I O N
             model.eval()
             with torch.no_grad():
