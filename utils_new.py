@@ -469,9 +469,9 @@ class ImprovedNN(nn.Module):
 
         time_series_res = time_series
         time_series = self.activation(self.conv1(time_series))
-        time_series = self.bn1(time_series)
-        time_series = self.dropout(time_series)
-        time_series += time_series_res
+        #time_series = self.bn1(time_series)
+        #time_series = self.dropout(time_series)
+        #time_series += time_series_res
 
         time_series = time_series.view(time_series.size(0), -1)
 

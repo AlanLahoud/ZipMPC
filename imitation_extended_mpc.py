@@ -55,7 +55,7 @@ seed_n = 0
 torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
-k_curve = 12.
+k_curve = 20.
 dt = 0.03
 
 l_f = l_r
@@ -131,9 +131,9 @@ if load_model==True:
     except:
         print('No model found to load')
         
-#opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
+opt = torch.optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.001)
-opt = torch.optim.AdamW(model.parameters(), lr=6e-5, weight_decay=1e-4)
+#opt = torch.optim.AdamW(model.parameters(), lr=6e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.01, 0, 0., 0, 0, 0.1, 0.1]), 0), mpc_T, 0)
