@@ -1178,7 +1178,7 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
 
     #delta
     #q[:,:,9] = torch.sigmoid((q[:,:,9] + q_p_pred[:,:,7]))
-    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,4]
+    #p[:,:,9] = p[:,:,9] + q_p_pred[:,:,1]
 
     return q, p
 

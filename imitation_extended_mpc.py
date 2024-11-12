@@ -48,7 +48,7 @@ delta_max = args.delta_max
 
 p_sigma_manual = args.p_sigma_manual
 
-load_model = False
+load_model = True
 
 
 seed_n = 0
@@ -113,12 +113,12 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 80
+BS = 60
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.00001
-lqr_iter = 35
+lqr_iter = 30
 
 grad_method = GradMethods.AUTO_DIFF
 
@@ -146,7 +146,7 @@ p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 
 idx_to_casadi = [5,1,2,3,8,9]
 
 
-epochs = 40
+epochs = 5
 num_patches = 20
 BS_init = 40
 BS_val = 10
@@ -365,7 +365,7 @@ for ep in range(epochs):
 
         #loss = 10*loss_a[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean()
 
-        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean() + loss_a[:,args_conv].sum(0).mean() + loss_delta[:,args_conv].sum(0).mean()
+        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean() + 0.1*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
         
         #loss = loss_a.sum(0).mean() + 10000*loss_delta.sum(0).mean()
