@@ -332,7 +332,7 @@ for ep in range(epochs):
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        loss = 10000*loss_dsigma[:,args_conv].mean() + 1000*loss_d[:,args_conv].mean() + 0*loss_phi[:,args_conv].mean() + 1*loss_v[:,args_conv].mean() + 1*loss_a[:,args_conv].mean() + 0.0001*loss_delta[:,args_conv].mean()  #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
+        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean() + loss_a[:,args_conv].sum(0).mean() + loss_delta[:,args_conv].sum(0).mean()  #+ loss_v.mean() #+ loss_a.mean() + loss_delta.mean()
 
 
 
@@ -401,15 +401,24 @@ for ep in range(epochs):
                 loss_delta_val = (u_true_val[:mpc_L, :, 1] - u_pred_val[:mpc_L, :, 1])**2
 
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 10000*loss_dsigma[:,args_conv].mean() + 1000*loss_d[:,args_conv].mean() + 0*loss_phi[:,args_conv].mean() + 1*loss_v[:,args_conv].mean() + 1*loss_a[:,args_conv].mean() + 0.0001*loss_d[:,args_conv].mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
+                loss_val = 100*loss_dsigma[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean() + loss_a[:,args_conv].sum(0).mean() + loss_delta[:,args_conv].sum(0).mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
+
+                print('Train loss:',
+                      round(100*loss_dsigma.detach().sum(0).mean().item(), 5),
+                      round(100*loss_d.detach().sum(0).mean().item(), 5),
+                      #round(loss_phi_val.sum(0).mean().item(), 5),
+                      round(10*loss_v.detach().sum(0).mean().item(), 5),
+                      round(0.01*loss_a.detach().sum(0).mean().item(), 5),
+                      round(0.1*loss_delta.detach().sum(0).mean().item(), 5),
+                      round(loss_train_avg, 5))
 
                 print('Validation loss:',
-                      round(10000*loss_dsigma_val.mean().item(), 5),
-                      round(1000*loss_d_val.mean().item(), 5),
-                      round(0*loss_phi_val.mean().item(), 5),
-                      round(1*loss_v_val.mean().item(), 5),
-                      round(1*loss_a_val.mean().item(), 5),
-                      round(0.0001*loss_delta_val.mean().item(), 5),
+                      round(100*loss_dsigma_val.sum(0).mean().item(), 5),
+                      round(100*loss_d_val.sum(0).mean().item(), 5),
+                      #round(loss_phi_val.sum(0).mean().item(), 5),
+                      round(10*loss_v_val.sum(0).mean().item(), 5),
+                      round(0.01*loss_a_val.sum(0).mean().item(), 5),
+                      round(0.1*loss_delta_val.sum(0).mean().item(), 5),
                       round(loss_val.item(), 5))
 
             print("validation loss end")
