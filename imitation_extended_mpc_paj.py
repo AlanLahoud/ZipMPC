@@ -409,8 +409,7 @@ for ep in range(epochs):
                       #round(loss_phi_val.sum(0).mean().item(), 5),
                       round(1*loss_v.detach().sum(0).mean().item(), 5),
                       round(0.01*loss_a.detach().sum(0).mean().item(), 5),
-                      round(0.1*loss_delta.detach().sum(0).mean().item(), 5),
-                      round(loss_train_avg, 5))
+                      round(0.1*loss_delta.detach().sum(0).mean().item(), 5))
 
                 print('Validation loss:',
                       round(100*loss_dsigma_val.sum(0).mean().item(), 5),
@@ -418,8 +417,7 @@ for ep in range(epochs):
                       #round(loss_phi_val.sum(0).mean().item(), 5),
                       round(1*loss_v_val.sum(0).mean().item(), 5),
                       round(0.01*loss_a_val.sum(0).mean().item(), 5),
-                      round(0.1*loss_delta_val.sum(0).mean().item(), 5),
-                      round(loss_val.item(), 5))
+                      round(0.1*loss_delta_val.sum(0).mean().item(), 5))
 
             print("validation loss end")
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
