@@ -113,7 +113,7 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 48
+BS = 60
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -282,13 +282,13 @@ for ep in range(epochs):
         #    npat = ep + 2
         
         x0_1 = utils_new.sample_init_traj_dist(BS//2, true_dx, x_star, npat)
-        x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, np.transpose(x_manual_full_H), npat)
+        #x0_2 = utils_new.sample_init_traj_dist(BS//2, true_dx, np.transpose(x_manual_full_H), npat)
 
-        #x0_3 = utils_new.sample_init(BS - BS//3 - BS//3, true_dx)
+        x0_3 = utils_new.sample_init(BS//2, true_dx)
 
         #x0 = torch.vstack((x0_1, x0_2, x0_3))
 
-        x0 = torch.vstack((x0_1, x0_2)).float()
+        x0 = torch.vstack((x0_1, x0_3)).float()
 
         #x0 = torch.vstack((x0_1, x0_2))
         
