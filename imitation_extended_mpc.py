@@ -118,12 +118,12 @@ u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mp
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.00001
-lqr_iter = 10
+lqr_iter = 20
 
 grad_method = GradMethods.AUTO_DIFF
 
-#model = utils_new.ImprovedNN(mpc_H, n_Q, 5, max_p)
-model = utils_new.ImprovedNN(3, n_Q, 5, max_p)
+model = utils_new.ImprovedNN(mpc_H, n_Q, 5, max_p)
+#model = utils_new.ImprovedNN(3, n_Q, 5, max_p)
 
 if load_model==True:
     try:
@@ -134,7 +134,7 @@ if load_model==True:
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=2e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.0, 0, 0., 0, 0, 0.1, 1.0]), 0), mpc_T, 0)
@@ -306,8 +306,9 @@ for ep in range(epochs):
         
 
         curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
-        inp = torch.hstack((x0[:,1:4], curv[:,[1,10,-1]]))
-        inp_norm = inp/torch.tensor([0.05,0.05,1.8,3.33,3.33,3.33])
+        inp = torch.hstack((x0[:,1:4], curv))
+        inp_norm = inp/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
+        
         q_p_pred = model(inp_norm)
         
         q, p = utils_new.q_and_p(mpc_T, q_p_pred, Q_manual, p_manual)
@@ -420,8 +421,8 @@ for ep in range(epochs):
                 #x0_val = utils_new.sample_init(BS_val, true_dx, sn=0)
 
                 curv_val = utils_new.get_curve_hor_from_x(x0_val, track_coord, mpc_H)
-                inp_val = torch.hstack((x0_val[:,1:4], curv_val[:,[1,10,-1]]))
-                inp_val_norm = inp_val/torch.tensor([0.05,0.05,1.8,3.33,3.33,3.33])
+                inp_val = torch.hstack((x0_val[:,1:4], curv_val))
+                inp_val_norm = inp_val/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
                 q_p_pred_val = model(inp_val_norm)
         
                 q_val, p_val = utils_new.q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
@@ -499,8 +500,8 @@ for ep in range(epochs):
 
                         x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
                         curv_lap = utils_new.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
-                        inp_lap = torch.hstack((x0_lap_pred_torch[:,1:4], curv_lap[:,[1,10,-1]]))
-                        inp_lap_norm = inp_lap/torch.tensor([0.05,0.05,1.8,3.33,3.33,3.33])
+                        inp_lap = torch.hstack((x0_lap_pred_torch[:,1:4], curv_lap))
+                        inp_lap_norm = inp_lap/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
                         q_p_pred_lap = model(inp_lap_norm)
                         q_lap, p_lap = utils_new.q_and_p(mpc_T, q_p_pred_lap, Q_manual, p_manual)
 

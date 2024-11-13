@@ -451,10 +451,10 @@ class ImprovedNN(nn.Module):
         self.bn1 = nn.BatchNorm1d(16)
         self.dropout = nn.Dropout(0.1)
 
-        self.fc1 = nn.Linear(16 * mpc_H + input_size, 2000)
-        self.fc2 = nn.Linear(2000, 2000)
-        self.fc3 = nn.Linear(2000, 2000)
-        self.fc4 = nn.Linear(2000, mpc_T * O)
+        self.fc1 = nn.Linear(16 * mpc_H + input_size, 600)
+        self.fc2 = nn.Linear(600, 600)
+        self.fc3 = nn.Linear(600, 600)
+        self.fc4 = nn.Linear(600, mpc_T * O)
         self.activation = nn.LeakyReLU(0.1)
         self.output_activation = nn.Tanh()
         self.K = K
@@ -469,9 +469,9 @@ class ImprovedNN(nn.Module):
 
         time_series_res = time_series
         time_series = self.activation(self.conv1(time_series))
-        #time_series = self.bn1(time_series)
-        #time_series = self.dropout(time_series)
-        #time_series += time_series_res
+        time_series = self.bn1(time_series)
+        time_series = self.dropout(time_series)
+        time_series += time_series_res
 
         time_series = time_series.view(time_series.size(0), -1)
 
