@@ -300,7 +300,7 @@ for ep in range(epochs):
 
         #x0 = torch.vstack((x0_1, x0_3)).float()
 
-        x0 = torch.vstack((x0_1, x0_2)).float()
+        x0 = torch.vstack((x0_1, x0_1)).float()
         
         #x0 = utils_new.sample_init(BS, true_dx)  
         
