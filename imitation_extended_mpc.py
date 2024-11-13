@@ -365,7 +365,7 @@ for ep in range(epochs):
 
         #loss = 10*loss_a[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean()
 
-        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean() + 10*loss_phi[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
 
         
         #loss = loss_a.sum(0).mean() + 10000*loss_delta.sum(0).mean()
@@ -390,7 +390,7 @@ for ep in range(epochs):
             model.eval()
             with torch.no_grad():
                
-                BS_val = 64
+                BS_val = 100
 
                 u_lower_val = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
                 u_upper_val = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
@@ -436,7 +436,7 @@ for ep in range(epochs):
                 print('Train loss:', 
                       round(100*loss_dsigma.detach().sum(0).mean().item(), 5),
                       round(100*loss_d.detach().sum(0).mean().item(), 5), 
-                      #round(loss_phi_val.sum(0).mean().item(), 5), 
+                      round(10*loss_phi_val.sum(0).mean().item(), 5), 
                       round(10*loss_v.detach().sum(0).mean().item(), 5), 
                       round(0.01*loss_a.detach().sum(0).mean().item(), 5), 
                       round(0.1*loss_delta.detach().sum(0).mean().item(), 5), 
