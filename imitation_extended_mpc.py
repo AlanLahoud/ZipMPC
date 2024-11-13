@@ -309,9 +309,6 @@ for ep in range(epochs):
         inp = torch.hstack((x0[:,1:4], curv[:,[1,10,-1]]))
         inp_norm = inp/torch.tensor([0.05,0.05,1.8,3.33,3.33,3.33])
         q_p_pred = model(inp_norm)
-
-        import pdb
-        pdb.set_trace()
         
         q, p = utils_new.q_and_p(mpc_T, q_p_pred, Q_manual, p_manual)
         Q = torch.diag_embed(q, offset=0, dim1=-2, dim2=-1)
