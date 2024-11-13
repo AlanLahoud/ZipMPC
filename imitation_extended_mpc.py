@@ -122,8 +122,8 @@ lqr_iter = 20
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.SimpleNN(mpc_H, n_Q, 5, max_p)
-#model = utils_new.ImprovedNN(3, n_Q, 5, max_p)
+#model = utils_new.SimpleNN(mpc_H, n_Q, 5, max_p)
+model = utils_new.ImprovedNN(mpc_H, n_Q, 5, max_p)
 
 if load_model==True:
     try:
@@ -137,11 +137,11 @@ if load_model==True:
 opt = torch.optim.AdamW(model.parameters(), lr=2e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.0, 0, 0., 0, 0, 0.1, 1.0]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3.0, 3.0, 0.1, 0, 0.1, 0, 0, 0.1, 3.0]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 1.0, 1.0, 0.0, 0, 0, 0, 0, 0.1, 1.0]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 3.0, 3.0, 0.1, 0, 0.1, 0, 0, 0.1, 3.0]), 0), mpc_H, 0)
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [5,1,2,3,8,9]
