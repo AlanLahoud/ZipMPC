@@ -394,9 +394,9 @@ class SimpleNN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K):
         super(SimpleNN, self).__init__()
         input_size = 3 + mpc_H
-        self.fc1 = nn.Linear(input_size, 512)
-        self.fc2 = nn.Linear(512, 512)
-        self.fc3 = nn.Linear(512, mpc_T*O)
+        self.fc1 = nn.Linear(input_size, 2000)
+        self.fc2 = nn.Linear(2000, 2000)
+        self.fc3 = nn.Linear(2000, mpc_T*O)
         self.activation = nn.ReLU()
         self.output_activation = nn.Tanh()
         self.K = K
@@ -409,7 +409,8 @@ class SimpleNN(nn.Module):
         x = self.fc3(x)
         #x = self.output_activation(x) * self.K
         x = x.reshape(self.mpc_T, -1, self.O)
-        return x/5
+        x = 5*self.output_activation(x/10)
+        return x
 
 
 class ImprovedNN(nn.Module):
@@ -451,10 +452,10 @@ class ImprovedNN(nn.Module):
         self.bn1 = nn.BatchNorm1d(16)
         self.dropout = nn.Dropout(0.1)
 
-        self.fc1 = nn.Linear(16 * mpc_H + input_size, 600)
-        self.fc2 = nn.Linear(600, 600)
-        self.fc3 = nn.Linear(600, 600)
-        self.fc4 = nn.Linear(600, mpc_T * O)
+        self.fc1 = nn.Linear(16 * mpc_H + input_size, 1000)
+        self.fc2 = nn.Linear(1000, 1000)
+        self.fc3 = nn.Linear(1000, 1000)
+        self.fc4 = nn.Linear(1000, mpc_T * O)
         self.activation = nn.LeakyReLU(0.1)
         self.output_activation = nn.Tanh()
         self.K = K
@@ -469,9 +470,9 @@ class ImprovedNN(nn.Module):
 
         time_series_res = time_series
         time_series = self.activation(self.conv1(time_series))
-        time_series = self.bn1(time_series)
-        time_series = self.dropout(time_series)
-        time_series += time_series_res
+        #time_series = self.bn1(time_series)
+        #time_series = self.dropout(time_series)
+        #time_series += time_series_res
 
         time_series = time_series.view(time_series.size(0), -1)
 

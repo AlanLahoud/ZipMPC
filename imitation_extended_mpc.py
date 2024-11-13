@@ -122,7 +122,7 @@ lqr_iter = 20
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.ImprovedNN(mpc_H, n_Q, 5, max_p)
+model = utils_new.SimpleNN(mpc_H, n_Q, 5, max_p)
 #model = utils_new.ImprovedNN(3, n_Q, 5, max_p)
 
 if load_model==True:
