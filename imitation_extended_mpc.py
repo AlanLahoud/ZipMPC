@@ -256,6 +256,8 @@ else:
 flag_finish_training = 0
 flag_finish_training_iter = 0
 
+its_per_epoch = 60
+
 for ep in range(epochs):
     
     print(f'Epoch {ep}, Update reference path')
@@ -273,7 +275,7 @@ for ep in range(epochs):
     loss_a_avg = 0.
     loss_delta_avg = 0.
     
-    for it in range(60):
+    for it in range(its_per_epoch):
 
         model.train()
         
@@ -382,21 +384,21 @@ for ep in range(epochs):
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         opt.step()
 
-        loss_sig_avg = loss_sig_avg + 100*loss_dsigma.detach().item()/60.
-        loss_d_avg = loss_d_avg + 100*loss_d.detach().item()/60.
-        loss_phi_avg = loss_phi_avg + loss_phi.detach().item()/60.
-        loss_a_avg = loss_a_avg + 0.01*loss_a.detach().item()/60.
-        loss_delta_avg = loss_delta_avg + 0.1*loss_delta.detach().item()/60.
+        loss_sig_avg = loss_sig_avg + 100*loss_dsigma.detach().item()/its_per_epoch
+        loss_d_avg = loss_d_avg + 100*loss_d.detach().item()/its_per_epoch
+        loss_phi_avg = loss_phi_avg + loss_phi.detach().item()/its_per_epoch
+        loss_a_avg = loss_a_avg + 0.01*loss_a.detach().item()/its_per_epoch
+        loss_delta_avg = loss_delta_avg + 0.1*loss_delta.detach().item()/its_per_epoch
     
-        loss_train_avg = loss_train_avg + loss.detach().item()/60.
+        loss_train_avg = loss_train_avg + loss.detach().item()/its_per_epoch
         
         
-        if it%60==59:
+        if it%its_per_epoch==its_per_epoch-1:
             d_pen = true_dx.penalty_d(pred_x[:, :, 1].detach())
             v_pen = true_dx.penalty_v(pred_x[:, :, 3].detach())
             #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
             print('V max: ', pred_x[:, :, 3].detach().max().item())
-            print('N useful samples: ', loss_a.detach()[:,args_conv].shape)
+            print('N useful samples: ', pred_x.detach()[:, args_conv, 5].shape)
             #print(pred_x[:, :, 1].max().item())
             #print(p.mean(0).mean(0))
             
