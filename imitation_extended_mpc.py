@@ -134,7 +134,7 @@ if load_model==True:
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=5e-6, weight_decay=1e-3)
+opt = torch.optim.AdamW(model.parameters(), lr=5e-4, weight_decay=1e-6)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 2.0, 2.0, 0.1, 0, 0.1, 0, 0, 0.1, 2.0]), 0), mpc_T, 0)
