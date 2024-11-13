@@ -266,6 +266,13 @@ for ep in range(epochs):
         break
 
     loss_train_avg = 0.
+
+    loss_sig_avg = 0.
+    loss_d_avg = 0.
+    loss_phi_avg = 0.
+    loss_a_avg = 0.
+    loss_delta_avg = 0.
+    
     for it in range(60):
 
         model.train()
@@ -336,17 +343,19 @@ for ep in range(epochs):
                     eps=eps,
                     n_batch=None,
                 )(x0, QuadCost(Q, p), true_dx)
-        
-        loss_dsigma = (x_true_torch[:mpc_T, :, 5] - pred_x[:, :, 5])**2
-        loss_d = (x_true_torch[:mpc_T, :, 1] - pred_x[:, :, 1])**2
-        loss_phi = (x_true_torch[:mpc_T, :, 2] - pred_x[:, :, 2])**2
-        loss_v = (x_true_torch[:mpc_T, :, 3] - pred_x[:, :, 3])**2
-        
-        loss_a = (u_true_torch[:mpc_T, :, 0] - pred_u[:, :, 0])**2
-        loss_delta = (u_true_torch[:mpc_T, :, 1] - pred_u[:, :, 1])**2
+
 
         diff_shorts = ((x_true_torch_S[:, :, 1] - pred_x[:, :, 1])**2 + (x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).mean(0)
         args_conv = torch.argwhere(diff_shorts<0.0001)
+        
+        loss_dsigma = ((x_true_torch[:mpc_T, args_conv, 5] - pred_x[:, args_conv, 5])**2).sum(0).mean()
+        loss_d = ((x_true_torch[:mpc_T, args_conv, 1] - pred_x[:, args_conv, 1])**2).sum(0).mean()
+        loss_phi = ((x_true_torch[:mpc_T, args_conv, 2] - pred_x[:, args_conv, 2])**2).sum(0).mean()
+        loss_v = ((x_true_torch[:mpc_T, args_conv, 3] - pred_x[:, args_conv, 3])**2).sum(0).mean()
+        
+        loss_a = ((u_true_torch[:mpc_T, args_conv, 0] - pred_u[:, args_conv, 0])**2).sum(0).mean()
+        loss_delta = ((u_true_torch[:mpc_T, args_conv, 1] - pred_u[:, args_conv, 1])**2).sum(0).mean()
+        
         #print(diff_sigs)
 
         # Ideal here would be to scale
@@ -365,16 +374,20 @@ for ep in range(epochs):
 
         #loss = 10*loss_a[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean()
 
-        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 100*loss_d[:,args_conv].sum(0).mean() + loss_phi[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
+        loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + 0.1*loss_delta
 
-        
-        #loss = loss_a.sum(0).mean() + 10000*loss_delta.sum(0).mean()
 
         opt.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         opt.step()
-        
+
+        loss_sig_avg = loss_sig_avg + 100*loss_dsigma.detach().item()/60.
+        loss_d_avg = loss_d_avg + 100*loss_d.detach().item()/60.
+        loss_phi_avg = loss_phi_avg + loss_phi.detach().item()/60.
+        loss_a_avg = loss_a_avg + 0.01*loss_a.detach().item()/60.
+        loss_delta_avg = loss_delta_avg + 0.1*loss_delta.detach().item()/60.
+    
         loss_train_avg = loss_train_avg + loss.detach().item()/60.
         
         
@@ -423,33 +436,32 @@ for ep in range(epochs):
                     x0_val.detach().numpy()[:,:6], BS_val, dx, du, control_H) 
 
                 
-                loss_dsigma_val = (x_true_val[:mpc_T, :, 5] - x_pred_val[:, :, 5])**2
-                loss_d_val = (x_true_val[:mpc_T, :, 1] - x_pred_val[:, :, 1])**2
-                loss_phi_val = (x_true_val[:mpc_T, :, 2] - x_pred_val[:, :, 2])**2
-                loss_v_val = (x_true_val[:mpc_T, :, 3] - x_pred_val[:, :, 3])**2
+                loss_dsigma_val = ((x_true_val[:mpc_T, :, 5] - x_pred_val[:, :, 5])**2).sum(0).mean()
+                loss_d_val = ((x_true_val[:mpc_T, :, 1] - x_pred_val[:, :, 1])**2).sum(0).mean()
+                loss_phi_val = ((x_true_val[:mpc_T, :, 2] - x_pred_val[:, :, 2])**2).sum(0).mean()
+                loss_v_val = ((x_true_val[:mpc_T, :, 3] - x_pred_val[:, :, 3])**2).sum(0).mean()
                 
-                loss_a_val = (u_true_val[:mpc_T, :, 0] - u_pred_val[:, :, 0])**2
-                loss_delta_val = (u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2
+                loss_a_val = ((u_true_val[:mpc_T, :, 0] - u_pred_val[:, :, 0])**2).sum(0).mean()
+                loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2).sum(0).mean()
         
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 100*loss_dsigma_val.sum(0).mean() + 100*loss_d_val.sum(0).mean() + loss_phi_val.sum(0).mean() + 10*loss_v_val.sum(0).mean() + 0.01*loss_a_val.sum(0).mean() + 0.1*loss_delta_val.sum(0).mean()
+                loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 10*loss_v_val + 0.01*loss_a_val + 0.1*loss_delta_val
 
                 print('Train loss:', 
-                      round(100*loss_dsigma.detach().sum(0).mean().item(), 5),
-                      round(100*loss_d.detach().sum(0).mean().item(), 5), 
-                      round(loss_phi.detach().sum(0).mean().item(), 5), 
-                      round(10*loss_v.detach().sum(0).mean().item(), 5), 
-                      round(0.01*loss_a.detach().sum(0).mean().item(), 5), 
-                      round(0.1*loss_delta.detach().sum(0).mean().item(), 5), 
+                      round(loss_sig_avg, 5),
+                      round(loss_d_avg, 5), 
+                      round(loss_phi_avg, 5), 
+                      round(loss_a_avg, 5), 
+                      round(loss_delta_avg, 5),
                       round(loss_train_avg, 5))
                 
                 print('Validation loss:', 
-                      round(100*loss_dsigma_val.sum(0).mean().item(), 5),
-                      round(100*loss_d_val.sum(0).mean().item(), 5), 
-                      round(loss_phi_val.sum(0).mean().item(), 5), 
-                      round(10*loss_v_val.sum(0).mean().item(), 5), 
-                      round(0.01*loss_a_val.sum(0).mean().item(), 5), 
-                      round(0.1*loss_delta_val.sum(0).mean().item(), 5), 
+                      round(100*loss_dsigma_val.item(), 5),
+                      round(100*loss_d_val.item(), 5), 
+                      round(loss_phi_val.item(), 5), 
+                      round(10*loss_v_val.item(), 5), 
+                      round(0.01*loss_a_val.item(), 5), 
+                      round(0.1*loss_delta_val.item(), 5), 
                       round(loss_val.item(), 5))
 
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
