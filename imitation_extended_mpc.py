@@ -134,7 +134,7 @@ if load_model==True:
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 0.5, 0.5, 0.1, 0, 0.1, 0, 0, 0.1, 0.5]), 0), mpc_T, 0)
@@ -353,8 +353,9 @@ for ep in range(epochs):
         loss_a = ((u_true_torch[:mpc_T, args_conv, 0] - pred_u[:, args_conv, 0])**2).sum(0).mean()
         loss_delta = ((u_true_torch[:mpc_T, args_conv, 1] - pred_u[:, args_conv, 1])**2).sum(0).mean()
 
-        loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + 0.1*loss_delta
+        #loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + 0.1*loss_delta
 
+        loss = 0.01*loss_a + 0.1*loss_delta
 
         opt.zero_grad()
         loss.backward()
