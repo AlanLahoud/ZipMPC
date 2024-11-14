@@ -491,7 +491,7 @@ class ImprovedNN(nn.Module):
 import torch.nn.functional as F
 class TCN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K, num_channels=[1, 25, 50, 50, 25], kernel_size=3):
-        super(TCN_MPC, self).__init__()
+        super(TCN, self).__init__()
         self.K = K
         self.O = O
         self.mpc_T = mpc_T
