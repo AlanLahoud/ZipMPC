@@ -134,7 +134,7 @@ if load_model==True:
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=5e-4, weight_decay=1e-6)
+opt = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 0.5, 0.5, 0.1, 0, 0.1, 0, 0, 0.1, 0.5]), 0), mpc_T, 0)
@@ -254,19 +254,12 @@ else:
     sys.exit("Manual parameter choice not feasible")
 
 
-flag_finish_training = 0
-flag_finish_training_iter = 0
-
 its_per_epoch = 60
 
 for ep in range(epochs):
     
     print(f'Epoch {ep}, Update reference path')
     x_star = np.transpose(x_current_full)
-
-    # We are saving three models
-    if flag_finish_training_iter >= 2:
-        break
 
     loss_train_avg = 0.
 
@@ -291,15 +284,15 @@ for ep in range(epochs):
         #if ep+2 < npat:
         #    npat = ep + 2
         
-        x0_1 = utils_new.sample_init_traj_dist(BS//3, true_dx, x_star, npat)
-        x0_2 = utils_new.sample_init_traj_dist(BS//3, true_dx, np.transpose(x_manual_full_H), npat)
-        x0_3 = utils_new.sample_init(BS//3, true_dx)
+        x0 = utils_new.sample_init_traj_dist(BS//3, true_dx, x_star, npat).float()
+        #x0_2 = utils_new.sample_init_traj_dist(BS//3, true_dx, np.transpose(x_manual_full_H), npat)
+        #x0_3 = utils_new.sample_init(BS//3, true_dx)
 
         #x0 = torch.vstack((x0_1, x0_2, x0_3))
 
         #x0 = torch.vstack((x0_1, x0_3)).float()
 
-        x0 = torch.vstack((x0_1, x0_2, x0_3)).float()
+        #x0 = torch.vstack((x0_1, x0_2, x0_3)).float()
         
         #x0 = utils_new.sample_init(BS, true_dx)  
         
@@ -359,24 +352,6 @@ for ep in range(epochs):
         
         loss_a = ((u_true_torch[:mpc_T, args_conv, 0] - pred_u[:, args_conv, 0])**2).sum(0).mean()
         loss_delta = ((u_true_torch[:mpc_T, args_conv, 1] - pred_u[:, args_conv, 1])**2).sum(0).mean()
-        
-        #print(diff_sigs)
-
-        # Ideal here would be to scale
-        #loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 100*loss_d[:,args_conv].sum(0).mean() + loss_phi[:,args_conv].sum(0).mean() + 10*loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.1*loss_delta[:,args_conv].sum(0).mean()
-
-        #if it<10:
-        #    idx_steps = [0,1]
-        #elif it<30:
-        #    idx_steps = [0,1,2,3]
-        #elif it<40:
-        #    idx_steps = [0,1,2,3,4,5]
-        #else:
-        #    idx_steps = list(np.arange(mpc_T))
-
-        #loss = loss_a[:,args_conv].sum(0).mean() + 10*loss_delta[:,args_conv].sum(0).mean()
-
-        #loss = 10*loss_a[:,args_conv].sum(0).mean() + 1000*loss_d[:,args_conv].sum(0).mean()
 
         loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + 0.1*loss_delta
 
@@ -525,22 +500,12 @@ for ep in range(epochs):
                         
                     lap_time = dt*steps
                     
-
                     x_current_full = x_pred_full
                     if finished == 1 and lap_time < current_time:
                         current_time = lap_time
                         q_current = q_lap_np_casadi
                         p_current = p_lap
-                        
-
-                    # Early stop based on the target trajectory. If it is never satisfied, it goes until the last epoch.
-                    if finished == 1 and lap_time < lap_time_H + 0.00001:
-                        flag_finish_training = 1
-                        print('Achieved a good enough lap performance!!!')
-
-                    if flag_finish_training == 1 or ep==epochs-1:                        
-                        torch.save(model.state_dict(), f'./saved_models/model_{str_model}_{flag_finish_training_iter}.pkl')
-                        flag_finish_training_iter = flag_finish_training_iter + 1
+                        torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
 
                     finish_list[b] = finished
                     lap_time_list[b] = lap_time
