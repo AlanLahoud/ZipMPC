@@ -452,10 +452,11 @@ class ImprovedNN(nn.Module):
         self.bn1 = nn.BatchNorm1d(16)
         self.dropout = nn.Dropout(0.1)
 
-        self.fc1 = nn.Linear(16 * mpc_H + input_size, 1000)
-        self.fc2 = nn.Linear(1000, 1000)
-        self.fc3 = nn.Linear(1000, 1000)
-        self.fc4 = nn.Linear(1000, mpc_T * O)
+        self.fc1 = nn.Linear(16 * mpc_H + input_size, 512)
+        self.fc2 = nn.Linear(512, 1024)
+        self.fc3 = nn.Linear(1024, 1024)
+        self.fc4 = nn.Linear(1024, 512)
+        self.fc5 = nn.Linear(512, mpc_T * O)
         self.activation = nn.LeakyReLU(0.1)
         self.output_activation = nn.Tanh()
         self.K = K
@@ -470,9 +471,9 @@ class ImprovedNN(nn.Module):
 
         time_series_res = time_series
         time_series = self.activation(self.conv1(time_series))
-        #time_series = self.bn1(time_series)
-        #time_series = self.dropout(time_series)
-        #time_series += time_series_res
+        time_series = self.bn1(time_series)
+        time_series = self.dropout(time_series)
+        time_series += time_series_res
 
         time_series = time_series.view(time_series.size(0), -1)
 
@@ -480,9 +481,50 @@ class ImprovedNN(nn.Module):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
         x = self.activation(self.fc3(x))
-        x = self.fc4(x)
+        x = self.activation(self.fc4(x))
+        x = self.fc5(x)
         x = x.reshape(self.mpc_T, -1, self.O)
         x = 5*self.output_activation(x/10)
+        return x
+
+
+import torch.nn.functional as F
+class TCN(nn.Module):
+    def __init__(self, mpc_H, mpc_T, O, K, num_channels=[1, 25, 50, 50, 25], kernel_size=3):
+        super(TCN_MPC, self).__init__()
+        self.K = K
+        self.O = O
+        self.mpc_T = mpc_T
+        
+        layers = []
+        for i in range(len(num_channels) - 1):
+            layers.append(nn.Conv1d(num_channels[i], num_channels[i+1], kernel_size, padding='same', dilation=2**i))
+            layers.append(nn.BatchNorm1d(num_channels[i+1]))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(0.3))
+        
+        self.tcn = nn.Sequential(*layers)
+        
+        # Fully connected layers for final prediction
+        self.fc1 = nn.Linear(num_channels[-1] * mpc_H + 3, 512)
+        self.fc2 = nn.Linear(512, 1024)
+        self.fc3 = nn.Linear(1024, mpc_T * O)
+        self.output_activation = nn.Tanh()
+
+    def forward(self, x):
+        global_context, time_series = x[:, :3], x[:, 3:]
+
+        time_series = time_series.unsqueeze(1)
+        time_series = self.tcn(time_series)
+        time_series = time_series.view(time_series.size(0), -1)
+
+        x = torch.cat([time_series, global_context], dim=1)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+
+        x = x.reshape(self.mpc_T, -1, self.O)
+        x = 5 * self.output_activation(x / 10)
         return x
 
 

@@ -123,7 +123,7 @@ lqr_iter = 20
 grad_method = GradMethods.AUTO_DIFF
 
 #model = utils_new.SimpleNN(mpc_H, n_Q, 5, max_p)
-model = utils_new.ImprovedNN(mpc_H, n_Q, 5, max_p)
+model = utils_new.TCN(mpc_H, n_Q, 5, max_p)
 
 if load_model==True:
     try:
@@ -501,7 +501,7 @@ for ep in range(epochs):
                     lap_time = dt*steps
                     
                     x_current_full = x_pred_full
-                    if finished == 1 and lap_time < current_time:
+                    if finished == 1 and lap_time <= current_time:
                         current_time = lap_time
                         q_current = q_lap_np_casadi
                         p_current = p_lap
