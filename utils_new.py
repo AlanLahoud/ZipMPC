@@ -499,9 +499,9 @@ class TCN(nn.Module):
         layers = []
         for i in range(len(num_channels) - 1):
             layers.append(nn.Conv1d(num_channels[i], num_channels[i+1], kernel_size, padding='same', dilation=2**i))
-            #layers.append(nn.BatchNorm1d(num_channels[i+1]))
+            layers.append(nn.BatchNorm1d(num_channels[i+1]))
             layers.append(nn.ReLU())
-            #layers.append(nn.Dropout(0.2))
+            layers.append(nn.Dropout(0.2))
         
         self.tcn = nn.Sequential(*layers)
         
@@ -524,7 +524,7 @@ class TCN(nn.Module):
         x = self.fc3(x)
 
         x = x.reshape(self.mpc_T, -1, self.O)
-        x = 5 * self.output_activation(x / 10)
+        x = 8 * self.output_activation(x / 10)
         return x
 
 
