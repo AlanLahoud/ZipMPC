@@ -123,7 +123,7 @@ lqr_iter = 18
 grad_method = GradMethods.AUTO_DIFF
 
 #model = utils_new.SimpleNN(mpc_H, n_Q, 5, max_p)
-model = utils_new.TCN(mpc_H, n_Q, 5, max_p)
+model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 
 if load_model==True:
     try:
@@ -245,13 +245,13 @@ p_manual_casadi = p_manual[:,idx_to_casadi].T
 
 
 # set fastest lap_time and corresponding params
-if finished == 1:
-    current_time = lap_time
-    q_manual_casadi = q_manual_casadi
-    p_current_casadi = p_manual_casadi
-    x_current_full = x_manual_full
-else:
-    sys.exit("Manual parameter choice not feasible")
+#if finished == 1:
+current_time = lap_time
+q_manual_casadi = q_manual_casadi
+p_current_casadi = p_manual_casadi
+x_current_full = x_manual_full
+#else:
+#    sys.exit("Manual parameter choice not feasible")
 
 
 its_per_epoch = 60
