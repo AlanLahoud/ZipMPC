@@ -27,8 +27,8 @@ def parse_arguments():
     parser.add_argument('--n_Q', type=int, default=3)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
-    parser.add_argument('--delta_max', type=float, default=0.41)
-    parser.add_argument('--p_v_manual', type=float, default=3.0)
+    parser.add_argument('--delta_max', type=float, default=0.42)
+    parser.add_argument('--p_sigma_manual', type=float, default=6.0)
     
     return parser.parse_args()
 
@@ -46,7 +46,7 @@ l_r = args.l_r
 v_max = args.v_max
 delta_max = args.delta_max
 
-p_v_manual = args.p_v_manual
+p_sigma_manual = args.p_sigma_manual
 
 load_model = False
 
@@ -75,7 +75,7 @@ init_track = [0,0,0]
 
 max_p = 100
 
-str_model = f'im_{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_v_manual}'
+str_model = f'im_{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_sigma_manual}'
 
 params = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_T])
 params_H = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_H])
@@ -138,11 +138,11 @@ opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3., 0.5, 0.1, 0, 0.1, 0, 0, 0.1, 0.5]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, -p_v_manual, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
 Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 3., 0.5, 0.1, 0, 0.1, 0, 0, 0.1, 0.5]), 0), mpc_H, 0)
-p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, -p_v_manual, 0, 0, 0, 0, 0, 0]), 0), mpc_H, 0)
+p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [5,1,2,3,8,9]
 
