@@ -340,7 +340,7 @@ for ep in range(epochs):
         loss_delta = ((u_true_torch[:mpc_L, args_conv, 1] - pred_u[:mpc_L, args_conv, 1])**2).sum(0).mean()
 
         
-        loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + loss_delta
+        loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.1*loss_a + loss_delta
         #loss = 0.1*loss_a + loss_delta
 
         opt.zero_grad()
@@ -409,16 +409,16 @@ for ep in range(epochs):
                     x0_val.detach().numpy()[:,:8], BS_val, dx, du, control_H)
 
 
-                loss_dsigma_val = ((x_true_val[:mpc_T, :, 5] - x_pred_val[:, :, 5])**2).sum(0).mean()
+                loss_dsigma_val = ((x_true_val[:mpc_T, :, 7] - x_pred_val[:, :, 7])**2).sum(0).mean()
                 loss_d_val = ((x_true_val[:mpc_T, :, 1] - x_pred_val[:, :, 1])**2).sum(0).mean()
                 loss_phi_val = ((x_true_val[:mpc_T, :, 2] - x_pred_val[:, :, 2])**2).sum(0).mean()
-                loss_v_val = ((x_true_val[:mpc_T, :, 3] - x_pred_val[:, :, 3])**2).sum(0).mean()
+                loss_v_val = ((x_true_val[:mpc_T, :, 4] - x_pred_val[:, :, 4])**2).sum(0).mean()
                 
                 loss_a_val = ((u_true_val[:mpc_T, :, 0] - u_pred_val[:, :, 0])**2).sum(0).mean()
                 loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2).sum(0).mean()
 
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 0.01*loss_a_val + loss_delta_val
+                loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 0.1*loss_a_val + loss_delta_val
 
                 
                 print('Train loss:', 
@@ -434,7 +434,7 @@ for ep in range(epochs):
                       round(100*loss_d_val.item(), 5), 
                       round(loss_phi_val.item(), 5), 
                       #round(10*loss_v_val.item(), 5), 
-                      round(0.01*loss_a_val.item(), 5), 
+                      round(0.1*loss_a_val.item(), 5), 
                       round(loss_delta_val.item(), 5), 
                       round(loss_val.item(), 5))
 
@@ -493,9 +493,8 @@ for ep in range(epochs):
 
                     lap_time = dt*steps
 
-
-                    x_current_full = x_pred_full
                     if finished == 1 and lap_time < current_time:
+                        x_current_full = x_pred_full
                         current_time = lap_time
                         q_current = q_lap_np_casadi
                         p_current = p_lap
