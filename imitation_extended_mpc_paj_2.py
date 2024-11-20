@@ -364,7 +364,7 @@ for ep in range(epochs):
         #    pdb.set_trace()
 
 
-        if it%its_per_epoch==0:
+        if it%its_per_epoch==its_per_epoch-1:
             d_pen = true_dx.penalty_d(pred_x[:, :, 1].detach())
             v_pen = true_dx.penalty_v(pred_x[:, :, 3].detach())
             #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
