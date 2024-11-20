@@ -19,8 +19,8 @@ from sys import exit
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--mpc_T', type=int, default=30)
-    parser.add_argument('--mpc_H', type=int, default=50)
+    parser.add_argument('--mpc_T', type=int, default=15)
+    parser.add_argument('--mpc_H', type=int, default=40)
     parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--l_r', type=float, default=0.03)
     parser.add_argument('--v_max', type=float, default=1.8)
@@ -399,13 +399,13 @@ for ep in range(epochs):
 
                 q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-                x_pred_val, u_pred_val = utils_new.solve_casadi_parallel(
+                x_pred_val, u_pred_val = utils_new.solve_casadi_parallel_dyn(
                     q_val_np_casadi, p_val_np_casadi,
                     x0_val.detach().numpy()[:,:8], BS_val, dx, du, control)
 
                 q_manual_casadi_val = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
                 p_manual_casadi_val = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
-                x_true_val, u_true_val = utils_new.solve_casadi_parallel(
+                x_true_val, u_true_val = utils_new.solve_casadi_parallel_dyn(
                     np.repeat(q_manual_casadi_val, BS_val, 1),
                     np.repeat(p_manual_casadi_val, BS_val, 1),
                     x0_val.detach().numpy()[:,:8], BS_val, dx, du, control_H)
