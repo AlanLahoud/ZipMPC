@@ -135,8 +135,8 @@ p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma
 idx_to_casadi = [7,1,2,3,4,5,10,11]
 idx_to_NN = [1,2,4]
 
-epochs = 10
-num_patches = 10
+epochs = 20
+num_patches = 20
 BS_init = 40
 BS_val = 10
 
@@ -171,7 +171,7 @@ for b in range(BS_test):
 
         x0_b_manual = x_b_manual[1]
         x_manual_full_H = np.append(x_manual_full_H, x0_b_manual.reshape(-1,1), axis=1)
-        print("x_manual:", x_b_manual[1])
+        #print("x_manual:", x_b_manual[1])
 
         if x0_b_manual[0]>track_coord[2].max().numpy()/2:
             finished=1
@@ -180,7 +180,7 @@ for b in range(BS_test):
             crashed=1
 
         steps = steps+1
-        print("long horizon step:", steps)
+        #print("long horizon step:", steps)
 
     lap_time = dt*steps
 
@@ -222,7 +222,7 @@ for b in range(BS_test):
             crashed=1
 
         steps = steps+1
-        print("short horizon step:", steps)
+        #print("short horizon step:", steps)
 
     lap_time = dt*steps
 
