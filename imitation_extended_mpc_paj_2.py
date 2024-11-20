@@ -126,11 +126,11 @@ opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 0, 0, 0.05, 0.5]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -1, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
 Q_manual_H = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 0, 0, 0.05, 0.5]), 0), mpc_H, 0)
-p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
+p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -1, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [7,1,2,3,4,5,10,11]
 idx_to_NN = [1,2,4]
@@ -420,7 +420,7 @@ for ep in range(epochs):
                 loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2).sum(0).mean()
 
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 10*loss_v_val + 0.01*loss_a_val + loss_delta_val
+                loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 0.01*loss_a_val + loss_delta_val
 
                 
                 print('Train loss:', 
@@ -435,7 +435,7 @@ for ep in range(epochs):
                       round(100*loss_dsigma_val.item(), 5),
                       round(100*loss_d_val.item(), 5), 
                       round(loss_phi_val.item(), 5), 
-                      round(10*loss_v_val.item(), 5), 
+                      #round(10*loss_v_val.item(), 5), 
                       round(0.01*loss_a_val.item(), 5), 
                       round(loss_delta_val.item(), 5), 
                       round(loss_val.item(), 5))
