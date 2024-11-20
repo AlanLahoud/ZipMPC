@@ -34,11 +34,11 @@ def parse_arguments():
 # Parsing arguments
 args = parse_arguments()
 
-mpc_L = 10
-
 mpc_T = args.mpc_T
 mpc_H = args.mpc_H
 n_Q = args.n_Q
+
+mpc_L = mpc_T
 
 l_r = args.l_r
 v_max = args.v_max
@@ -256,6 +256,14 @@ for ep in range(epochs):
     print(f'Epoch {ep}, Update reference path')
     x_star = np.transpose(x_current_full)
 
+    loss_train_avg = 0.
+
+    loss_sig_avg = 0.
+    loss_d_avg = 0.
+    loss_phi_avg = 0.
+    loss_a_avg = 0.
+    loss_delta_avg = 0.
+
     for it in range(its_per_epoch):
 
         model.train()
@@ -271,10 +279,10 @@ for ep in range(epochs):
         #if ep+2 < npat:
         #    npat = ep + 2
 
-        x0_1 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, x_star, npat)
-        x0_2 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, np.transpose(x_manual_full_H), npat)
+        x0 = utils_new.sample_init_traj_dist_dyn(BS, true_dx, x_star, npat).float()
+        #x0_2 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, np.transpose(x_manual_full_H), npat)
 
-        x0 = torch.vstack((x0_1, x0_2))
+        #x0 = torch.vstack((x0_1, x0_2))
 
         #x0 = utils_new.sample_init(BS, true_dx)
 
@@ -322,28 +330,33 @@ for ep in range(epochs):
                     n_batch=None,
                 )(x0_diff, QuadCost(Q, p), true_dx)
 
-        loss_dsigma = (x_true_torch[:mpc_L, :, 7] - pred_x[:mpc_L, :, 7])**2
-        loss_d = (x_true_torch[:mpc_L, :, 1] - pred_x[:mpc_L, :, 1])**2
-        loss_phi = (x_true_torch[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2
-        loss_v = (x_true_torch[:mpc_L, :, 4] - pred_x[:mpc_L, :, 4])**2
-
-        loss_a = (u_true_torch[:mpc_L, :, 0] - pred_u[:mpc_L, :, 0])**2
-        loss_delta = (u_true_torch[:mpc_L, :, 1] - pred_u[:mpc_L, :, 1])**2
-
         diff_shorts = ((x_true_torch_S[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2).sum(0)
-        args_conv = torch.argwhere(diff_shorts<0.001)
+        args_conv = torch.argwhere(diff_shorts<0.005)
+        
+        loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 5] - pred_x[:, args_conv, 5])**2).sum(0).mean()
+        loss_d = ((x_true_torch[:mpc_L, args_conv, 1] - pred_x[:, args_conv, 1])**2).sum(0).mean()
+        loss_phi = ((x_true_torch[:mpc_L, args_conv, 2] - pred_x[:, args_conv, 2])**2).sum(0).mean()
+        loss_v = ((x_true_torch[:mpc_L, args_conv, 3] - pred_x[:, args_conv, 3])**2).sum(0).mean()
+        
+        loss_a = ((u_true_torch[:mpc_L, args_conv, 0] - pred_u[:, args_conv, 0])**2).sum(0).mean()
+        loss_delta = ((u_true_torch[:mpc_L, args_conv, 1] - pred_u[:, args_conv, 1])**2).sum(0).mean()
 
-        #import pdb
-        #pdb.set_trace()
-        #print(diff_sigs)
+        
+        loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + loss_delta
 
-        # Ideal here would be to scale
-        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 100*loss_d[:,args_conv].sum(0).mean() + loss_phi[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + loss_delta[:,args_conv].sum(0).mean()
 
         opt.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         opt.step()
+
+        loss_sig_avg = loss_sig_avg + 100*loss_dsigma.detach().item()/its_per_epoch
+        loss_d_avg = loss_d_avg + 100*loss_d.detach().item()/its_per_epoch
+        loss_phi_avg = loss_phi_avg + loss_phi.detach().item()/its_per_epoch
+        loss_a_avg = loss_a_avg + 0.01*loss_a.detach().item()/its_per_epoch
+        loss_delta_avg = loss_delta_avg + loss_delta.detach().item()/its_per_epoch
+    
+        loss_train_avg = loss_train_avg + loss.detach().item()/its_per_epoch
 
 
         #if diff_sigs> 0.001:
@@ -372,8 +385,10 @@ for ep in range(epochs):
                 u_upper_val = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
                 u_init_val = torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(device)
 
+                x0_val = utils_new.sample_init_traj_dist_dyn(BS_val, true_dx, np.transpose(x_manual_full_H), npat, sn=0)
+
                 # This sampling should bring always the same set of initial states
-                x0_val = utils_new.sample_init_dyn(BS_val, true_dx, sn=0)
+                #x0_val = utils_new.sample_init_dyn(BS_val, true_dx, sn=0)
 
                 curv_val = utils_new.get_curve_hor_from_x(x0_val, track_coord, mpc_H)
                 inp_val = torch.hstack((x0_val[:,idx_to_NN], curv_val))
@@ -396,32 +411,34 @@ for ep in range(epochs):
                     x0_val.detach().numpy()[:,:8], BS_val, dx, du, control_H)
 
 
-                loss_dsigma_val = (x_true_val[:mpc_L, :, 7] - x_pred_val[:mpc_L, :, 7])**2
-                loss_d_val = (x_true_val[:mpc_L, :, 1] - x_pred_val[:mpc_L, :, 1])**2
-                loss_phi_val = (x_true_val[:mpc_L, :, 2] - x_pred_val[:mpc_L, :, 2])**2
-                loss_v_val = (x_true_val[:mpc_L, :, 4] - x_pred_val[:mpc_L, :, 4])**2
-
-                loss_a_val = (u_true_val[:mpc_L, :, 0] - u_pred_val[:mpc_L, :, 0])**2
-                loss_delta_val = (u_true_val[:mpc_L, :, 1] - u_pred_val[:mpc_L, :, 1])**2
+                loss_dsigma_val = ((x_true_val[:mpc_T, :, 5] - x_pred_val[:, :, 5])**2).sum(0).mean()
+                loss_d_val = ((x_true_val[:mpc_T, :, 1] - x_pred_val[:, :, 1])**2).sum(0).mean()
+                loss_phi_val = ((x_true_val[:mpc_T, :, 2] - x_pred_val[:, :, 2])**2).sum(0).mean()
+                loss_v_val = ((x_true_val[:mpc_T, :, 3] - x_pred_val[:, :, 3])**2).sum(0).mean()
+                
+                loss_a_val = ((u_true_val[:mpc_T, :, 0] - u_pred_val[:, :, 0])**2).sum(0).mean()
+                loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2).sum(0).mean()
 
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 1000*loss_dsigma_val.sum(0).mean() + 10*loss_d_val.sum(0).mean() + 10*loss_v_val.sum(0).mean() + 0.01*loss_a_val.sum(0).mean() + 0.001*loss_delta_val.sum(0).mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
+                loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 10*loss_v_val + 0.01*loss_a_val + loss_delta_val
 
-                print('Train loss:',
-                      round(100*loss_dsigma.detach().sum(0).mean().item(), 5),
-                      round(100*loss_d.detach().sum(0).mean().item(), 5),
-                      #round(loss_phi_val.sum(0).mean().item(), 5),
-                      round(loss_v.detach().sum(0).mean().item(), 5),
-                      round(0.01*loss_a.detach().sum(0).mean().item(), 5),
-                      round(loss_delta.detach().sum(0).mean().item(), 5))
-
-                print('Validation loss:',
-                      round(100*loss_dsigma_val.sum(0).mean().item(), 5),
-                      round(100*loss_d_val.sum(0).mean().item(), 5),
-                      #round(loss_phi_val.sum(0).mean().item(), 5),
-                      round(loss_v_val.sum(0).mean().item(), 5),
-                      round(0.01*loss_a_val.sum(0).mean().item(), 5),
-                      round(loss_delta_val.sum(0).mean().item(), 5))
+                
+                print('Train loss:', 
+                      round(loss_sig_avg, 5),
+                      round(loss_d_avg, 5), 
+                      round(loss_phi_avg, 5), 
+                      round(loss_a_avg, 5), 
+                      round(loss_delta_avg, 5),
+                      round(loss_train_avg, 5))
+                
+                print('Validation loss:', 
+                      round(100*loss_dsigma_val.item(), 5),
+                      round(100*loss_d_val.item(), 5), 
+                      round(loss_phi_val.item(), 5), 
+                      round(10*loss_v_val.item(), 5), 
+                      round(0.01*loss_a_val.item(), 5), 
+                      round(loss_delta_val.item(), 5), 
+                      round(loss_val.item(), 5))
 
             print("validation loss end")
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
