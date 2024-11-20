@@ -364,7 +364,7 @@ for ep in range(epochs):
         #    pdb.set_trace()
 
 
-        if it%its_per_epoch==its_per_epoch-1:
+        if it%its_per_epoch==0:
             d_pen = true_dx.penalty_d(pred_x[:, :, 1].detach())
             v_pen = true_dx.penalty_v(pred_x[:, :, 3].detach())
             #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
@@ -385,7 +385,7 @@ for ep in range(epochs):
                 u_upper_val = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
                 u_init_val = torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(device)
 
-                x0_val = utils_new.sample_init_traj_dist_dyn(BS_val, true_dx, np.transpose(x_manual_full_H), npat, sn=0)
+                x0_val = utils_new.sample_init_traj_dist_dyn(BS_val, true_dx, np.transpose(x_manual_full_H), npat, sn=0).float()
 
                 # This sampling should bring always the same set of initial states
                 #x0_val = utils_new.sample_init_dyn(BS_val, true_dx, sn=0)
