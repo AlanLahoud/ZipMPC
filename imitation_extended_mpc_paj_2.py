@@ -19,7 +19,7 @@ from sys import exit
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--mpc_T', type=int, default=15)
+    parser.add_argument('--mpc_T', type=int, default=12)
     parser.add_argument('--mpc_H', type=int, default=40)
     parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--l_r', type=float, default=0.03)
@@ -38,7 +38,7 @@ mpc_T = args.mpc_T
 mpc_H = args.mpc_H
 n_Q = args.n_Q
 
-mpc_L = 8
+mpc_L = mpc_T
 
 l_r = args.l_r
 v_max = args.v_max
@@ -288,7 +288,8 @@ for ep in range(epochs):
 
         curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
-        q_p_pred = model(inp)
+        inp_norm = inp/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
+        q_p_pred = model(inp_norm)
 
         q, p = utils_new.q_and_p_dyn(mpc_T, q_p_pred, Q_manual, p_manual)
         Q = torch.diag_embed(q, offset=0, dim1=-2, dim2=-1)
@@ -328,8 +329,8 @@ for ep in range(epochs):
                     n_batch=None,
                 )(x0, QuadCost(Q, p), true_dx)
 
-        diff_shorts = ((x_true_torch_S[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2).sum(0)
-        args_conv = torch.argwhere(diff_shorts<0.005)
+        diff_shorts = ((x_true_torch_S[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2).mean(0)
+        args_conv = torch.argwhere(diff_shorts<0.001)
         
         loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 7] - pred_x[:mpc_L, args_conv, 7])**2).sum(0).mean()
         loss_d = ((x_true_torch[:mpc_L, args_conv, 1] - pred_x[:mpc_L, args_conv, 1])**2).sum(0).mean()
@@ -351,7 +352,7 @@ for ep in range(epochs):
         loss_sig_avg = loss_sig_avg + 100*loss_dsigma.detach().item()/its_per_epoch
         loss_d_avg = loss_d_avg + 100*loss_d.detach().item()/its_per_epoch
         loss_phi_avg = loss_phi_avg + loss_phi.detach().item()/its_per_epoch
-        loss_a_avg = loss_a_avg + 0.01*loss_a.detach().item()/its_per_epoch
+        loss_a_avg = loss_a_avg + 0.1*loss_a.detach().item()/its_per_epoch
         loss_delta_avg = loss_delta_avg + loss_delta.detach().item()/its_per_epoch
     
         loss_train_avg = loss_train_avg + loss.detach().item()/its_per_epoch
@@ -390,7 +391,8 @@ for ep in range(epochs):
 
                 curv_val = utils_new.get_curve_hor_from_x(x0_val, track_coord, mpc_H)
                 inp_val = torch.hstack((x0_val[:,idx_to_NN], curv_val))
-                q_p_pred_val = model(inp_val)
+                inp_val_norm = inp_val/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
+                q_p_pred_val = model(inp_val_norm)
 
                 q_val, p_val = utils_new.q_and_p_dyn(mpc_T, q_p_pred_val, Q_manual, p_manual)
                 Q_val = torch.diag_embed(q_val, offset=0, dim1=-2, dim2=-1)
@@ -469,7 +471,8 @@ for ep in range(epochs):
                         x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
                         curv_lap = utils_new.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
                         inp_lap = torch.hstack((x0_lap_pred_torch[:,idx_to_NN], curv_lap))
-                        q_p_pred_lap = model(inp_lap)
+                        inp_lap_norm = inp_lap/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
+                        q_p_pred_lap = model(inp_lap_norm)
                         q_lap, p_lap = utils_new.q_and_p_dyn(mpc_T, q_p_pred_lap, Q_manual, p_manual)
 
                         q_lap_np_casadi = torch.permute(q_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
