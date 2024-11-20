@@ -331,6 +331,9 @@ for ep in range(epochs):
 
         diff_shorts = ((x_true_torch_S[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2).sum(0)
         args_conv = torch.argwhere(diff_shorts<0.00001)
+
+        import pdb
+        pdb.set_trace()
         #print(diff_sigs)
 
         # Ideal here would be to scale
