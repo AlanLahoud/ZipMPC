@@ -975,7 +975,7 @@ class FrenetDynBicycleDx(nn.Module):
 
         self.delta_max = params[6]
 
-        self.factor_pen = 1000.
+        self.factor_pen = 10000000.
 
         # # model parameters: l_r, l_f (beta and curv(sigma) are calculated in the dynamics)
         # if params is None:
