@@ -120,8 +120,9 @@ lqr_iter = 30
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
-opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
+#opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
+opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 0, 0, 0.1, 0.5]), 0), mpc_T, 0)
@@ -332,8 +333,8 @@ for ep in range(epochs):
         diff_shorts = ((x_true_torch_S[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2).sum(0)
         args_conv = torch.argwhere(diff_shorts<0.001)
 
-        #import pdb
-        #pdb.set_trace()
+        import pdb
+        pdb.set_trace()
         #print(diff_sigs)
 
         # Ideal here would be to scale

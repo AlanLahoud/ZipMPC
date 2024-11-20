@@ -977,6 +977,8 @@ class FrenetDynBicycleDx(nn.Module):
 
         self.factor_pen = 10000000.
 
+        self.max_track_width_perc = 0.68
+
         # # model parameters: l_r, l_f (beta and curv(sigma) are calculated in the dynamics)
         # if params is None:
         #     # l_r, l_f
@@ -1020,8 +1022,8 @@ class FrenetDynBicycleDx(nn.Module):
 
 
     def penalty_d(self, d):
-        overshoot_pos = (d - 0.35*self.track_width).clamp(min=0)
-        overshoot_neg = (-d - 0.35*self.track_width).clamp(min=0)
+        overshoot_pos = (d - 0.5*self.max_track_width_perc*self.track_width).clamp(min=0)
+        overshoot_neg = (-d - 0.5*self.max_track_width_perc*self.track_width).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
         penalty_neg = torch.exp(overshoot_neg) - 1
         return self.factor_pen*(penalty_pos + penalty_neg)
@@ -1098,7 +1100,7 @@ class FrenetDynBicycleDx(nn.Module):
         r = r + self.dt * dr
         v_x = v_x + self.dt * dv_x
         v_y = v_y + self.dt * dv_y
-        sigma_0 = sigma_0                   # we need to carry it on
+        sigma_0 = sigma_0              
         sigma_diff = sigma - sigma_0
 
         d_pen = self.penalty_d(d)
