@@ -126,11 +126,11 @@ opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 0, 0, 0.05, 0.5]), 0), mpc_T, 0)
-p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -1, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
+p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
 Q_manual_H = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 0, 0, 0.05, 0.5]), 0), mpc_H, 0)
-p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -1, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
+p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [7,1,2,3,4,5,10,11]
 idx_to_NN = [1,2,4]
@@ -331,17 +331,17 @@ for ep in range(epochs):
         diff_shorts = ((x_true_torch_S[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2).sum(0)
         args_conv = torch.argwhere(diff_shorts<0.005)
         
-        loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 5] - pred_x[:mpc_L, args_conv, 5])**2).sum(0).mean()
+        loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 7] - pred_x[:mpc_L, args_conv, 7])**2).sum(0).mean()
         loss_d = ((x_true_torch[:mpc_L, args_conv, 1] - pred_x[:mpc_L, args_conv, 1])**2).sum(0).mean()
         loss_phi = ((x_true_torch[:mpc_L, args_conv, 2] - pred_x[:mpc_L, args_conv, 2])**2).sum(0).mean()
-        loss_v = ((x_true_torch[:mpc_L, args_conv, 3] - pred_x[:mpc_L, args_conv, 3])**2).sum(0).mean()
+        loss_v = ((x_true_torch[:mpc_L, args_conv, 4] - pred_x[:mpc_L, args_conv, 4])**2).sum(0).mean()
         
         loss_a = ((u_true_torch[:mpc_L, args_conv, 0] - pred_u[:mpc_L, args_conv, 0])**2).sum(0).mean()
         loss_delta = ((u_true_torch[:mpc_L, args_conv, 1] - pred_u[:mpc_L, args_conv, 1])**2).sum(0).mean()
 
         
-        #loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + loss_delta
-        loss = 0.01*loss_a + loss_delta
+        loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + loss_delta
+        #loss = 0.1*loss_a + loss_delta
 
         opt.zero_grad()
         loss.backward()
