@@ -1244,22 +1244,22 @@ def q_and_p_dyn(mpc_T, q_p_pred, Q_manual, p_manual):
 
     #sigma_diff
     #q[:,:,5] = q[:,:,5] + q_p_pred[:,:,0].clamp(e)
-    p[:,:,7] = p[:,:,7] + q_p_pred[:,:,0]
+    #p[:,:,7] = p[:,:,7] + q_p_pred[:,:,0]
 
     #d
     #q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,1]).clamp(e)
-    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,1]
+    #p[:,:,1] = p[:,:,1] + q_p_pred[:,:,1]
 
     #phi
     #q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,3]).clamp(e)
-    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,2]
+    #p[:,:,2] = p[:,:,2] + q_p_pred[:,:,2]
 
     #a
     #q[:,:,10] = (q[:,:,10] + q_p_pred[:,:,5]).clamp(e)
-    p[:,:,10] = p[:,:,10] + q_p_pred[:,:,3]
+    p[:,:,10] = p[:,:,10] + q_p_pred[:,:,0]
 
     #delta
     #q[:,:,11] = (q[:,:,11] + q_p_pred[:,:,7]).clamp(e)
-    p[:,:,11] = p[:,:,11] + q_p_pred[:,:,4]
+    p[:,:,11] = p[:,:,11] + q_p_pred[:,:,1]
 
     return q, p
