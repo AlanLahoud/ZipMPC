@@ -25,7 +25,7 @@ def parse_arguments():
     parser.add_argument('--l_r', type=float, default=0.03)
     parser.add_argument('--v_max', type=float, default=1.8)
     parser.add_argument('--delta_max', type=float, default=0.4)
-    parser.add_argument('--p_sigma_manual', type=float, default=0.1)
+    parser.add_argument('--p_sigma_manual', type=float, default=3.0)
     parser.add_argument('--eps', type=float, default=0.02)
 
     return parser.parse_args()
@@ -122,7 +122,7 @@ grad_method = GradMethods.AUTO_DIFF
 model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 #opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 0, 0, 0.05, 0.5]), 0), mpc_T, 0)
