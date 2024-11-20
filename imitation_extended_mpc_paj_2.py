@@ -119,7 +119,7 @@ lqr_iter = 30
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.TCN(mpc_H, n_Q, 5, max_p)
+model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 
@@ -248,12 +248,14 @@ else:
     sys.exit("Manual parameter choice not feasible")
 
 
+its_per_epoch = 40
+
 for ep in range(epochs):
 
     print(f'Epoch {ep}, Update reference path')
     x_star = np.transpose(x_current_full)
 
-    for it in range(60):
+    for it in range(its_per_epoch):
 
         model.train()
 
@@ -332,37 +334,35 @@ for ep in range(epochs):
         #print(diff_sigs)
 
         # Ideal here would be to scale
-        loss = 1000*loss_dsigma[:,args_conv].sum(0).mean() + 10*loss_d[:,args_conv].sum(0).mean() + 10*loss_v[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + 0.001*loss_delta[:,args_conv].sum(0).mean()
+        loss = 100*loss_dsigma[:,args_conv].sum(0).mean() + 100*loss_d[:,args_conv].sum(0).mean() + loss_phi[:,args_conv].sum(0).mean() + 0.01*loss_a[:,args_conv].sum(0).mean() + loss_delta[:,args_conv].sum(0).mean()
 
+        opt.zero_grad()
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        opt.step()
 
 
         #if diff_sigs> 0.001:
         #    import pdb
         #    pdb.set_trace()
 
-        if it%20==0:
-            #import pdb
-            #pdb.set_trace()
-            d_pen = true_dx.penalty_d(pred_x[:, :, 1])
-            v_pen = true_dx.penalty_v(pred_x[:, :, 3])
+
+        if it%its_per_epoch==its_per_epoch-1:
+            d_pen = true_dx.penalty_d(pred_x[:, :, 1].detach())
+            v_pen = true_dx.penalty_v(pred_x[:, :, 3].detach())
             #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
-            #print(pred_x[:, :, 3].max().item())
+            print('V max: ', pred_x[:, :, 3].detach().max().item())
+            print('N useful samples: ', pred_x.detach()[:, args_conv, 7].shape)
             #print(pred_x[:, :, 1].max().item())
-            #print(p.mean(0).mean(0))
+            #print(p.mean(0).mean(0))       
 
 
-        opt.zero_grad()
-        loss.backward()
-        opt.step()
-
-
-        if it%20==0:
             # L O S S   V A LI D A T I O N
             print("validation loss start")
             model.eval()
             with torch.no_grad():
 
-                BS_val = 32
+                BS_val = 100
 
                 u_lower_val = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
                 u_upper_val = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
@@ -404,20 +404,20 @@ for ep in range(epochs):
                 loss_val = 1000*loss_dsigma_val.sum(0).mean() + 10*loss_d_val.sum(0).mean() + 10*loss_v_val.sum(0).mean() + 0.01*loss_a_val.sum(0).mean() + 0.001*loss_delta_val.sum(0).mean() #+ loss_v_val.mean() #+ loss_a_val.mean() + loss_delta_val.mean()
 
                 print('Train loss:',
-                      round(1000*loss_dsigma.detach().sum(0).mean().item(), 5),
-                      round(10*loss_d.detach().sum(0).mean().item(), 5),
+                      round(100*loss_dsigma.detach().sum(0).mean().item(), 5),
+                      round(100*loss_d.detach().sum(0).mean().item(), 5),
                       #round(loss_phi_val.sum(0).mean().item(), 5),
-                      round(10*loss_v.detach().sum(0).mean().item(), 5),
+                      round(loss_v.detach().sum(0).mean().item(), 5),
                       round(0.01*loss_a.detach().sum(0).mean().item(), 5),
-                      round(0.001*loss_delta.detach().sum(0).mean().item(), 5))
+                      round(01*loss_delta.detach().sum(0).mean().item(), 5))
 
                 print('Validation loss:',
-                      round(1000*loss_dsigma_val.sum(0).mean().item(), 5),
-                      round(10*loss_d_val.sum(0).mean().item(), 5),
+                      round(100*loss_dsigma_val.sum(0).mean().item(), 5),
+                      round(100*loss_d_val.sum(0).mean().item(), 5),
                       #round(loss_phi_val.sum(0).mean().item(), 5),
-                      round(10*loss_v_val.sum(0).mean().item(), 5),
+                      round(loss_v_val.sum(0).mean().item(), 5),
                       round(0.01*loss_a_val.sum(0).mean().item(), 5),
-                      round(0.001*loss_delta_val.sum(0).mean().item(), 5))
+                      round(loss_delta_val.sum(0).mean().item(), 5))
 
             print("validation loss end")
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
@@ -475,11 +475,11 @@ for ep in range(epochs):
                     lap_time = dt*steps
 
 
+                    x_current_full = x_pred_full
                     if finished == 1 and lap_time < current_time:
                         current_time = lap_time
                         q_current = q_lap_np_casadi
                         p_current = p_lap
-                        x_current_full = x_pred_full
                         torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
 
                     finish_list[b] = finished
