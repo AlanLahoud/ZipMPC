@@ -409,7 +409,7 @@ for ep in range(epochs):
                       #round(loss_phi_val.sum(0).mean().item(), 5),
                       round(loss_v.detach().sum(0).mean().item(), 5),
                       round(0.01*loss_a.detach().sum(0).mean().item(), 5),
-                      round(01*loss_delta.detach().sum(0).mean().item(), 5))
+                      round(loss_delta.detach().sum(0).mean().item(), 5))
 
                 print('Validation loss:',
                       round(100*loss_dsigma_val.sum(0).mean().item(), 5),
