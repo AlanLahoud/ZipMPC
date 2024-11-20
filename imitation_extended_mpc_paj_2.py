@@ -38,7 +38,7 @@ mpc_T = args.mpc_T
 mpc_H = args.mpc_H
 n_Q = args.n_Q
 
-mpc_L = mpc_T
+mpc_L = 8
 
 l_r = args.l_r
 v_max = args.v_max
@@ -59,7 +59,7 @@ l_f = l_r
 
 assert mpc_T%n_Q==0
 
-a_max = 2.0
+a_max = 1.5
 
 track_density = 300
 track_width = 0.5
@@ -280,16 +280,14 @@ for ep in range(epochs):
         #    npat = ep + 2
 
         x0 = utils_new.sample_init_traj_dist_dyn(BS, true_dx, x_star, npat).float()
-        #x0_2 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, np.transpose(x_manual_full_H), npat)
+        #x0_2 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, np.transpose(x_manual_full_H), npat).float()
 
         #x0 = torch.vstack((x0_1, x0_2))
 
         #x0 = utils_new.sample_init(BS, true_dx)
 
-        x0_diff = x0.clone().float()
-
-        curv = utils_new.get_curve_hor_from_x(x0_diff, track_coord, mpc_H)
-        inp = torch.hstack((x0_diff[:,idx_to_NN], curv))
+        curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
+        inp = torch.hstack((x0[:,idx_to_NN], curv))
         q_p_pred = model(inp)
 
         q, p = utils_new.q_and_p_dyn(mpc_T, q_p_pred, Q_manual, p_manual)
@@ -300,7 +298,7 @@ for ep in range(epochs):
         x_true, u_true = utils_new.solve_casadi_parallel_dyn(
             np.repeat(q_manual_casadi, BS, 1),
             np.repeat(p_manual_casadi, BS, 1),
-            x0_diff.detach().numpy()[:,:8], BS, dx, du, control_H)
+            x0.detach().numpy()[:,:8], BS, dx, du, control_H)
 
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
@@ -311,7 +309,7 @@ for ep in range(epochs):
         p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
         x_true_S, u_true_S = utils_new.solve_casadi_parallel_dyn(
             q_manual_casadi_S, p_manual_casadi_S,
-            x0_diff.detach().numpy()[:,:8], BS, dx, du, control)
+            x0.detach().numpy()[:,:8], BS, dx, du, control)
 
         x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
         u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)
@@ -328,7 +326,7 @@ for ep in range(epochs):
                     grad_method=grad_method,
                     eps=eps,
                     n_batch=None,
-                )(x0_diff, QuadCost(Q, p), true_dx)
+                )(x0, QuadCost(Q, p), true_dx)
 
         diff_shorts = ((x_true_torch_S[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2).sum(0)
         args_conv = torch.argwhere(diff_shorts<0.005)
