@@ -300,7 +300,7 @@ for ep in range(epochs):
         # T E S T  MPC SHORT
         q_manual_casadi_S = torch.permute(q[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
         p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
-        x_true_S, u_true_S = utils_new.solve_casadi_parallel(
+        x_true_S, u_true_S = utils_new.solve_casadi_parallel_dyn(
             q_manual_casadi_S, p_manual_casadi_S,
             x0_diff.detach().numpy()[:,:8], BS, dx, du, control)
 
