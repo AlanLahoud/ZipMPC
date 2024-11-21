@@ -119,7 +119,7 @@ lqr_iter = 15
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
+model = utils_new.TCN(mpc_H, n_Q, 5, max_p)
 #opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 opt = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4)
@@ -135,7 +135,7 @@ p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma
 idx_to_casadi = [7,1,2,3,4,5,10,11]
 idx_to_NN = [1,2,4]
 
-epochs = 20
+epochs = 30
 num_patches = 20
 BS_init = 40
 BS_val = 10
