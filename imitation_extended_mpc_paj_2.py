@@ -254,7 +254,7 @@ its_per_epoch = 40
 for ep in range(epochs):
 
     mpc_L = mpc_L+1
-    mpc_L = int(np.maximum(mpc_L, mpc_T))
+    mpc_L = int(np.minimum(mpc_L, mpc_T))
 
     print(f'Epoch {ep}, Update reference path, mpcL = {mpc_L}')
     x_star = np.transpose(x_current_full)
