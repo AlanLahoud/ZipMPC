@@ -38,7 +38,7 @@ mpc_T = args.mpc_T
 mpc_H = args.mpc_H
 n_Q = args.n_Q
 
-mpc_L = mpc_T
+mpc_L = 4
 
 l_r = args.l_r
 v_max = args.v_max
@@ -253,7 +253,10 @@ its_per_epoch = 40
 
 for ep in range(epochs):
 
-    print(f'Epoch {ep}, Update reference path')
+    mpc_L = mpc_L+1
+    mpc_L = int(np.maximum(mpc_L, mpc_T))
+
+    print(f'Epoch {ep}, Update reference path, mpcL = {mpc_L}')
     x_star = np.transpose(x_current_full)
 
     loss_train_avg = 0.
