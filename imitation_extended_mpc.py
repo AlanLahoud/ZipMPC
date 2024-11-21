@@ -259,7 +259,7 @@ its_per_epoch = 60
 
 for ep in range(epochs):
     
-    mpc_L = mpc_L+1
+    mpc_L = 5 + ep//3
     mpc_L = int(np.minimum(mpc_L, mpc_T))
     
     print(f'Epoch {ep}, Update reference path')
