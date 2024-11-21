@@ -40,6 +40,7 @@ mpc_T = args.mpc_T
 mpc_H = args.mpc_H
 n_Q = args.n_Q
 
+mpc_L = 5
 #n_Q = mpc_T
 
 l_r = args.l_r
@@ -258,6 +259,9 @@ its_per_epoch = 60
 
 for ep in range(epochs):
     
+    mpc_L = mpc_L+1
+    mpc_L = int(np.minimum(mpc_L, mpc_T))
+    
     print(f'Epoch {ep}, Update reference path')
     x_star = np.transpose(x_current_full)
 
@@ -345,13 +349,13 @@ for ep in range(epochs):
         diff_shorts = ((x_true_torch_S[:, :, 1] - pred_x[:, :, 1])**2 + (x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).mean(0)
         args_conv = torch.argwhere(diff_shorts<0.0001)
         
-        loss_dsigma = ((x_true_torch[:mpc_T, args_conv, 5] - pred_x[:, args_conv, 5])**2).sum(0).mean()
-        loss_d = ((x_true_torch[:mpc_T, args_conv, 1] - pred_x[:, args_conv, 1])**2).sum(0).mean()
-        loss_phi = ((x_true_torch[:mpc_T, args_conv, 2] - pred_x[:, args_conv, 2])**2).sum(0).mean()
-        loss_v = ((x_true_torch[:mpc_T, args_conv, 3] - pred_x[:, args_conv, 3])**2).sum(0).mean()
+        loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 5] - pred_x[:mpc_L, args_conv, 5])**2).sum(0).mean()
+        loss_d = ((x_true_torch[:mpc_L, args_conv, 1] - pred_x[:mpc_L, args_conv, 1])**2).sum(0).mean()
+        loss_phi = ((x_true_torch[:mpc_L, args_conv, 2] - pred_x[:mpc_L, args_conv, 2])**2).sum(0).mean()
+        loss_v = ((x_true_torch[:mpc_L, args_conv, 3] - pred_x[:mpc_L, args_conv, 3])**2).sum(0).mean()
         
-        loss_a = ((u_true_torch[:mpc_T, args_conv, 0] - pred_u[:, args_conv, 0])**2).sum(0).mean()
-        loss_delta = ((u_true_torch[:mpc_T, args_conv, 1] - pred_u[:, args_conv, 1])**2).sum(0).mean()
+        loss_a = ((u_true_torch[:mpc_L, args_conv, 0] - pred_u[:mpc_L, args_conv, 0])**2).sum(0).mean()
+        loss_delta = ((u_true_torch[:mpc_L, args_conv, 1] - pred_u[:mpc_L, args_conv, 1])**2).sum(0).mean()
 
         loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + loss_delta
 
