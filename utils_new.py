@@ -975,7 +975,7 @@ class FrenetDynBicycleDx(nn.Module):
 
         self.delta_max = params[6]
 
-        self.factor_pen = 100.
+        self.factor_pen = 1000.
 
         self.max_track_width_perc = 0.68
 
