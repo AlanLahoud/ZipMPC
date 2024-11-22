@@ -169,7 +169,7 @@ class CasadiControl():
                     -self.a_max*np.ones(mpc_T),
                     -self.delta_max*np.ones(mpc_T),
                     -0.5*self.max_track_width_perc*self.track_width*np.ones(mpc_T+1),
-                    -0.1*np.ones(mpc_T+1)]
+                    -0.001*np.ones(mpc_T+1)]
 
         ubg = np.r_[np.zeros(mpc_T+1),
                     np.zeros(mpc_T+1),
@@ -332,7 +332,7 @@ class CasadiControl():
                     -self.a_max*np.ones(N),
                     -self.delta_max*np.ones(N),
                     -0.5*self.max_track_width_perc*self.track_width*np.ones(N+1),
-                    0.1*np.ones(N+1)]
+                    -0.001*np.ones(N+1)]
 
         ubg = np.r_[np.zeros(N+1),
                     np.zeros(N+1),
