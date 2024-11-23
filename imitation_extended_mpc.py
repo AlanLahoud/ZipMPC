@@ -27,7 +27,7 @@ def parse_arguments():
     parser.add_argument('--n_Q', type=int, default=3)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
-    parser.add_argument('--delta_max', type=float, default=0.41)
+    parser.add_argument('--delta_max', type=float, default=0.40)
     parser.add_argument('--p_sigma_manual', type=float, default=3.0)
     
     return parser.parse_args()
@@ -135,7 +135,7 @@ if load_model==True:
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3., 0.5, 0.1, 0, 0.1, 1, 1, 0.1, 0.5]), 0), mpc_T, 0)
@@ -262,7 +262,7 @@ for ep in range(epochs):
     mpc_L = 5 + ep//3
     mpc_L = int(np.minimum(mpc_L, mpc_T))
     
-    print(f'Epoch {ep}, Update reference path')
+    print(f'Epoch {ep}, Update reference path, mpcL={mpc_L}')
     x_star = np.transpose(x_current_full)
 
     loss_train_avg = 0.
