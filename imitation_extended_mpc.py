@@ -114,7 +114,7 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 64
+BS = 40
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -135,7 +135,7 @@ if load_model==True:
         
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3., 0.5, 0.1, 0, 0.1, 1, 1, 0.1, 0.5]), 0), mpc_T, 0)
@@ -289,8 +289,8 @@ for ep in range(epochs):
         #    npat = ep + 2
         
         #x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, npat).float()
-        x0 = utils_new.sample_init_traj_dist(BS, true_dx, np.transpose(x_manual_full_H), npat, sn=0).float()
-        #x0_3 = utils_new.sample_init(BS//3, true_dx)
+        #x0 = utils_new.sample_init_traj_dist(BS, true_dx, np.transpose(x_manual_full_H), npat).float()
+        x0 = utils_new.sample_init(BS, true_dx).float()
 
         #x0 = torch.vstack((x0_1, x0_2, x0_3))
 
