@@ -390,68 +390,6 @@ class CasadiControl():
         return x, u
 
 
-class SimpleNN(nn.Module):
-    def __init__(self, mpc_H, mpc_T, O, K):
-        super(SimpleNN, self).__init__()
-        input_size = 3 + mpc_H
-        self.fc1 = nn.Linear(input_size, 2000)
-        self.fc2 = nn.Linear(2000, 2000)
-
-        self.fc3_1 = nn.Linear(2000, O)
-        self.fc3_2 = nn.Linear(2000, mpc_T*O)
-        
-        self.activation = nn.ReLU()
-        self.output_activation = nn.Tanh()
-        self.K = K
-        self.O = O
-        self.mpc_T = mpc_T
-
-    def forward(self, x, const=False):
-        x = self.activation(self.fc1(x))
-        x = self.activation(self.fc2(x))
-
-        if const:
-            x = self.fc3_1(x)
-            x = x.repeat(self.mpc_T, 1, 1)
-        else:
-            x = self.fc3_2(x)
-            x = x.view(self.mpc_T, -1, self.O)
-            
-        #x = self.output_activation(x) * self.K
-                 
-        x = 5*self.output_activation(x/10)
-        return x
-
-
-class ImprovedNN(nn.Module):
-    def __init__(self, mpc_H, mpc_T, O, K):
-        super(ImprovedNN, self).__init__()
-        input_size = 3  # For the global context variables
-        self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=1)  # Adding a temporal conv layer
-        self.fc1 = nn.Linear(16 * mpc_H + input_size, 1000)
-        self.fc2 = nn.Linear(1000, 1000)
-        self.fc3 = nn.Linear(1000, 500)
-        self.fc4 = nn.Linear(500, mpc_T * O)
-        self.activation = nn.ReLU()
-        self.output_activation = nn.Tanh()
-        self.K = K
-        self.O = O
-        self.mpc_T = mpc_T
-
-    def forward(self, x):
-        global_context, time_series = x[:, :3], x[:, 3:]
-        time_series = time_series.unsqueeze(1)  # For Conv1D input [batch_size, channels, seq_len]
-        time_series = self.activation(self.conv1(time_series)).view(time_series.size(0), -1)
-
-        x = torch.cat([time_series, global_context], dim=1)
-        x = self.activation(self.fc1(x))
-        x = self.activation(self.fc2(x))
-        x = self.activation(self.fc3(x))
-        x = self.fc4(x)
-        x = x.reshape(self.mpc_T, -1, self.O)
-        return x/5
-
-
 
 class ImprovedNN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K):
@@ -498,58 +436,20 @@ class ImprovedNN(nn.Module):
         return x
 
 
-import torch.nn.functional as F
 class TCN(nn.Module):
-    def __init__(self, mpc_H, mpc_T, O, K, num_channels=[1, 25, 50, 50, 25], kernel_size=3):
-        super(TCN, self).__init__()
-        self.K = K
-        self.O = O
-        self.mpc_T = mpc_T
-        
-        layers = []
-        for i in range(len(num_channels) - 1):
-            layers.append(nn.Conv1d(num_channels[i], num_channels[i+1], kernel_size, padding='same', dilation=2**i))
-            layers.append(nn.BatchNorm1d(num_channels[i+1]))
-            layers.append(nn.ReLU())
-            layers.append(nn.Dropout(0.2))
-        
-        self.tcn = nn.Sequential(*layers)
-        
-        # Fully connected layers for final prediction
-        self.fc1 = nn.Linear(num_channels[-1] * mpc_H + 3, 512)
-        self.fc2 = nn.Linear(512, 1024)
-        self.fc3 = nn.Linear(1024, mpc_T * O)
-        self.output_activation = nn.Tanh()
-
-    def forward(self, x):
-        global_context, time_series = x[:, :3], x[:, 3:]
-
-        time_series = time_series.unsqueeze(1)
-        time_series = self.tcn(time_series)
-        time_series = time_series.view(time_series.size(0), -1)
-
-        x = torch.cat([time_series, global_context], dim=1)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-
-        x = x.reshape(self.mpc_T, -1, self.O)
-        x = 8 * self.output_activation(x / 10)
-        return x
-
-
-
-class SharedRepresentationNN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K):
         super(SharedRepresentationNN, self).__init__()
         input_size = 3
 
-        # Shared feature extractor
-        self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
+        # Convolutional feature extractor
+        self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=1)  
+        self.conv2 = nn.Conv1d(16, 32, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm1d(16)
-        self.dropout = nn.Dropout(0.1)
+        self.bn2 = nn.BatchNorm1d(32)
+        self.dropout = nn.Dropout(0.2) 
 
-        self.fc1 = nn.Linear(16 * mpc_H + input_size, 512)
+        # Fully connected layers for shared representation
+        self.fc1 = nn.Linear(32 * mpc_H + input_size, 512)
         self.fc2 = nn.Linear(512, 1024)
         self.fc3 = nn.Linear(1024, 1024)
         self.fc4 = nn.Linear(1024, 512)
@@ -560,10 +460,11 @@ class SharedRepresentationNN(nn.Module):
         # Modulation layer for time-varying outputs
         self.fc_modulation = nn.Linear(512, mpc_T * O)
 
-        # Activation
+        # Activation functions
         self.activation = nn.LeakyReLU(0.1)
         self.output_activation = nn.Tanh()
 
+        # Model parameters
         self.mpc_T = mpc_T
         self.O = O
         self.K = K
@@ -571,16 +472,14 @@ class SharedRepresentationNN(nn.Module):
     def forward(self, x):
         global_context, time_series = x[:, :3], x[:, 3:]
 
-        time_series = time_series.unsqueeze(1)
-        time_series_res = time_series
-        time_series = self.activation(self.conv1(time_series))
-        time_series = self.bn1(time_series)
-        time_series = self.dropout(time_series)
-        time_series += time_series_res
+        time_series = time_series.unsqueeze(1) 
+        time_series = self.activation(self.bn1(self.conv1(time_series)))
+        time_series = self.dropout(self.activation(self.bn2(self.conv2(time_series))))
 
-        time_series = time_series.view(time_series.size(0), -1)
+        time_series = time_series.view(time_series.size(0), -1) 
 
         x = torch.cat([time_series, global_context], dim=1)
+
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
         x = self.activation(self.fc3(x))
@@ -588,17 +487,14 @@ class SharedRepresentationNN(nn.Module):
 
         global_cost = self.fc_global(x) 
 
-        modulation = self.fc_modulation(x)  
-        modulation = modulation.view(self.mpc_T, -1, self.O)  
+        modulation = self.fc_modulation(x) 
+        modulation = modulation.view(self.mpc_T, -1, self.O) 
 
-        outputs = global_cost.unsqueeze(0) * modulation 
+        global_cost = global_cost.unsqueeze(0) 
+        outputs = global_cost + modulation 
 
         outputs = self.K * self.output_activation(outputs / self.K)
         return outputs
-
-
-
-
 
 
 def sample_init(BS, dyn, sn=None):
