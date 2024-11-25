@@ -438,7 +438,7 @@ class ImprovedNN(nn.Module):
 
 class TCN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K):
-        super(SharedRepresentationNN, self).__init__()
+        super(TCN, self).__init__()
         input_size = 3
 
         # Convolutional feature extractor

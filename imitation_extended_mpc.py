@@ -123,8 +123,7 @@ lqr_iter = 18
 
 grad_method = GradMethods.AUTO_DIFF
 
-#model = utils_new.SimpleNN(mpc_H, n_Q, 5, max_p)
-model = utils_new.SharedRepresentationNN(mpc_H, n_Q, 2, max_p)
+model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 
 if load_model==True:
     try:
@@ -288,9 +287,9 @@ for ep in range(epochs):
         #if ep+2 < npat:
         #    npat = ep + 2
         
-        x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, npat).float()
+        #x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, npat).float()
         #x0 = utils_new.sample_init_traj_dist(BS, true_dx, np.transpose(x_manual_full_H), npat).float()
-        #x0 = utils_new.sample_init(BS, true_dx).float()
+        x0 = utils_new.sample_init(BS, true_dx).float()
 
         #x0 = torch.vstack((x0_1, x0_2, x0_3))
 
