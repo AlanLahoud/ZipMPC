@@ -74,7 +74,7 @@ bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
 t_track = 0.3
 init_track = [0,0,0]
 
-max_p = 100
+max_p = 10
 
 str_model = f'im_{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_sigma_manual}'
 
@@ -124,7 +124,7 @@ lqr_iter = 18
 grad_method = GradMethods.AUTO_DIFF
 
 #model = utils_new.SimpleNN(mpc_H, n_Q, 5, max_p)
-model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
+model = utils_new.SharedRepresentationNN(mpc_H, n_Q, 2, max_p)
 
 if load_model==True:
     try:

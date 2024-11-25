@@ -396,19 +396,29 @@ class SimpleNN(nn.Module):
         input_size = 3 + mpc_H
         self.fc1 = nn.Linear(input_size, 2000)
         self.fc2 = nn.Linear(2000, 2000)
-        self.fc3 = nn.Linear(2000, mpc_T*O)
+
+        self.fc3_1 = nn.Linear(2000, O)
+        self.fc3_2 = nn.Linear(2000, mpc_T*O)
+        
         self.activation = nn.ReLU()
         self.output_activation = nn.Tanh()
         self.K = K
         self.O = O
         self.mpc_T = mpc_T
 
-    def forward(self, x):
+    def forward(self, x, const=False):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
-        x = self.fc3(x)
+
+        if const:
+            x = self.fc3_1(x)
+            x = x.repeat(self.mpc_T, 1, 1)
+        else:
+            x = self.fc3_2(x)
+            x = x.view(self.mpc_T, -1, self.O)
+            
         #x = self.output_activation(x) * self.K
-        x = x.reshape(self.mpc_T, -1, self.O)
+                 
         x = 5*self.output_activation(x/10)
         return x
 
@@ -526,6 +536,67 @@ class TCN(nn.Module):
         x = x.reshape(self.mpc_T, -1, self.O)
         x = 8 * self.output_activation(x / 10)
         return x
+
+
+
+class SharedRepresentationNN(nn.Module):
+    def __init__(self, mpc_H, mpc_T, O, K):
+        super(SharedRepresentationNN, self).__init__()
+        input_size = 3
+
+        # Shared feature extractor
+        self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
+        self.bn1 = nn.BatchNorm1d(16)
+        self.dropout = nn.Dropout(0.1)
+
+        self.fc1 = nn.Linear(16 * mpc_H + input_size, 512)
+        self.fc2 = nn.Linear(512, 1024)
+        self.fc3 = nn.Linear(1024, 1024)
+        self.fc4 = nn.Linear(1024, 512)
+
+        # Global representation layer
+        self.fc_global = nn.Linear(512, O)
+
+        # Modulation layer for time-varying outputs
+        self.fc_modulation = nn.Linear(512, mpc_T * O)
+
+        # Activation
+        self.activation = nn.LeakyReLU(0.1)
+        self.output_activation = nn.Tanh()
+
+        self.mpc_T = mpc_T
+        self.O = O
+        self.K = K
+
+    def forward(self, x):
+        global_context, time_series = x[:, :3], x[:, 3:]
+
+        time_series = time_series.unsqueeze(1)
+        time_series_res = time_series
+        time_series = self.activation(self.conv1(time_series))
+        time_series = self.bn1(time_series)
+        time_series = self.dropout(time_series)
+        time_series += time_series_res
+
+        time_series = time_series.view(time_series.size(0), -1)
+
+        x = torch.cat([time_series, global_context], dim=1)
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.activation(self.fc3(x))
+        x = self.fc4(x)
+
+        global_cost = self.fc_global(x) 
+
+        modulation = self.fc_modulation(x)  
+        modulation = modulation.view(self.mpc_T, -1, self.O)  
+
+        outputs = global_cost.unsqueeze(0) * modulation 
+
+        outputs = self.K * self.output_activation(outputs / self.K)
+        return outputs
+
+
 
 
 
