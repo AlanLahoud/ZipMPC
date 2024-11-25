@@ -288,9 +288,9 @@ for ep in range(epochs):
         #if ep+2 < npat:
         #    npat = ep + 2
         
-        #x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, npat).float()
+        x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, npat).float()
         #x0 = utils_new.sample_init_traj_dist(BS, true_dx, np.transpose(x_manual_full_H), npat).float()
-        x0 = utils_new.sample_init(BS, true_dx).float()
+        #x0 = utils_new.sample_init(BS, true_dx).float()
 
         #x0 = torch.vstack((x0_1, x0_2, x0_3))
 
