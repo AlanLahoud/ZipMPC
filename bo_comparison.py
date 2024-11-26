@@ -393,7 +393,7 @@ for i in range(bo_iter):
 
     gpr_fit = gpr.fit(bo_grid[samples],losses)
 
-    mean_fit, std_figt = gpr.predict(bo_grid, return_std=True)
+    mean_fit, std_fit = gpr.predict(bo_grid, return_std=True)
 
     accq_fun = mean_fit - beta*std_fit
 
