@@ -177,7 +177,7 @@ for i in range(warm_start):
 samples = samples.astype(int)
 
 #run lap with new samples
-beta = 1.0
+beta = 100.0
 bo_iter = 100
 p_bo_base = np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0])
 p_bo_add = np.zeros(10)
@@ -286,15 +286,17 @@ for b in range(warm_start):
     finish_list[b] = finished
     lap_time_list[b] = lap_time
 
-    loss_length = min(np.shape(x_manual_full)[0],np.shape(x_manual_full_H)[0])
+    loss_length = min(np.shape(x_manual_full)[1],np.shape(x_manual_full_H)[1])
+    print(np.shape(x_manual_full))
+    print(np.shape(x_manual_full_H))
 
-    loss_dsigma = ((x_manual_full[:loss_length, 5] - x_manual_full_H[:loss_length, 5])**2).sum(0).mean()
-    loss_d = ((x_manual_full[:loss_length, 1] - x_manual_full_H[:loss_length, 1])**2).sum(0).mean()
-    loss_phi = ((x_manual_full[:loss_length, 2] - x_manual_full_H[:loss_length, 2])**2).sum(0).mean()
-    loss_v = ((x_manual_full[:loss_length, 3] - x_manual_full_H[:loss_length, 3])**2).sum(0).mean()
+    loss_dsigma = ((x_manual_full[5,:loss_length] - x_manual_full_H[5,:loss_length])**2).sum(0).mean()
+    loss_d = ((x_manual_full[1,:loss_length] - x_manual_full_H[1,:loss_length])**2).sum(0).mean()
+    loss_phi = ((x_manual_full[2,:loss_length] - x_manual_full_H[2,:loss_length])**2).sum(0).mean()
+    loss_v = ((x_manual_full[3,:loss_length] - x_manual_full_H[3,:loss_length])**2).sum(0).mean()
 
-    loss_a = ((u_manual_full[:loss_length, 0] - u_manual_full_H[:loss_length, 0])**2).sum(0).mean()
-    loss_delta = ((u_manual_full[:loss_length, 1] - u_manual_full_H[:loss_length, 1])**2).sum(0).mean()
+    loss_a = ((u_manual_full[0,:loss_length-1] - u_manual_full_H[0,:loss_length-1])**2).sum(0).mean()
+    loss_delta = ((u_manual_full[1,:loss_length-1] - u_manual_full_H[1,:loss_length-1])**2).sum(0).mean()
 
     loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + loss_delta + crashed*10
 
@@ -307,6 +309,7 @@ for b in range(warm_start):
 
     print(f'Manual mpc_T = {mpc_T}, lap time: {lap_time}')
     print(f'Manual mpc_T = {mpc_T}, loss: {loss}')
+    print(f'Manual mpc_T = {mpc_T}, loss length: {loss_length}')
 
 
 
@@ -366,15 +369,17 @@ for i in range(bo_iter):
     finish_list[warm_start+b] = finished
     lap_time_list[warm_start+b] = lap_time
 
-    loss_length = min(np.shape(x_manual_full)[0],np.shape(x_manual_full_H)[0])
+    loss_length = min(np.shape(x_manual_full)[1],np.shape(x_manual_full_H)[1])
+    print(np.shape(x_manual_full))
+    print(np.shape(x_manual_full_H))
 
-    loss_dsigma = ((x_manual_full[:loss_length, 5] - x_manual_full_H[:loss_length, 5])**2).sum(0).mean()
-    loss_d = ((x_manual_full[:loss_length, 1] - x_manual_full_H[:loss_length, 1])**2).sum(0).mean()
-    loss_phi = ((x_manual_full[:loss_length, 2] - x_manual_full_H[:loss_length, 2])**2).sum(0).mean()
-    loss_v = ((x_manual_full[:loss_length, 3] - x_manual_full_H[:loss_length, 3])**2).sum(0).mean()
+    loss_dsigma = ((x_manual_full[5,:loss_length] - x_manual_full_H[5,:loss_length])**2).sum(0).mean()
+    loss_d = ((x_manual_full[1,:loss_length] - x_manual_full_H[1,:loss_length])**2).sum(0).mean()
+    loss_phi = ((x_manual_full[2,:loss_length] - x_manual_full_H[2,:loss_length])**2).sum(0).mean()
+    loss_v = ((x_manual_full[3,:loss_length] - x_manual_full_H[3,:loss_length])**2).sum(0).mean()
 
-    loss_a = ((u_manual_full[:loss_length, 0] - u_manual_full_H[:loss_length, 0])**2).sum(0).mean()
-    loss_delta = ((u_manual_full[:loss_length, 1] - u_manual_full_H[:loss_length, 1])**2).sum(0).mean()
+    loss_a = ((u_manual_full[0,:loss_length-1] - u_manual_full_H[0,:loss_length-1])**2).sum(0).mean()
+    loss_delta = ((u_manual_full[1,:loss_length-1] - u_manual_full_H[1,:loss_length-1])**2).sum(0).mean()
 
     loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + loss_delta + crashed*10
 
@@ -384,6 +389,7 @@ for i in range(bo_iter):
 
     print(f'Manual mpc_T = {mpc_T}, lap time: {lap_time}')
     print(f'Manual mpc_T = {mpc_T}, loss: {loss}')
+    print(f'Manual mpc_T = {mpc_T}, loss length: {loss_length}')
 
     gpr_fit = gpr.fit(bo_grid[samples],losses)
 
