@@ -253,7 +253,7 @@ its_per_epoch = 40
 
 for ep in range(epochs):
 
-    mpc_L = mpc_L+1
+    mpc_L = mpc_L+ep//4
     mpc_L = int(np.minimum(mpc_L, mpc_T))
 
     print(f'Epoch {ep}, Update reference path, mpcL = {mpc_L}')
@@ -332,12 +332,11 @@ for ep in range(epochs):
                     n_batch=None,
                 )(x0, QuadCost(Q, p), true_dx)
 
-        diff_shorts = ((x_true_torch_S[:mpc_L, :, 2] - pred_x[:mpc_L, :, 2])**2).mean(0)
-        args_conv = torch.argwhere(diff_shorts<0.001)
+        diff_shorts = ((u_true_torch_S[:mpc_L, :, 1] - pred_u[:mpc_L, :, 2])**1).mean(0)
+        args_conv = torch.argwhere(diff_shorts<0.01)
         
         loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 7] - pred_x[:mpc_L, args_conv, 7])**2).sum(0).mean()
         loss_d = ((x_true_torch[:mpc_L, args_conv, 1] - pred_x[:mpc_L, args_conv, 1])**2).sum(0).mean()
-        loss_phi = ((x_true_torch[:mpc_L, args_conv, 2] - pred_x[:mpc_L, args_conv, 2])**2).sum(0).mean()
         loss_v = ((x_true_torch[:mpc_L, args_conv, 4] - pred_x[:mpc_L, args_conv, 4])**2).sum(0).mean()
         
         loss_a = ((u_true_torch[:mpc_L, args_conv, 0] - pred_u[:mpc_L, args_conv, 0])**2).sum(0).mean()
