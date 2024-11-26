@@ -122,7 +122,7 @@ grad_method = GradMethods.AUTO_DIFF
 model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 #opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=5e-6, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=3e-6, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 1, 1, 0.05, 0.3]), 0), mpc_T, 0)
@@ -253,7 +253,7 @@ its_per_epoch = 40
 
 for ep in range(epochs):
 
-    mpc_L = mpc_L+ep//4
+    mpc_L = 4 + ep//4
     mpc_L = int(np.minimum(mpc_L, mpc_T))
 
     print(f'Epoch {ep}, Update reference path, mpcL = {mpc_L}')
