@@ -29,7 +29,7 @@ def parse_arguments():
     parser.add_argument('--v_max', type=float, default=1.8)
     parser.add_argument('--delta_max', type=float, default=0.40)
     parser.add_argument('--p_sigma_manual', type=float, default=3.0)
-    
+
     return parser.parse_args()
 
 
@@ -91,6 +91,7 @@ track_function = {
     'LUCERNE_TRACK' : track_functions.lucerne_track,
     'BERN_TRACK'    : track_functions.bern_track,
     'INFINITY_TRACK': track_functions.infinity_track,
+    'TEST_TRACK'    : track_functions.test_track,
     'SNAIL_TRACK'   : track_functions.snail_track
 }.get(track_name, track_functions.demo_track)
 
@@ -131,7 +132,7 @@ if load_model==True:
         print('Model loaded')
     except:
         print('No model found to load')
-        
+
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
@@ -257,10 +258,10 @@ x_current_full = x_manual_full
 its_per_epoch = 60
 
 for ep in range(epochs):
-    
+
     mpc_L = 5 + ep//3
     mpc_L = int(np.minimum(mpc_L, mpc_T))
-    
+
     print(f'Epoch {ep}, Update reference path, mpcL={mpc_L}')
     x_star = np.transpose(x_current_full)
 
@@ -271,11 +272,11 @@ for ep in range(epochs):
     loss_phi_avg = 0.
     loss_a_avg = 0.
     loss_delta_avg = 0.
-    
+
     for it in range(its_per_epoch):
 
         model.train()
-        
+
         u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
         u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
         u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
@@ -286,7 +287,7 @@ for ep in range(epochs):
         npat = num_patches
         #if ep+2 < npat:
         #    npat = ep + 2
-        
+
         #x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, npat).float()
         #x0 = utils_new.sample_init_traj_dist(BS, true_dx, np.transpose(x_manual_full_H), npat).float()
         x0 = utils_new.sample_init(BS, true_dx).float()
@@ -296,25 +297,25 @@ for ep in range(epochs):
         #x0 = torch.vstack((x0_1, x0_3)).float()
 
         #x0 = torch.vstack((x0_1, x0_2, x0_3)).float()
-        
-        #x0 = utils_new.sample_init(BS, true_dx)  
-        
+
+        #x0 = utils_new.sample_init(BS, true_dx)
+
 
         curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
         inp = torch.hstack((x0[:,1:4], curv))
         inp_norm = inp/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
-        
+
         q_p_pred = model(inp_norm)
-        
+
         q, p = utils_new.q_and_p(mpc_T, q_p_pred, Q_manual, p_manual)
         Q = torch.diag_embed(q, offset=0, dim1=-2, dim2=-1)
-        
+
         q_manual_casadi = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
         p_manual_casadi = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
         x_true, u_true = utils_new.solve_casadi_parallel(
-            np.repeat(q_manual_casadi, BS, 1), 
-            np.repeat(p_manual_casadi, BS, 1), 
-            x0.detach().numpy()[:,:6], BS, dx, du, control_H) 
+            np.repeat(q_manual_casadi, BS, 1),
+            np.repeat(p_manual_casadi, BS, 1),
+            x0.detach().numpy()[:,:6], BS, dx, du, control_H)
 
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
@@ -324,12 +325,12 @@ for ep in range(epochs):
         q_manual_casadi_S = torch.permute(q[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
         p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
         x_true_S, u_true_S = utils_new.solve_casadi_parallel(
-            q_manual_casadi_S, p_manual_casadi_S, 
-            x0.detach().numpy()[:,:6], BS, dx, du, control) 
+            q_manual_casadi_S, p_manual_casadi_S,
+            x0.detach().numpy()[:,:6], BS, dx, du, control)
 
         x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
-        u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)      
-            
+        u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)
+
         pred_x, pred_u, pred_objs = mpc.MPC(
                     true_dx.n_state, true_dx.n_ctrl, mpc_T,
                     u_lower=u_lower, u_upper=u_upper, u_init=u_init,
@@ -347,12 +348,12 @@ for ep in range(epochs):
 
         diff_shorts = ((x_true_torch_S[:, :, 1] - pred_x[:, :, 1])**2 + (x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).mean(0)
         args_conv = torch.argwhere(diff_shorts<0.0001)
-        
+
         loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 5] - pred_x[:mpc_L, args_conv, 5])**2).sum(0).mean()
         loss_d = ((x_true_torch[:mpc_L, args_conv, 1] - pred_x[:mpc_L, args_conv, 1])**2).sum(0).mean()
         loss_phi = ((x_true_torch[:mpc_L, args_conv, 2] - pred_x[:mpc_L, args_conv, 2])**2).sum(0).mean()
         loss_v = ((x_true_torch[:mpc_L, args_conv, 3] - pred_x[:mpc_L, args_conv, 3])**2).sum(0).mean()
-        
+
         loss_a = ((u_true_torch[:mpc_L, args_conv, 0] - pred_u[:mpc_L, args_conv, 0])**2).sum(0).mean()
         loss_delta = ((u_true_torch[:mpc_L, args_conv, 1] - pred_u[:mpc_L, args_conv, 1])**2).sum(0).mean()
 
@@ -368,10 +369,10 @@ for ep in range(epochs):
         loss_phi_avg = loss_phi_avg + loss_phi.detach().item()/its_per_epoch
         loss_a_avg = loss_a_avg + 0.01*loss_a.detach().item()/its_per_epoch
         loss_delta_avg = loss_delta_avg + 0.1*loss_delta.detach().item()/its_per_epoch
-    
+
         loss_train_avg = loss_train_avg + loss.detach().item()/its_per_epoch
-        
-        
+
+
         if it%its_per_epoch==its_per_epoch-1:
             d_pen = true_dx.penalty_d(pred_x[:, :, 1].detach())
             v_pen = true_dx.penalty_v(pred_x[:, :, 3].detach())
@@ -380,17 +381,17 @@ for ep in range(epochs):
             print('N useful samples: ', pred_x.detach()[:, args_conv, 5].shape)
             #print(pred_x[:, :, 1].max().item())
             #print(p.mean(0).mean(0))
-            
+
             # L O S S   V A LI D A T I O N
             model.eval()
             with torch.no_grad():
-               
+
                 BS_val = 100
 
                 u_lower_val = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
                 u_upper_val = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
                 u_init_val = torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(device)
-    
+
                 # This sampling should bring always the same set of initial states
                 x0_val = utils_new.sample_init_traj_dist(BS_val, true_dx, np.transpose(x_manual_full_H), npat, sn=0)
                 x0_val = x0_val.float()
@@ -400,50 +401,50 @@ for ep in range(epochs):
                 inp_val = torch.hstack((x0_val[:,1:4], curv_val))
                 inp_val_norm = inp_val/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
                 q_p_pred_val = model(inp_val_norm)
-        
+
                 q_val, p_val = utils_new.q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
                 Q_val = torch.diag_embed(q_val, offset=0, dim1=-2, dim2=-1)
-                
+
                 q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 x_pred_val, u_pred_val = utils_new.solve_casadi_parallel(
-                    q_val_np_casadi, p_val_np_casadi, 
-                    x0_val.detach().numpy()[:,:6], BS_val, dx, du, control) 
+                    q_val_np_casadi, p_val_np_casadi,
+                    x0_val.detach().numpy()[:,:6], BS_val, dx, du, control)
 
                 q_manual_casadi_val = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
                 p_manual_casadi_val = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
                 x_true_val, u_true_val = utils_new.solve_casadi_parallel(
-                    np.repeat(q_manual_casadi_val, BS_val, 1), 
-                    np.repeat(p_manual_casadi_val, BS_val, 1), 
-                    x0_val.detach().numpy()[:,:6], BS_val, dx, du, control_H) 
+                    np.repeat(q_manual_casadi_val, BS_val, 1),
+                    np.repeat(p_manual_casadi_val, BS_val, 1),
+                    x0_val.detach().numpy()[:,:6], BS_val, dx, du, control_H)
 
-                
+
                 loss_dsigma_val = ((x_true_val[:mpc_T, :, 5] - x_pred_val[:, :, 5])**2).sum(0).mean()
                 loss_d_val = ((x_true_val[:mpc_T, :, 1] - x_pred_val[:, :, 1])**2).sum(0).mean()
                 loss_phi_val = ((x_true_val[:mpc_T, :, 2] - x_pred_val[:, :, 2])**2).sum(0).mean()
                 loss_v_val = ((x_true_val[:mpc_T, :, 3] - x_pred_val[:, :, 3])**2).sum(0).mean()
-                
+
                 loss_a_val = ((u_true_val[:mpc_T, :, 0] - u_pred_val[:, :, 0])**2).sum(0).mean()
                 loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2).sum(0).mean()
-        
+
                 # Ideal here would be to scale, but this is fine just to be in the same range
                 loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 10*loss_v_val + 0.01*loss_a_val + 0.1*loss_delta_val
 
-                print('Train loss:', 
+                print('Train loss:',
                       round(loss_sig_avg, 5),
-                      round(loss_d_avg, 5), 
-                      round(loss_phi_avg, 5), 
-                      round(loss_a_avg, 5), 
+                      round(loss_d_avg, 5),
+                      round(loss_phi_avg, 5),
+                      round(loss_a_avg, 5),
                       round(loss_delta_avg, 5),
                       round(loss_train_avg, 5))
-                
-                print('Validation loss:', 
+
+                print('Validation loss:',
                       round(100*loss_dsigma_val.item(), 5),
-                      round(100*loss_d_val.item(), 5), 
-                      round(loss_phi_val.item(), 5), 
-                      round(10*loss_v_val.item(), 5), 
-                      round(0.01*loss_a_val.item(), 5), 
-                      round(0.1*loss_delta_val.item(), 5), 
+                      round(100*loss_d_val.item(), 5),
+                      round(loss_phi_val.item(), 5),
+                      round(10*loss_v_val.item(), 5),
+                      round(0.01*loss_a_val.item(), 5),
+                      round(0.1*loss_delta_val.item(), 5),
                       round(loss_val.item(), 5))
 
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
@@ -468,8 +469,8 @@ for ep in range(epochs):
                     steps = 0
                     max_steps=500
 
-                    x0_b_pred = x0_lap_pred[b].copy() 
-                    
+                    x0_b_pred = x0_lap_pred[b].copy()
+
                     x_pred_full = x0_b_pred.reshape(-1,1)
 
                     while finished==0 and crashed==0:
@@ -499,9 +500,9 @@ for ep in range(epochs):
                             crashed=1
 
                         steps = steps+1
-                        
+
                     lap_time = dt*steps
-                    
+
                     x_current_full = x_pred_full
                     if finished == 1 and lap_time <= current_time:
                         current_time = lap_time
@@ -513,7 +514,7 @@ for ep in range(epochs):
                     lap_time_list[b] = lap_time
 
                 print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
-                
+
                 try:
                     print(x_pred_full[0,60], x_pred_full[0,90], x_pred_full[0,120], x_pred_full[0,150], x_pred_full[0,180])
                     print(x_manual_full_H[0,60], x_manual_full_H[0,90], x_manual_full_H[0,120], x_manual_full_H[0,150], x_manual_full_H[0,180])
