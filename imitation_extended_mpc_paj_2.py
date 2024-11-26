@@ -333,7 +333,7 @@ for ep in range(epochs):
                 )(x0, QuadCost(Q, p), true_dx)
 
         diff_shorts = ((u_true_torch_S[:mpc_L, :, 1] - pred_u[:mpc_L, :, 1])**1).mean(0)
-        args_conv = torch.argwhere(diff_shorts<0.01)
+        args_conv = torch.argwhere(diff_shorts<0.001)
         
         loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 7] - pred_x[:mpc_L, args_conv, 7])**2).sum(0).mean()
         loss_d = ((x_true_torch[:mpc_L, args_conv, 1] - pred_x[:mpc_L, args_conv, 1])**2).sum(0).mean()
