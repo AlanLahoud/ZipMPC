@@ -25,7 +25,7 @@ def parse_arguments():
     parser.add_argument('--l_r', type=float, default=0.03)
     parser.add_argument('--v_max', type=float, default=1.8)
     parser.add_argument('--delta_max', type=float, default=0.4)
-    parser.add_argument('--p_sigma_manual', type=float, default=3.0)
+    parser.add_argument('--p_sigma_manual', type=float, default=6.0)
     parser.add_argument('--eps', type=float, default=0.02)
 
     return parser.parse_args()
@@ -70,7 +70,7 @@ bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
 t_track = 0.3
 init_track = [0,0,0]
 
-max_p = 100
+max_p = 10
 
 str_model = f'im_{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_sigma_manual}'
 
@@ -122,7 +122,7 @@ grad_method = GradMethods.AUTO_DIFF
 model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 #opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=1e-6, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=5e-6, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 1, 1, 0.05, 0.3]), 0), mpc_T, 0)
