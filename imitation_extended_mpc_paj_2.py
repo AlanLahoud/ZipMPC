@@ -70,7 +70,7 @@ bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
 t_track = 0.3
 init_track = [0,0,0]
 
-max_p = 10
+max_p = 100
 
 str_model = f'im_paj_{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_sigma_manual}'
 
@@ -282,12 +282,12 @@ for ep in range(epochs):
         #if ep+2 < npat:
         #    npat = ep + 2
 
-        #x0 = utils_new.sample_init_traj_dist_dyn(BS, true_dx, x_star, npat).float()
+        x0 = utils_new.sample_init_traj_dist_dyn(BS, true_dx, x_star, npat).float()
         #x0_2 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, np.transpose(x_manual_full_H), npat).float()
 
         #x0 = torch.vstack((x0_1, x0_2))
 
-        x0 = utils_new.sample_init(BS, true_dx)
+        #x0 = utils_new.sample_init(BS, true_dx)
 
         curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
