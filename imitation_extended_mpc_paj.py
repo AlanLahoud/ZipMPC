@@ -87,6 +87,7 @@ track_function = {
     'LUCERNE_TRACK' : track_functions.lucerne_track,
     'BERN_TRACK'    : track_functions.bern_track,
     'INFINITY_TRACK': track_functions.infinity_track,
+    'TEST_TRACK'    : track_functions.test_track,
     'SNAIL_TRACK'   : track_functions.snail_track
 }.get(track_name, track_functions.demo_track)
 

@@ -19,7 +19,7 @@ def demo_track(gen, t, init):
     next = gen.left_turn(next,t,np.pi/2)
     next = gen.straight(next, 4.5*t)
     return gen
-    
+
 def hard_track(gen, t, init):
     next = gen.straight(init,6*t)
     next = gen.left_turn(next, 3*t, np.pi/2)
@@ -119,7 +119,7 @@ def lucerne_track(gen, t, init):
     next = gen.left_turn(next, t, np.pi/2)
     next = gen.straight(next, 5*t)
     return gen
-    
+
 def bern_track(gen, t, init):
     next = gen.straight(init, 3*t)
     next = gen.left_turn(next, 3*t, 3*np.pi/4)
@@ -146,6 +146,35 @@ def bern_track(gen, t, init):
     next = gen.straight(next, 3*t)
     next = gen.right_turn(next, 4.333*t, np.pi/6)
     next = gen.straight(next, 1.7*t+0.032)
+    return gen
+
+def test_track(gen, t, init):
+    next = gen.straight(init, 3*t)
+    next = gen.left_turn(next, 3*t, 3*np.pi/4)
+    next = gen.straight(next, 3*t)
+    next = gen.right_turn(next, t, np.pi/4)
+    next = gen.straight(next, 3*t)
+    next = gen.left_turn(next, t, np.pi/2)
+    next = gen.straight(next, 2*t)
+    next = gen.left_turn(next, 2*t, np.pi/3)
+    next = gen.straight(next, 3*t)
+    next = gen.right_turn(next, 2*t, np.pi/3)
+    next = gen.straight(next, t)
+    next = gen.left_turn(next, t, np.pi/2)
+    next = gen.straight(next, t)
+    next = gen.left_turn(next, t, np.pi/2)
+    next = gen.straight(next, t)
+    next = gen.right_turn(next, t, np.pi/2)
+    next = gen.straight(next, t)
+    next = gen.right_turn(next, t, np.pi/2)
+    next = gen.straight(next, t)
+    next = gen.left_turn(next, t, np.pi/2)
+    next = gen.straight(next, 2*t)
+    next = gen.left_turn(next, t, np.pi/2)
+    next = gen.straight(next, 0.5*t)
+    next = gen.left_turn(next, 4.333*t, np.pi/5)
+    next = gen.straight(next, 1.7*t+0.01)
+    next = gen.right_turn(next, 4.333*t, np.pi/5)
     return gen
 
 def infinity_track(gen, t, init):
