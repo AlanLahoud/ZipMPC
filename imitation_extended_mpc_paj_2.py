@@ -87,7 +87,6 @@ track_function = {
     'LUCERNE_TRACK' : track_functions.lucerne_track,
     'BERN_TRACK'    : track_functions.bern_track,
     'INFINITY_TRACK': track_functions.infinity_track,
-    'TEST_TRACK'    : track_functions.test_track,
     'SNAIL_TRACK'   : track_functions.snail_track
 }.get(track_name, track_functions.demo_track)
 
@@ -254,7 +253,7 @@ its_per_epoch = 40
 
 for ep in range(epochs):
 
-    mpc_L = 4 + ep//4
+    mpc_L = 4 + ep//3
     mpc_L = int(np.minimum(mpc_L, mpc_T))
 
     print(f'Epoch {ep}, Update reference path, mpcL = {mpc_L}')
@@ -283,12 +282,12 @@ for ep in range(epochs):
         #if ep+2 < npat:
         #    npat = ep + 2
 
-        x0 = utils_new.sample_init_traj_dist_dyn(BS, true_dx, x_star, npat).float()
+        #x0 = utils_new.sample_init_traj_dist_dyn(BS, true_dx, x_star, npat).float()
         #x0_2 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, np.transpose(x_manual_full_H), npat).float()
 
         #x0 = torch.vstack((x0_1, x0_2))
 
-        #x0 = utils_new.sample_init(BS, true_dx)
+        x0 = utils_new.sample_init(BS, true_dx)
 
         curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
@@ -335,16 +334,16 @@ for ep in range(epochs):
 
         diff_shorts = ((u_true_torch_S[:mpc_L, :, 1] - pred_u[:mpc_L, :, 1])**1).mean(0)
         args_conv = torch.argwhere(diff_shorts<0.001)
-
+        
         loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 7] - pred_x[:mpc_L, args_conv, 7])**2).sum(0).mean()
         loss_d = ((x_true_torch[:mpc_L, args_conv, 1] - pred_x[:mpc_L, args_conv, 1])**2).sum(0).mean()
         loss_phi = ((x_true_torch[:mpc_L, args_conv, 2] - pred_x[:mpc_L, args_conv, 2])**2).sum(0).mean()
         loss_v = ((x_true_torch[:mpc_L, args_conv, 4] - pred_x[:mpc_L, args_conv, 4])**2).sum(0).mean()
-
+        
         loss_a = ((u_true_torch[:mpc_L, args_conv, 0] - pred_u[:mpc_L, args_conv, 0])**2).sum(0).mean()
         loss_delta = ((u_true_torch[:mpc_L, args_conv, 1] - pred_u[:mpc_L, args_conv, 1])**2).sum(0).mean()
 
-
+        
         loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.1*loss_a + loss_delta
         #loss = 0.1*loss_a + loss_delta
 
@@ -358,7 +357,7 @@ for ep in range(epochs):
         loss_phi_avg = loss_phi_avg + loss_phi.detach().item()/its_per_epoch
         loss_a_avg = loss_a_avg + 0.1*loss_a.detach().item()/its_per_epoch
         loss_delta_avg = loss_delta_avg + loss_delta.detach().item()/its_per_epoch
-
+    
         loss_train_avg = loss_train_avg + loss.detach().item()/its_per_epoch
 
 
@@ -374,7 +373,7 @@ for ep in range(epochs):
             print('V max: ', pred_x[:, :, 4].detach().max().item())
             print('N useful samples: ', pred_x.detach()[:, args_conv, 7].shape)
             #print(pred_x[:, :, 1].max().item())
-            #print(p.mean(0).mean(0))
+            #print(p.mean(0).mean(0))       
 
 
             # L O S S   V A LI D A T I O N
@@ -419,29 +418,29 @@ for ep in range(epochs):
                 loss_d_val = ((x_true_val[:mpc_T, :, 1] - x_pred_val[:, :, 1])**2).sum(0).mean()
                 loss_phi_val = ((x_true_val[:mpc_T, :, 2] - x_pred_val[:, :, 2])**2).sum(0).mean()
                 loss_v_val = ((x_true_val[:mpc_T, :, 4] - x_pred_val[:, :, 4])**2).sum(0).mean()
-
+                
                 loss_a_val = ((u_true_val[:mpc_T, :, 0] - u_pred_val[:, :, 0])**2).sum(0).mean()
                 loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2).sum(0).mean()
 
                 # Ideal here would be to scale, but this is fine just to be in the same range
                 loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 0.1*loss_a_val + loss_delta_val
 
-
-                print('Train loss:',
+                
+                print('Train loss:', 
                       round(loss_sig_avg, 5),
-                      round(loss_d_avg, 5),
-                      round(loss_phi_avg, 5),
-                      round(loss_a_avg, 5),
+                      round(loss_d_avg, 5), 
+                      round(loss_phi_avg, 5), 
+                      round(loss_a_avg, 5), 
                       round(loss_delta_avg, 5),
                       round(loss_train_avg, 5))
-
-                print('Validation loss:',
+                
+                print('Validation loss:', 
                       round(100*loss_dsigma_val.item(), 5),
-                      round(100*loss_d_val.item(), 5),
-                      round(loss_phi_val.item(), 5),
-                      #round(10*loss_v_val.item(), 5),
-                      round(0.1*loss_a_val.item(), 5),
-                      round(loss_delta_val.item(), 5),
+                      round(100*loss_d_val.item(), 5), 
+                      round(loss_phi_val.item(), 5), 
+                      #round(10*loss_v_val.item(), 5), 
+                      round(0.1*loss_a_val.item(), 5), 
+                      round(loss_delta_val.item(), 5), 
                       round(loss_val.item(), 5))
 
             print("validation loss end")
