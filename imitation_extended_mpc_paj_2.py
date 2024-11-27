@@ -19,13 +19,13 @@ from sys import exit
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--mpc_T', type=int, default=12)
+    parser.add_argument('--mpc_T', type=int, default=15)
     parser.add_argument('--mpc_H', type=int, default=40)
     parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--l_r', type=float, default=0.03)
     parser.add_argument('--v_max', type=float, default=1.8)
-    parser.add_argument('--delta_max', type=float, default=0.4)
-    parser.add_argument('--p_sigma_manual', type=float, default=6.0)
+    parser.add_argument('--delta_max', type=float, default=0.45)
+    parser.add_argument('--p_sigma_manual', type=float, default=5.0)
     parser.add_argument('--eps', type=float, default=0.02)
 
     return parser.parse_args()
@@ -52,7 +52,7 @@ seed_n = 0
 torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
-k_curve = 25.
+k_curve = 10.
 dt = 0.03
 
 l_f = l_r
@@ -72,7 +72,7 @@ init_track = [0,0,0]
 
 max_p = 10
 
-str_model = f'im_{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_sigma_manual}'
+str_model = f'im_paj_{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_sigma_manual}'
 
 params = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_T])
 params_H = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_H])
