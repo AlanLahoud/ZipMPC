@@ -110,19 +110,19 @@ u0 = torch.tensor([0.0, 0.0])
 dx=6
 du=2
 
-BS = 80
+BS = 60
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.001
-lqr_iter = 20
+lqr_iter = 30
 
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 #opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=3e-6, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 1, 1, 0.05, 0.3]), 0), mpc_T, 0)
@@ -135,7 +135,7 @@ p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma
 idx_to_casadi = [7,1,2,3,4,5,10,11]
 idx_to_NN = [1,2,4]
 
-epochs = 30
+epochs = 8
 num_patches = 20
 BS_init = 40
 BS_val = 10
