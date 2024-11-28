@@ -52,7 +52,7 @@ seed_n = 0
 torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
-k_curve = 10.
+k_curve = 15.
 dt = 0.03
 
 l_f = l_r
@@ -122,14 +122,14 @@ grad_method = GradMethods.AUTO_DIFF
 model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 #opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=2e-5, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=5e-6, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 10, 10, 0.05, 1.0]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0, 5.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 10, 10, 0.05, 0.1]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 10, 10, 0.05, 1.0]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0, 5.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 10, 10, 0.05, 0.1]), 0), mpc_H, 0)
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [7,1,2,3,4,5,10,11]
@@ -240,13 +240,13 @@ p_manual_casadi = p_manual[:,idx_to_casadi].T
 
 
 # set fastest lap_time and corresponding params
-if finished == 1:
-    current_time = lap_time
-    q_manual_casadi = q_manual_casadi
-    p_current_casadi = p_manual_casadi
-    x_current_full = x_manual_full
-else:
-    sys.exit("Manual parameter choice not feasible")
+#if finished == 1:
+current_time = lap_time
+q_manual_casadi = q_manual_casadi
+p_current_casadi = p_manual_casadi
+x_current_full = x_manual_full
+#else:
+    #sys.exit("Manual parameter choice not feasible")
 
 
 its_per_epoch = 40
