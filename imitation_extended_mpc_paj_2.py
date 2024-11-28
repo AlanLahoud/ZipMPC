@@ -125,11 +125,11 @@ model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 1, 1, 0.05, 0.3]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 10, 10, 0.05, 0.3]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 1, 1, 0.05, 0.3]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 10, 10, 0.05, 0.3]), 0), mpc_H, 0)
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [7,1,2,3,4,5,10,11]
@@ -325,8 +325,8 @@ for ep in range(epochs):
                     verbose=0,
                     exit_unconverged=False,
                     detach_unconverged=False,
-                    linesearch_decay=.1,
-                    max_linesearch_iter=30,
+                    linesearch_decay=.6,
+                    max_linesearch_iter=60,
                     grad_method=grad_method,
                     eps=eps,
                     n_batch=None,
