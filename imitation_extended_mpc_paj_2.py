@@ -110,32 +110,32 @@ u0 = torch.tensor([0.0, 0.0])
 dx=6
 du=2
 
-BS = 60
+BS = 40
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.001
-lqr_iter = 30
+lqr_iter = 35
 
 grad_method = GradMethods.AUTO_DIFF
 
 model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 #opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=2e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 10, 10, 0.05, 0.3]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 10, 10, 0.05, 1.0]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 10, 10, 0.05, 0.3]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.05, 0.05, 0.05, 0.05, 0.05, 10, 10, 0.05, 1.0]), 0), mpc_H, 0)
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, -0.3, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [7,1,2,3,4,5,10,11]
 idx_to_NN = [1,2,4]
 
-epochs = 15
+epochs = 25
 num_patches = 20
 BS_init = 40
 BS_val = 10
@@ -253,8 +253,9 @@ its_per_epoch = 40
 
 for ep in range(epochs):
 
-    mpc_L = 4 + ep//3
-    mpc_L = int(np.minimum(mpc_L, mpc_T))
+    mpc_L = mpc_T
+    #mpc_L = 4 + ep//3
+    #mpc_L = int(np.minimum(mpc_L, mpc_T))
 
     print(f'Epoch {ep}, Update reference path, mpcL = {mpc_L}')
     x_star = np.transpose(x_current_full)
@@ -325,7 +326,7 @@ for ep in range(epochs):
                     verbose=0,
                     exit_unconverged=False,
                     detach_unconverged=False,
-                    linesearch_decay=.6,
+                    linesearch_decay=.7,
                     max_linesearch_iter=60,
                     grad_method=grad_method,
                     eps=eps,
