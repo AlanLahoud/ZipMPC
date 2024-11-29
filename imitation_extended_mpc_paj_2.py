@@ -274,7 +274,7 @@ for ep in range(epochs):
 
         u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
         u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
-        u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
+        u_init= torch.tensor([0.0, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 
         #import pdb
         #pdb.set_trace()
@@ -335,8 +335,9 @@ for ep in range(epochs):
                     n_batch=None,
                 )(x0, QuadCost(Q, p), true_dx)
 
-        diff_shorts = ((u_true_torch_S[:mpc_L, :, 1] - pred_u[:mpc_L, :, 1])**1).mean(0)
-        args_conv = torch.argwhere(diff_shorts<0.001)
+        diff_shorts = (
+            (u_true_torch_S[:5, :, 0] - pred_u[:5, :, 0])**2 + (u_true_torch_S[:5, :, 1] - pred_u[:5, :, 1])**2).mean(0)
+        args_conv = torch.argwhere(diff_shorts<0.003)
         
         loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 7] - pred_x[:mpc_L, args_conv, 7])**2).sum(0).mean()
         loss_d = ((x_true_torch[:mpc_L, args_conv, 1] - pred_x[:mpc_L, args_conv, 1])**2).sum(0).mean()
