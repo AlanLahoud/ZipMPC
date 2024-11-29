@@ -70,7 +70,7 @@ bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
 t_track = 0.3
 init_track = [0,0,0]
 
-max_p = 30
+max_p = 7
 
 str_model = f'im_paj_{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_sigma_manual}'
 
