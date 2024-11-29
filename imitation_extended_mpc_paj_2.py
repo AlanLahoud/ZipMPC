@@ -288,7 +288,7 @@ for ep in range(epochs):
 
         #x0 = torch.vstack((x0_1, x0_2))
 
-        x0 = utils_new.sample_init(BS, true_dx)
+        x0 = utils_new.sample_init_test_dyn(BS, true_dx)
 
         curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
