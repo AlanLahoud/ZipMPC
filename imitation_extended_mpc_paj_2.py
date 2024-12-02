@@ -119,7 +119,7 @@ lqr_iter = 40
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
+model = utils_new.TCN(mpc_H, n_Q, 5, max_p)
 #opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
 opt = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4)
