@@ -290,7 +290,7 @@ for ep in range(epochs):
 
         #x0 = torch.vstack((x0_1, x0_2))
 
-        x0 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, np.transpose(x_manual_full_H), npat).float()
+        x0 = utils_new.sample_init_traj_dist_dyn(BS, true_dx, np.transpose(x_manual_full_H), npat).float()
 
         curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
