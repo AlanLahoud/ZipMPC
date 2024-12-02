@@ -290,7 +290,7 @@ for ep in range(epochs):
 
         #x0 = torch.vstack((x0_1, x0_2))
 
-        x0 = utils_new.sample_init_test_dyn(BS, true_dx).float()
+        x0 = utils_new.sample_init_traj_dist_dyn(BS, true_dx).float()
 
         curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
@@ -328,8 +328,8 @@ for ep in range(epochs):
                     verbose=0,
                     exit_unconverged=False,
                     detach_unconverged=False,
-                    linesearch_decay=.2,
-                    max_linesearch_iter=60,
+                    linesearch_decay=.3,
+                    max_linesearch_iter=50,
                     grad_method=grad_method,
                     eps=eps,
                     n_batch=None,
@@ -348,7 +348,7 @@ for ep in range(epochs):
         loss_delta = ((u_true_torch[:mpc_L, args_conv, 1] - pred_u[:mpc_L, args_conv, 1])**2).sum(0).mean()
 
         
-        loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.1*loss_a + loss_delta
+        loss = 10*loss_dsigma + 100*loss_d + loss_phi + loss_a + loss_delta
         #loss = 0.1*loss_a + loss_delta
 
         opt.zero_grad()
@@ -356,10 +356,10 @@ for ep in range(epochs):
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         opt.step()
 
-        loss_sig_avg = loss_sig_avg + 100*loss_dsigma.detach().item()/its_per_epoch
+        loss_sig_avg = loss_sig_avg + 10*loss_dsigma.detach().item()/its_per_epoch
         loss_d_avg = loss_d_avg + 100*loss_d.detach().item()/its_per_epoch
         loss_phi_avg = loss_phi_avg + loss_phi.detach().item()/its_per_epoch
-        loss_a_avg = loss_a_avg + 0.1*loss_a.detach().item()/its_per_epoch
+        loss_a_avg = loss_a_avg + loss_a.detach().item()/its_per_epoch
         loss_delta_avg = loss_delta_avg + loss_delta.detach().item()/its_per_epoch
     
         loss_train_avg = loss_train_avg + loss.detach().item()/its_per_epoch
@@ -427,7 +427,7 @@ for ep in range(epochs):
                 loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2).sum(0).mean()
 
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 0.1*loss_a_val + loss_delta_val
+                loss_val = 10*loss_dsigma_val + 100*loss_d_val + loss_phi_val + loss_a_val + loss_delta_val
 
                 
                 print('Train loss:', 
@@ -439,11 +439,11 @@ for ep in range(epochs):
                       round(loss_train_avg, 5))
                 
                 print('Validation loss:', 
-                      round(100*loss_dsigma_val.item(), 5),
+                      round(10*loss_dsigma_val.item(), 5),
                       round(100*loss_d_val.item(), 5), 
                       round(loss_phi_val.item(), 5), 
                       #round(10*loss_v_val.item(), 5), 
-                      round(0.1*loss_a_val.item(), 5), 
+                      round(loss_a_val.item(), 5), 
                       round(loss_delta_val.item(), 5), 
                       round(loss_val.item(), 5))
 
