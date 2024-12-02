@@ -110,12 +110,12 @@ u0 = torch.tensor([0.0, 0.0])
 dx=6
 du=2
 
-BS = 60
+BS = 80
 u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 eps=0.001
-lqr_iter = 40
+lqr_iter = 35
 
 grad_method = GradMethods.AUTO_DIFF
 
@@ -283,14 +283,14 @@ for ep in range(epochs):
         #if ep+2 < npat:
         #    npat = ep + 2
 
-        #x0_1 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, x_star, npat).float()
-        #x0_2 = utils_new.sample_init_dyn(BS//2, true_dx).float()
+        x0_1 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, x_star, npat).float()
+        x0_2 = utils_new.sample_init_dyn(BS//2, true_dx).float()
         
         #x0_2 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, np.transpose(x_manual_full_H), npat).float()
 
-        #x0 = torch.vstack((x0_1, x0_2))
+        x0 = torch.vstack((x0_1, x0_2))
 
-        x0 = utils_new.sample_init_traj_dist_dyn(BS, true_dx, np.transpose(x_manual_full_H), npat).float()
+        #x0 = utils_new.sample_init_traj_dist_dyn(BS, true_dx, np.transpose(x_manual_full_H), npat).float()
 
         curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
