@@ -122,7 +122,7 @@ grad_method = GradMethods.AUTO_DIFF
 model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 #opt = torch.optim.Adam(model.parameters(), lr=0.00005, weight_decay=1e-3)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=5e-6, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0, 3.0, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), mpc_T, 0)
@@ -189,7 +189,7 @@ for b in range(BS_test):
 
     print(f'Manual extended mpc_H = {mpc_H}, lap time: {lap_time}')
 
-    utils.plot_traj(np.transpose(x_manual_full_H),track_coord,gen)
+    #utils.plot_traj(np.transpose(x_manual_full_H),track_coord,gen)
 
 
 finish_list = np.zeros((BS_test,))
@@ -283,14 +283,14 @@ for ep in range(epochs):
         #if ep+2 < npat:
         #    npat = ep + 2
 
-        x0_1 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, x_star, npat).float()
-        x0_2 = utils_new.sample_init_dyn(BS//2, true_dx).float()
+        #x0_1 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, x_star, npat).float()
+        #x0_2 = utils_new.sample_init_dyn(BS//2, true_dx).float()
         
         #x0_2 = utils_new.sample_init_traj_dist_dyn(BS//2, true_dx, np.transpose(x_manual_full_H), npat).float()
 
-        x0 = torch.vstack((x0_1, x0_2))
+        #x0 = torch.vstack((x0_1, x0_2))
 
-        #x0 = utils_new.sample_init_test_dyn(BS, true_dx).float()
+        x0 = utils_new.sample_init_test_dyn(BS, true_dx).float()
 
         curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
         inp = torch.hstack((x0[:,idx_to_NN], curv))

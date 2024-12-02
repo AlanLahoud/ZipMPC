@@ -536,10 +536,10 @@ def sample_init_dyn(BS, dyn, sn=None):
 
     di = 1000
     sigma_sample = torch.randint(int(0.0*di), int(14.5*di), (BS,1), generator=gen)/di
-    d_sample = torch.randint(int(-0.06*di), int(0.06*di), (BS,1), generator=gen)/di
-    phi_sample = torch.randint(int(-0.06*di), int(0.06*di), (BS,1), generator=gen)/di
+    d_sample = torch.randint(int(-0.12*di), int(0.12*di), (BS,1), generator=gen)/di
+    phi_sample = torch.randint(int(-0.2*di), int(0.2*di), (BS,1), generator=gen)/di
     r_sample = torch.randint(int(-0.01*di), int(0.01*di), (BS,1), generator=gen)/di
-    vx_sample = torch.randint(int(1.0*di), int(1.8*di), (BS,1), generator=gen)/di
+    vx_sample = torch.randint(int(0.1*di), int(1.8*di), (BS,1), generator=gen)/di
     vy_sample = torch.randint(int(0.0*di), int(0.03*di), (BS,1), generator=gen)/di
 
     sigma_diff_sample = torch.zeros((BS,1))
@@ -746,10 +746,10 @@ def sample_init_traj_dist_dyn(BS, dyn, traj, num_patches, sn=None):
     # Note that we clamp the sampled d and v values to stay in their constraints. Sampling constraint violating
     # states would not make sense.
 
-    d_sample = torch.clamp(torch.from_numpy(traj_sample[:,1].reshape(-1,1))+torch.randint(int(-.01*di), int(.01*di), (BS,1), generator=gen)/di,-0.17,0.17)
-    phi_sample = torch.from_numpy(traj_sample[:,2].reshape(-1,1))+torch.randint(int(-0.02*di), int(0.02*di), (BS,1), generator=gen)/di
+    d_sample = torch.clamp(torch.from_numpy(traj_sample[:,1].reshape(-1,1))+torch.randint(int(-.02*di), int(.02*di), (BS,1), generator=gen)/di,-0.17,0.17)
+    phi_sample = torch.from_numpy(traj_sample[:,2].reshape(-1,1))+torch.randint(int(-0.05*di), int(0.05*di), (BS,1), generator=gen)/di
     r_sample = torch.from_numpy(traj_sample[:,3].reshape(-1,1))+torch.randint(int(-0.001*di), int(0.001*di), (BS,1), generator=gen)/di  # currently fixed
-    vx_sample = torch.clamp(torch.from_numpy(traj_sample[:,4].reshape(-1,1))+torch.randint(int(-0.1*di), int(0.1*di), (BS,1), generator=gen)/di,0.5,1.8)
+    vx_sample = torch.clamp(torch.from_numpy(traj_sample[:,4].reshape(-1,1))+torch.randint(int(-0.3*di), int(0.1*di), (BS,1), generator=gen)/di,0.5,1.8)
     vy_sample = torch.from_numpy(traj_sample[:,5].reshape(-1,1))+torch.randint(int(-0.00*di), int(0.001*di), (BS,1), generator=gen)/di # currently fixed
 
     # and this part we can actually keep
