@@ -177,6 +177,31 @@ def test_track(gen, t, init):
     next = gen.right_turn(next, 4.333*t, np.pi/5)
     return gen
 
+def test_track2(gen, t, init):
+    next = gen.straight(init, 2*t)
+    next = gen.straight(next, 3*t)
+    next = gen.right_turn(next, t, np.pi/4)
+    next = gen.straight(next, 3*t)
+    next = gen.left_turn(next, t, np.pi/2)
+    next = gen.straight(next, 4*t)
+    next = gen.left_turn(next, 2*t, np.pi/2)
+    next = gen.straight(next, 3*t)
+    next = gen.straight(next, t)
+    next = gen.left_turn(next, t, np.pi/4)
+    next = gen.straight(next, t)
+    next = gen.left_turn(next, t, np.pi/2)
+    next = gen.straight(next, t)
+    next = gen.right_turn(next, t, np.pi/2)
+    next = gen.straight(next, t)
+    next = gen.right_turn(next, t, np.pi/2)
+    next = gen.straight(next, 6*t)
+    next = gen.left_turn(next, t, np.pi/2)
+    next = gen.straight(next, 2*t)
+    next = gen.left_turn(next, 3*t, np.pi/2)
+    next = gen.straight(next, 5.37*t)
+    next = gen.left_turn(next, 3*t, np.pi/2)
+    return gen
+
 def infinity_track(gen, t, init):
     init = [0,0,-np.pi/4]
     next = gen.straight(init,2*np.sqrt(2)*t)
