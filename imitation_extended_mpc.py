@@ -92,6 +92,7 @@ track_function = {
     'BERN_TRACK'    : track_functions.bern_track,
     'INFINITY_TRACK': track_functions.infinity_track,
     'TEST_TRACK'    : track_functions.test_track,
+    'TEST_TRACK2'    : track_functions.test_track2,
     'SNAIL_TRACK'   : track_functions.snail_track
 }.get(track_name, track_functions.demo_track)
 
