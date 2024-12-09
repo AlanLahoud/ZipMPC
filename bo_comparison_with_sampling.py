@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import itertools
+from sklearn.gaussian_process import GaussianProcessRegressor
 
 import utils_new
 import torch.autograd.functional as F
@@ -23,7 +25,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
     parser.add_argument('--mpc_T', type=int, default=9)
-    parser.add_argument('--mpc_H', type=int, default=9)
+    parser.add_argument('--mpc_H', type=int, default=20)
     parser.add_argument('--n_Q', type=int, default=3)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
@@ -92,6 +94,7 @@ track_function = {
     'BERN_TRACK'    : track_functions.bern_track,
     'INFINITY_TRACK': track_functions.infinity_track,
     'TEST_TRACK'    : track_functions.test_track,
+    'TEST_TRACK2'    : track_functions.test_track2,
     'SNAIL_TRACK'   : track_functions.snail_track
 }.get(track_name, track_functions.demo_track)
 
@@ -115,27 +118,29 @@ u0 = torch.tensor([0.0, 0.0])
 dx=4
 du=2
 
-BS = 400
+BS = 40
 # u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 # u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
 # u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
 # eps=0.00001
 # lqr_iter = 18
 
-grad_method = GradMethods.AUTO_DIFF
+# grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.FullLearningNN(max_p)
+# model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
 
-if load_model==True:
-    try:
-        model.load_state_dict(torch.load(f'./saved_models/model_{str_model}_0.pkl'))
-        print('Model loaded')
-    except:
-        print('No model found to load')
+# if load_model==True:
+#     try:
+#         model.load_state_dict(torch.load(f'./saved_models/model_{str_model}_0.pkl'))
+#         print('Model loaded')
+#     except:
+#         print('No model found to load')
 
-#opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
-#opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
+# #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
+# #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
+# opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
+
+gpr = GaussianProcessRegressor(random_state=0)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3., 0.5, 0.1, 0, 0.1, 1, 1, 0.1, 0.5]), 0), mpc_T, 0)
@@ -146,6 +151,38 @@ Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 3., 0.5, 0.1, 0, 0.1, 1, 1,
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [5,1,2,3,8,9]
+
+# here we should decide how many parameters we would like to learn
+learned_param = 2
+idx_to_learned_param = [8,9]
+bo_bound = 2
+bo_step = 10
+array1 = np.linspace(-bo_bound, bo_bound, bo_step).tolist()
+array2 = np.linspace(-bo_bound, bo_bound, bo_step).tolist()
+array3 = np.linspace(-bo_bound, bo_bound, bo_step).tolist()
+bo_grid = np.array(list(itertools.product(array1,array2)))
+#bo_grid = list(itertools.product([(np.linspace(-bo_bound, bo_bound, bo_step)).tolist() for _ in range(learned_param)]))
+grid_shape = np.shape(bo_grid)
+
+# now we sample from this grid without sampling any location twice
+samples = np.zeros(0)
+warm_start = 5
+
+for i in range(warm_start):
+    sample = np.random.randint(0,grid_shape[0],1)
+    while np.isin(sample,samples):
+        sample = np.random.randint(0,grid_shape[0],1)
+
+    samples = np.append(samples,sample,axis=0)
+
+samples = samples.astype(int)
+
+#run lap with new samples
+beta = 100.0
+bo_iter = 100
+p_bo_base = np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0])
+p_bo_add = np.zeros(10)
+Q_bo = Q_manual
 
 
 epochs = 35
@@ -254,6 +291,77 @@ x_current_full = x_manual_full
 #else:
 #    sys.exit("Manual parameter choice not feasible")
 
+# start here with the warm start 
+for b in range(warm_start):
+
+        npat = num_patches
+
+        #x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, npat).float()
+        #x0 = utils_new.sample_init_traj_dist(BS, true_dx, np.transpose(x_manual_full_H), npat).float()
+        x0 = utils_new.sample_init(BS, true_dx).float()
+
+        #x0 = torch.vstack((x0_1, x0_2, x0_3))
+
+        #x0 = torch.vstack((x0_1, x0_3)).float()
+
+        #x0 = torch.vstack((x0_1, x0_2, x0_3)).float()
+
+        #x0 = utils_new.sample_init(BS, true_dx)
+
+        q_manual_casadi = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
+        p_manual_casadi = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
+        x_true, u_true = utils_new.solve_casadi_parallel(
+            np.repeat(q_manual_casadi, BS, 1),
+            np.repeat(p_manual_casadi, BS, 1),
+            x0.detach().numpy()[:,:6], BS, dx, du, control_H)
+
+        x_true_torch = torch.tensor(x_true, dtype=torch.float32)
+        u_true_torch = torch.tensor(u_true, dtype=torch.float32)
+
+        # here I should sample from the BO process
+        p_bo_add[idx_to_learned_param] = bo_grid[samples[b]]
+
+        p_bo_app = p_bo_base + p_bo_add
+
+        p_bo = np.repeat(np.expand_dims(p_bo_app, 0), mpc_T, 0)
+        
+        q_bo_casadi = np.expand_dims((Q_bo[:,idx_to_casadi].T), 1)
+        p_bo_casadi = np.expand_dims((p_bo[:,idx_to_casadi].T), 1)
+        x_bo, u_bo = utils_new.solve_casadi_parallel(
+            np.repeat(q_bo_casadi, BS, 1),
+            np.repeat(p_bo_casadi, BS, 1),
+            x0.detach().numpy()[:,:6], BS, dx, du, control)
+        
+        x_bo_torch = torch.tensor(x_bo, dtype=torch.float32)
+        u_bo_torch = torch.tensor(u_bo, dtype=torch.float32)
+
+        loss_dsigma = ((x_true_torch[:mpc_L, :, 5] - x_bo_torch[:mpc_L, :, 5])**2).sum(0).mean()
+        loss_d = ((x_true_torch[:mpc_L, :, 1] - x_bo_torch[:mpc_L, :, 1])**2).sum(0).mean()
+        loss_phi = ((x_true_torch[:mpc_L, :, 2] - x_bo_torch[:mpc_L, :, 2])**2).sum(0).mean()
+        loss_v = ((x_true_torch[:mpc_L, :, 3] - x_bo_torch[:mpc_L, :, 3])**2).sum(0).mean()
+
+        loss_a = ((u_true_torch[:mpc_L, :, 0] - u_bo_torch[:mpc_L, :, 0])**2).sum(0).mean()
+        loss_delta = ((u_true_torch[:mpc_L, :, 1] - u_bo_torch[:mpc_L, :, 1])**2).sum(0).mean()
+
+        loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + loss_delta
+
+        loss = loss.reshape(1)
+
+        if b == 0:
+            losses = loss
+        else:
+            losses = np.append(losses,loss,axis=0)
+
+gpr_fit = gpr.fit(bo_grid[samples],losses)
+
+mean_fit, std_fit = gpr.predict(bo_grid, return_std=True)
+
+accq_fun = mean_fit - beta*std_fit
+
+# find minimum of accquisition function to find next sampling point
+sampling_idx = np.argmin(accq_fun).reshape(1)
+
+samples = np.append(samples,sampling_idx,axis=0)
 
 its_per_epoch = 60
 
@@ -275,22 +383,11 @@ for ep in range(epochs):
 
     for it in range(its_per_epoch):
 
-        model.train()
-
-        # u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
-        # u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(dev)
-        # u_init= torch.tensor([0.1, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)#.to(device)
-
-        #import pdb
-        #pdb.set_trace()
-
         npat = num_patches
-        #if ep+2 < npat:
-        #    npat = ep + 2
 
-        x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, npat).float()
+        #x0 = utils_new.sample_init_traj_dist(BS, true_dx, x_star, npat).float()
         #x0 = utils_new.sample_init_traj_dist(BS, true_dx, np.transpose(x_manual_full_H), npat).float()
-        #x0 = utils_new.sample_init(BS, true_dx).float()
+        x0 = utils_new.sample_init(BS, true_dx).float()
 
         #x0 = torch.vstack((x0_1, x0_2, x0_3))
 
@@ -299,15 +396,6 @@ for ep in range(epochs):
         #x0 = torch.vstack((x0_1, x0_2, x0_3)).float()
 
         #x0 = utils_new.sample_init(BS, true_dx)
-
-
-        #curv = utils_new.get_curve_hor_from_x(x0, track_coord, mpc_H)
-        inp = x0[:,0:4]
-        #inp_norm = inp/torch.tensor([0.05,0.05,0.05,1.8])
-
-        pred_u = model(inp)
-
-        # print(pred_u)
 
         q_manual_casadi = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
         p_manual_casadi = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
@@ -319,39 +407,68 @@ for ep in range(epochs):
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
 
-        # --------------------------------------------------------------------------------------------------
-        # this part is changed with respect to our proposed method and the MPC is replaced with an NN
-        # ---------------------------------------------------------------------------------------------------
+        # here I should sample from the BO process
+        p_bo_add[idx_to_learned_param] = bo_grid[sampling_idx]
 
-        # and the loss is done with respect to only the first step
+        print(f'Manual mpc_T = {mpc_T}, sampling_idx: {sampling_idx}')
+        print(f'Manual mpc_T = {mpc_T}, values: {bo_grid[sampling_idx]}')
 
-        loss_a = ((u_true_torch[0,:, 0] - pred_u[0, :])**2).sum(0).mean()
-        # print(u_true_torch[0,:, 0])
-        # print(pred_u[0, :])
-        # print(loss_a)
-        loss_delta = ((u_true_torch[0,:, 1] - pred_u[1, :])**2).sum(0).mean()
+        p_bo_app = p_bo_base + p_bo_add
 
-        loss = 0.1*loss_a + 0.1*loss_delta
+        p_bo = np.repeat(np.expand_dims(p_bo_app, 0), mpc_T, 0)
+        
+        q_bo_casadi = np.expand_dims((Q_bo[:,idx_to_casadi].T), 1)
+        p_bo_casadi = np.expand_dims((p_bo[:,idx_to_casadi].T), 1)
+        x_bo, u_bo = utils_new.solve_casadi_parallel(
+            np.repeat(q_bo_casadi, BS, 1),
+            np.repeat(p_bo_casadi, BS, 1),
+            x0.detach().numpy()[:,:6], BS, dx, du, control)
+        
+        x_bo_torch = torch.tensor(x_bo, dtype=torch.float32)
+        u_bo_torch = torch.tensor(u_bo, dtype=torch.float32)
 
-        print(loss_delta)
-        print(loss_a)
-        print(loss)
+        loss_dsigma = ((x_true_torch[:mpc_L, :, 5] - x_bo_torch[:mpc_L, :, 5])**2).sum(0).mean()
+        loss_d = ((x_true_torch[:mpc_L, :, 1] - x_bo_torch[:mpc_L, :, 1])**2).sum(0).mean()
+        loss_phi = ((x_true_torch[:mpc_L, :, 2] - x_bo_torch[:mpc_L, :, 2])**2).sum(0).mean()
+        loss_v = ((x_true_torch[:mpc_L, :, 3] - x_bo_torch[:mpc_L, :, 3])**2).sum(0).mean()
 
-        model.zero_grad()
-        loss.backward()
-        #torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        opt.step()
+        loss_a = ((u_true_torch[:mpc_L, :, 0] - u_bo_torch[:mpc_L, :, 0])**2).sum(0).mean()
+        loss_delta = ((u_true_torch[:mpc_L, :, 1] - u_bo_torch[:mpc_L, :, 1])**2).sum(0).mean()
 
+        loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + loss_delta
+
+        loss = loss.reshape(1)
+        print(f'Manual mpc_T = {mpc_T}, loss: {loss}')
+
+        losses = np.append(losses,loss,axis=0)
+
+        loss_sig_avg = loss_sig_avg + 100*loss_dsigma.detach().item()/its_per_epoch
+        loss_d_avg = loss_d_avg + 100*loss_d.detach().item()/its_per_epoch
+        loss_phi_avg = loss_phi_avg + loss_phi.detach().item()/its_per_epoch
         loss_a_avg = loss_a_avg + 0.01*loss_a.detach().item()/its_per_epoch
         loss_delta_avg = loss_delta_avg + 0.1*loss_delta.detach().item()/its_per_epoch
 
         loss_train_avg = loss_train_avg + loss.detach().item()/its_per_epoch
 
+        gpr_fit = gpr.fit(bo_grid[samples],losses)
+
+        mean_fit, std_fit = gpr.predict(bo_grid, return_std=True)
+
+        accq_fun = mean_fit - beta*std_fit
+
+        # find minimum of accquisition function to find next sampling point
+        sampling_idx = np.argmin(accq_fun).reshape(1)
+
+        samples = np.append(samples,sampling_idx,axis=0)
+
 
         if it%its_per_epoch==its_per_epoch-1:
+            d_pen = true_dx.penalty_d(x_bo_torch[:, :, 1].detach())
+            v_pen = true_dx.penalty_v(x_bo_torch[:, :, 3].detach())
+            #print(f'd_pen: {d_pen.sum(0).mean().item()} \t v_pen: {v_pen.sum(0).mean().item()}')
+            print('V max: ', x_bo_torch[:, :, 3].detach().max().item())
 
             # L O S S   V A LI D A T I O N
-            model.eval()
             with torch.no_grad():
 
                 BS_val = 100
@@ -361,10 +478,12 @@ for ep in range(epochs):
                 x0_val = x0_val.float()
                 #x0_val = utils_new.sample_init(BS_val, true_dx, sn=0)
 
-                inp_val = x0_val[:,0:4]
-                #inp_val_norm = inp_val/torch.tensor([0.05,0.05,0.05,1.8])
-                u_pred_val = model(inp_val)
-                #print(u_pred_val.size())
+                q_bo_casadi = np.expand_dims((Q_bo[:,idx_to_casadi].T), 1)
+                p_bo_casadi = np.expand_dims((p_bo[:,idx_to_casadi].T), 1)
+                x_bo_val, u_bo_val = utils_new.solve_casadi_parallel(
+                    np.repeat(q_bo_casadi, BS_val, 1),
+                    np.repeat(p_bo_casadi, BS_val, 1),
+                    x0_val.detach().numpy()[:,:6], BS_val, dx, du, control)
 
                 q_manual_casadi_val = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
                 p_manual_casadi_val = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
@@ -374,24 +493,35 @@ for ep in range(epochs):
                     x0_val.detach().numpy()[:,:6], BS_val, dx, du, control_H)
 
 
-                loss_a_val = ((u_true_val[0, :, 0] - u_pred_val[0, :].numpy())**2).sum(0).mean()
-                loss_delta_val = ((u_true_val[0, :, 1] - u_pred_val[1, :].numpy())**2).sum(0).mean()
+                loss_dsigma_val = ((x_true_val[:mpc_T, :, 5] - x_bo_val[:, :, 5])**2).sum(0).mean()
+                loss_d_val = ((x_true_val[:mpc_T, :, 1] - x_bo_val[:, :, 1])**2).sum(0).mean()
+                loss_phi_val = ((x_true_val[:mpc_T, :, 2] - x_bo_val[:, :, 2])**2).sum(0).mean()
+                loss_v_val = ((x_true_val[:mpc_T, :, 3] - x_bo_val[:, :, 3])**2).sum(0).mean()
+
+                loss_a_val = ((u_true_val[:mpc_T, :, 0] - u_bo_val[:, :, 0])**2).sum(0).mean()
+                loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_bo_val[:, :, 1])**2).sum(0).mean()
 
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val =  0.1*loss_a_val + 0.1*loss_delta_val
+                loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 10*loss_v_val + 0.01*loss_a_val + 0.1*loss_delta_val
 
                 print('Train loss:',
+                      round(loss_sig_avg, 5),
+                      round(loss_d_avg, 5),
+                      round(loss_phi_avg, 5),
                       round(loss_a_avg, 5),
                       round(loss_delta_avg, 5),
                       round(loss_train_avg, 5))
 
                 print('Validation loss:',
-                      round(0.1*loss_a_val.item(), 5),
+                      round(100*loss_dsigma_val.item(), 5),
+                      round(100*loss_d_val.item(), 5),
+                      round(loss_phi_val.item(), 5),
+                      round(10*loss_v_val.item(), 5),
+                      round(0.01*loss_a_val.item(), 5),
                       round(0.1*loss_delta_val.item(), 5),
                       round(loss_val.item(), 5))
 
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
-            model.eval()
             with torch.no_grad():
 
                 #print('LAP PERFORMANCE:')
@@ -419,17 +549,16 @@ for ep in range(epochs):
                     while finished==0 and crashed==0:
 
                         x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
-                        inp_lap = x0_lap_pred_torch[:,0:4]
-                        #inp_lap_norm = inp_lap/torch.tensor([0.05,0.05,0.05,1.8])
-                        u_pred_lap = model(inp_lap)
+                        
+                        q_bo_casadi = np.expand_dims((Q_bo[:,idx_to_casadi].T), 1)
+                        p_bo_casadi = np.expand_dims((p_bo[:,idx_to_casadi].T), 1)
 
-                        # until here: now I need to call the forward model.
-                        #print(x0_b_pred)
-                        #print(x_pred_full)
-                        x0_b_pred = torch.transpose(true_dx.forward(torch.from_numpy(x0_b_pred.reshape(1,-1)),torch.transpose(u_pred_lap,0,1)),0,1)
-                        x0_b_pred = x0_b_pred.numpy().reshape(-1,1)
-                        x_pred_full = np.append(x_pred_full, x0_b_pred[:6,:], axis=1)
-                        x0_b_pred = x0_b_pred[:,0]
+                        x_b_pred, u_b_pred = utils_new.solve_casadi(
+                            q_bo_casadi[:,0,:], p_bo_casadi[:,0,:],
+                            x0_b_pred, dx, du, control)
+
+                        x0_b_pred = x_b_pred[1]
+                        x_pred_full = np.append(x_pred_full, x0_b_pred.reshape(-1,1), axis=1)
 
                         if x0_b_pred[0]>track_coord[2].max().numpy()/2:
                             finished=1
@@ -444,8 +573,8 @@ for ep in range(epochs):
                     x_current_full = x_pred_full
                     if finished == 1 and lap_time <= current_time:
                         current_time = lap_time
-                        # currently not updating q_current and p_current
-                        torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
+                        q_current = q_bo_casadi
+                        p_current = p_bo_casadi
 
                     finish_list[b] = finished
                     lap_time_list[b] = lap_time

@@ -441,9 +441,9 @@ class FullLearningNN(nn.Module):
         input_size = 4
         output_size = 2
 
-        self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
-        self.bn1 = nn.BatchNorm1d(16)
-        self.dropout = nn.Dropout(0.1)
+        # self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
+        # self.bn1 = nn.BatchNorm1d(16)
+        # self.dropout = nn.Dropout(0.1)
 
         self.fc1 = nn.Linear(input_size, 512)
         self.fc2 = nn.Linear(512, 1024)
