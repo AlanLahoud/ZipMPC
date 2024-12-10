@@ -450,9 +450,9 @@ class TCN(nn.Module):
 
         # Fully connected layers for shared representation
         self.fc1 = nn.Linear(32 * mpc_H + input_size, 512)
-        self.fc2 = nn.Linear(512, 1024)
-        self.fc3 = nn.Linear(1024, 1024)
-        self.fc4 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, 2000)
+        self.fc3 = nn.Linear(2000, 2000)
+        self.fc4 = nn.Linear(2000, 512)
 
         # Global representation layer
         self.fc_global = nn.Linear(512, O)
@@ -497,6 +497,70 @@ class TCN(nn.Module):
         return outputs
 
 
+
+class TCN2(nn.Module):
+    def __init__(self, mpc_H, mpc_T, O, K):
+        super(TCN2, self).__init__()
+        input_size = 3
+
+        # Convolutional feature extractor
+        self.conv1 = nn.Conv1d(1, 4, kernel_size=3, padding=1)  
+        self.conv2 = nn.Conv1d(4, 8, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm1d(4)
+        self.bn2 = nn.BatchNorm1d(8)
+        self.dropout = nn.Dropout(0.2) 
+
+        # Fully connected layers for shared representation
+        self.fc1 = nn.Linear(8 * mpc_H + input_size, 100)
+        self.fc2 = nn.Linear(100, 100)
+        self.fc3 = nn.Linear(100, 100)
+        self.fc4 = nn.Linear(100, 100)
+
+        # Global representation layer
+        self.fc_global = nn.Linear(100, O)
+
+        # Modulation layer for time-varying outputs
+        self.fc_modulation = nn.Linear(100, mpc_T * O)
+
+        # Activation functions
+        self.activation = nn.LeakyReLU(0.1)
+        self.output_activation = nn.Tanh()
+
+        # Model parameters
+        self.mpc_T = mpc_T
+        self.O = O
+        self.K = K
+
+    def forward(self, x):
+        global_context, time_series = x[:, :3], x[:, 3:]
+
+        time_series = time_series.unsqueeze(1) 
+        time_series = self.activation(self.bn1(self.conv1(time_series)))
+        time_series = self.dropout(self.activation(self.bn2(self.conv2(time_series))))
+
+        time_series = time_series.view(time_series.size(0), -1) 
+
+        x = torch.cat([time_series, global_context], dim=1)
+
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.activation(self.fc3(x))
+        x = self.fc4(x)
+
+        global_cost = self.fc_global(x) 
+
+        modulation = self.fc_modulation(x) 
+        modulation = modulation.view(self.mpc_T, -1, self.O) 
+
+        global_cost = global_cost.unsqueeze(0) 
+        outputs = global_cost + modulation 
+
+        outputs = self.K * self.output_activation(outputs / self.K)
+        return outputs
+
+
+
+
 def sample_init(BS, dyn, sn=None):
 
     # If sn!=None, we makesure that we always sample the same set of initial states
@@ -509,9 +573,9 @@ def sample_init(BS, dyn, sn=None):
 
     di = 1000
     sigma_sample = torch.randint(int(0.0*di), int(14.5*di), (BS,1), generator=gen)/di
-    d_sample = torch.randint(int(-0.09*di), int(0.09*di), (BS,1), generator=gen)/di
-    phi_sample = torch.randint(int(-0.09*di), int(0.09*di), (BS,1), generator=gen)/di
-    v_sample = torch.randint(int(.5*di), int(1.8*di), (BS,1), generator=gen)/di
+    d_sample = torch.randint(int(-0.14*di), int(0.14*di), (BS,1), generator=gen)/di
+    phi_sample = torch.randint(int(-0.5*di), int(0.5*di), (BS,1), generator=gen)/di
+    v_sample = torch.randint(int(.1*di), int(1.8*di), (BS,1), generator=gen)/di
 
     sigma_diff_sample = torch.zeros((BS,1))
 
@@ -536,8 +600,8 @@ def sample_init_dyn(BS, dyn, sn=None):
 
     di = 1000
     sigma_sample = torch.randint(int(0.0*di), int(14.5*di), (BS,1), generator=gen)/di
-    d_sample = torch.randint(int(-0.12*di), int(0.12*di), (BS,1), generator=gen)/di
-    phi_sample = torch.randint(int(-0.2*di), int(0.2*di), (BS,1), generator=gen)/di
+    d_sample = torch.randint(int(-0.13*di), int(0.13*di), (BS,1), generator=gen)/di
+    phi_sample = torch.randint(int(-0.4*di), int(0.4*di), (BS,1), generator=gen)/di
     r_sample = torch.randint(int(-0.01*di), int(0.01*di), (BS,1), generator=gen)/di
     vx_sample = torch.randint(int(0.1*di), int(1.8*di), (BS,1), generator=gen)/di
     vy_sample = torch.randint(int(0.0*di), int(0.03*di), (BS,1), generator=gen)/di
@@ -1216,19 +1280,19 @@ def q_and_p_dyn(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,7] = p[:,:,7] + q_p_pred[:,:,0]
 
     #d
-    #q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,1]).clamp(e)
-    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,1]
+    q[:,:,1] = (q[:,:,1] + q_p_pred[:,:,1]).clamp(e)
+    p[:,:,1] = p[:,:,1] + q_p_pred[:,:,2]
 
     #phi
-    #q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,3]).clamp(e)
-    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,2]
+    q[:,:,2] = (q[:,:,2] + q_p_pred[:,:,3]).clamp(e)
+    p[:,:,2] = p[:,:,2] + q_p_pred[:,:,4]
 
     #a
     #q[:,:,10] = (q[:,:,10] + q_p_pred[:,:,5]).clamp(e)
-    p[:,:,10] = p[:,:,10] + q_p_pred[:,:,3]
+    p[:,:,10] = p[:,:,10] + q_p_pred[:,:,5]
 
     #delta
-    #q[:,:,11] = (q[:,:,11] + q_p_pred[:,:,7]).clamp(e)
-    p[:,:,11] = p[:,:,11] + q_p_pred[:,:,4]
+    q[:,:,11] = (q[:,:,11] + q_p_pred[:,:,6]).clamp(e)
+    p[:,:,11] = p[:,:,11] + q_p_pred[:,:,7]
 
     return q, p

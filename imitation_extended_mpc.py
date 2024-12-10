@@ -28,7 +28,7 @@ def parse_arguments():
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
     parser.add_argument('--delta_max', type=float, default=0.40)
-    parser.add_argument('--p_sigma_manual', type=float, default=3.0)
+    parser.add_argument('--p_sigma_manual', type=float, default=8.0)
 
     return parser.parse_args()
 
@@ -82,7 +82,7 @@ params = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_m
 params_H = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_H])
 
 gen = simple_track_generator.trackGenerator(track_density,track_width)
-track_name = 'DEMO_TRACK'
+track_name = 'TEST_TRACK'
 
 track_function = {
     'DEMO_TRACK'    : track_functions.demo_track,
@@ -92,6 +92,7 @@ track_function = {
     'BERN_TRACK'    : track_functions.bern_track,
     'INFINITY_TRACK': track_functions.infinity_track,
     'TEST_TRACK'    : track_functions.test_track,
+    'TEST_TRACK_2'    : track_functions.test_track2,
     'SNAIL_TRACK'   : track_functions.snail_track
 }.get(track_name, track_functions.demo_track)
 
@@ -124,11 +125,11 @@ lqr_iter = 18
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.TCN(mpc_H, n_Q, 2, max_p)
+model = utils_new.TCN2(mpc_H, n_Q, 8, max_p)
 
 if load_model==True:
     try:
-        model.load_state_dict(torch.load(f'./saved_models/model_{str_model}_0.pkl'))
+        model.load_state_dict(torch.load(f'./saved_models/model_gen_{str_model}_0.pkl'))
         print('Model loaded')
     except:
         print('No model found to load')
@@ -138,11 +139,11 @@ if load_model==True:
 opt = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3., 0.5, 0.1, 0, 0.1, 1, 1, 0.1, 0.5]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3., 3., 0.1, 0, 0.1, 1, 1, 0.1, 3.]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 3., 0.5, 0.1, 0, 0.1, 1, 1, 0.1, 0.5]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 3., 3., 0.1, 0, 0.1, 1, 1, 0.1, 3.]), 0), mpc_H, 0)
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [5,1,2,3,8,9]
