@@ -435,6 +435,38 @@ class ImprovedNN(nn.Module):
         x = 5*self.output_activation(x/10)
         return x
 
+class FullLearningNN(nn.Module):
+    def __init__(self, K):
+        super(FullLearningNN, self).__init__()
+        input_size = 4
+        output_size = 2
+
+        # self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=2, dilation=2)
+        # self.bn1 = nn.BatchNorm1d(16)
+        # self.dropout = nn.Dropout(0.1)
+
+        self.fc1 = nn.Linear(input_size, 512)
+        self.fc2 = nn.Linear(512, 1024)
+        self.fc3 = nn.Linear(1024, 1024)
+        self.fc4 = nn.Linear(1024, 512)
+        self.fc5 = nn.Linear(512, output_size)
+        self.activation = nn.LeakyReLU(0.1)
+        self.output_activation = nn.Tanh()
+        self.K = K
+        self.output_size = output_size
+
+
+    def forward(self, x):
+
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.activation(self.fc3(x))
+        x = self.activation(self.fc4(x))
+        x = self.fc5(x)
+        x = x.reshape(self.output_size, -1)
+        x = 5*self.output_activation(x/10)
+        return x
+
 
 class TCN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K):
@@ -442,11 +474,11 @@ class TCN(nn.Module):
         input_size = 3
 
         # Convolutional feature extractor
-        self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=1)  
+        self.conv1 = nn.Conv1d(1, 16, kernel_size=3, padding=1)
         self.conv2 = nn.Conv1d(16, 32, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm1d(16)
         self.bn2 = nn.BatchNorm1d(32)
-        self.dropout = nn.Dropout(0.2) 
+        self.dropout = nn.Dropout(0.2)
 
         # Fully connected layers for shared representation
         self.fc1 = nn.Linear(32 * mpc_H + input_size, 512)
@@ -472,11 +504,11 @@ class TCN(nn.Module):
     def forward(self, x):
         global_context, time_series = x[:, :3], x[:, 3:]
 
-        time_series = time_series.unsqueeze(1) 
+        time_series = time_series.unsqueeze(1)
         time_series = self.activation(self.bn1(self.conv1(time_series)))
         time_series = self.dropout(self.activation(self.bn2(self.conv2(time_series))))
 
-        time_series = time_series.view(time_series.size(0), -1) 
+        time_series = time_series.view(time_series.size(0), -1)
 
         x = torch.cat([time_series, global_context], dim=1)
 
@@ -485,13 +517,13 @@ class TCN(nn.Module):
         x = self.activation(self.fc3(x))
         x = self.fc4(x)
 
-        global_cost = self.fc_global(x) 
+        global_cost = self.fc_global(x)
 
-        modulation = self.fc_modulation(x) 
-        modulation = modulation.view(self.mpc_T, -1, self.O) 
+        modulation = self.fc_modulation(x)
+        modulation = modulation.view(self.mpc_T, -1, self.O)
 
-        global_cost = global_cost.unsqueeze(0) 
-        outputs = global_cost + modulation 
+        global_cost = global_cost.unsqueeze(0)
+        outputs = global_cost + modulation
 
         outputs = self.K * self.output_activation(outputs / self.K)
         return outputs
@@ -1131,7 +1163,7 @@ class FrenetDynBicycleDx(nn.Module):
         r = r + self.dt * dr
         v_x = v_x + self.dt * dv_x
         v_y = v_y + self.dt * dv_y
-        sigma_0 = sigma_0              
+        sigma_0 = sigma_0
         sigma_diff = sigma - sigma_0
 
         d_pen = self.penalty_d(d)
