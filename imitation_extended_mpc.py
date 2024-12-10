@@ -260,8 +260,8 @@ its_per_epoch = 60
 
 for ep in range(epochs):
 
-    mpc_L = 5 + ep//3
-    mpc_L = int(np.minimum(mpc_L, mpc_T))
+    mpc_L = 5
+    #mpc_L = int(np.minimum(mpc_L, mpc_T))
 
     print(f'Epoch {ep}, Update reference path, mpcL={mpc_L}')
     x_star = np.transpose(x_current_full)
@@ -347,8 +347,8 @@ for ep in range(epochs):
                 )(x0, QuadCost(Q, p), true_dx)
 
 
-        diff_shorts = ((x_true_torch_S[:, :, 1] - pred_x[:, :, 1])**2 + (x_true_torch_S[:, :, 2] - pred_x[:, :, 2])**2).mean(0)
-        args_conv = torch.argwhere(diff_shorts<0.0001)
+        diff_shorts = ((u_true_torch_S[:, :, 0] - pred_u[:, :, 0])**2 + (u_true_torch_S[:, :, 1] - pred_u[:, :, 1])**2).mean(0)
+        args_conv = torch.argwhere(diff_shorts<0.005)
 
         loss_dsigma = ((x_true_torch[:mpc_L, args_conv, 5] - pred_x[:mpc_L, args_conv, 5])**2).sum(0).mean()
         loss_d = ((x_true_torch[:mpc_L, args_conv, 1] - pred_x[:mpc_L, args_conv, 1])**2).sum(0).mean()
