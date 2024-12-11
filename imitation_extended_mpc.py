@@ -366,7 +366,7 @@ for ep in range(epochs):
         opt.step()
 
         loss_sig_avg = loss_sig_avg + 100*loss_dsigma.detach().item()/its_per_epoch
-        loss_d_avg = loss_d_avg + 100*loss_d.detach().item()/its_per_epoch
+        loss_d_avg = loss_d_avg + 10*loss_d.detach().item()/its_per_epoch
         loss_phi_avg = loss_phi_avg + loss_phi.detach().item()/its_per_epoch
         loss_a_avg = loss_a_avg + 0.01*loss_a.detach().item()/its_per_epoch
         loss_delta_avg = loss_delta_avg + 0.1*loss_delta.detach().item()/its_per_epoch
