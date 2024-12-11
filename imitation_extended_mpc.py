@@ -136,7 +136,7 @@ if load_model==True:
 
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=5e-4, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3., 3., 0.1, 0, 0.1, 1, 1, 0.1, 3.]), 0), mpc_T, 0)
@@ -149,7 +149,7 @@ p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 
 idx_to_casadi = [5,1,2,3,8,9]
 
 
-epochs = 15
+epochs = 20
 num_patches = 20
 BS_init = 40
 BS_val = 10
@@ -358,7 +358,7 @@ for ep in range(epochs):
         loss_a = ((u_true_torch[:mpc_L, args_conv, 0] - pred_u[:mpc_L, args_conv, 0])**2).sum(0).mean()
         loss_delta = ((u_true_torch[:mpc_L, args_conv, 1] - pred_u[:mpc_L, args_conv, 1])**2).sum(0).mean()
 
-        loss = 100*loss_dsigma + 100*loss_d + loss_phi + 0.01*loss_a + loss_delta
+        loss = 100*loss_dsigma + 10*loss_d + loss_phi + 0.01*loss_a + 0.1*loss_delta
 
         opt.zero_grad()
         loss.backward()
@@ -429,7 +429,7 @@ for ep in range(epochs):
                 loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_pred_val[:, :, 1])**2).sum(0).mean()
 
                 # Ideal here would be to scale, but this is fine just to be in the same range
-                loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 10*loss_v_val + 0.01*loss_a_val + 0.1*loss_delta_val
+                loss_val = 100*loss_dsigma_val + 10*loss_d_val + loss_phi_val + 10*loss_v_val + 0.01*loss_a_val + 0.1*loss_delta_val
 
                 print('Train loss:',
                       round(loss_sig_avg, 5),
@@ -441,7 +441,7 @@ for ep in range(epochs):
 
                 print('Validation loss:',
                       round(100*loss_dsigma_val.item(), 5),
-                      round(100*loss_d_val.item(), 5),
+                      round(10*loss_d_val.item(), 5),
                       round(loss_phi_val.item(), 5),
                       round(10*loss_v_val.item(), 5),
                       round(0.01*loss_a_val.item(), 5),
