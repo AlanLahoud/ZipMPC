@@ -27,7 +27,7 @@ def parse_arguments():
     parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
-    parser.add_argument('--delta_max', type=float, default=0.55)
+    parser.add_argument('--delta_max', type=float, default=0.50)
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
 
     return parser.parse_args()
@@ -125,7 +125,7 @@ lqr_iter = 20
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.TCN2(mpc_H, n_Q, 5, max_p)
+model = utils_new.TCN2(mpc_H, n_Q, 8, max_p)
 
 if load_model==True:
     try:
@@ -139,11 +139,11 @@ if load_model==True:
 opt = torch.optim.AdamW(model.parameters(), lr=2e-4, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
-Q_manual = np.repeat(np.expand_dims(np.array([0.0, 1., 1., 0.01, 0, 0.01, 1, 1, 0.01, 1.]), 0), mpc_T, 0)
+Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3., 3., 0.01, 0, 0.01, 1, 1, 0.01, 3.]), 0), mpc_T, 0)
 p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
 
 control_H = utils_new.CasadiControl(track_coord, params_H)
-Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 1., 1., 0.01, 0, 0.01, 1, 1, 0.01, 1.]), 0), mpc_H, 0)
+Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 3., 3., 0.01, 0, 0.01, 1, 1, 0.01, 3.]), 0), mpc_H, 0)
 p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
 
 idx_to_casadi = [5,1,2,3,8,9]
