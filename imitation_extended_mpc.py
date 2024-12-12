@@ -22,12 +22,12 @@ from sys import exit
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--mpc_T', type=int, default=9)
+    parser.add_argument('--mpc_T', type=int, default=10)
     parser.add_argument('--mpc_H', type=int, default=20)
-    parser.add_argument('--n_Q', type=int, default=3)
+    parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
-    parser.add_argument('--delta_max', type=float, default=0.40)
+    parser.add_argument('--delta_max', type=float, default=0.55)
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
 
     return parser.parse_args()
@@ -183,7 +183,11 @@ for b in range(BS_test):
             q_lap_manual_casadi, p_lap_manual_casadi,
             x0_b_manual, dx, du, control_H)
 
-        x0_b_manual = x_b_manual[1]
+        #x0_b_manual = x_b_manual[1]
+
+        x0_b_manual = true_dx.forward((torch.tensor(x0_b_manual)).unsqueeze(0), torch.tensor(u_b_manual)[0:1]).squeeze()[:6].detach().numpy()
+        #x0 = x0_new.copy()
+        
         x_manual_full_H = np.append(x_manual_full_H, x0_b_manual.reshape(-1,1), axis=1)
 
         if x0_b_manual[0]>track_coord[2].max().numpy()/2:
@@ -222,7 +226,9 @@ for b in range(BS_test):
             q_lap_manual_casadi, p_lap_manual_casadi,
             x0_b_manual, dx, du, control)
 
-        x0_b_manual = x_b_manual[1]
+        #x0_b_manual = x_b_manual[1]
+        x0_b_manual = true_dx.forward((torch.tensor(x0_b_manual)).unsqueeze(0), torch.tensor(u_b_manual)[0:1]).squeeze()[:6].detach().numpy()
+        
         x_manual_full = np.append(x_manual_full, x0_b_manual.reshape(-1,1), axis=1)
 
         if x0_b_manual[0]>track_coord[2].max().numpy()/2:
@@ -491,7 +497,11 @@ for ep in range(epochs):
                             q_lap_np_casadi[:,0,:], p_lap_np_casadi[:,0,:],
                             x0_b_pred, dx, du, control)
 
-                        x0_b_pred = x_b_pred[1]
+                        #x0_b_pred = x_b_pred[1]
+
+                        x0_b_pred = true_dx.forward((torch.tensor(x0_b_pred)).unsqueeze(0), 
+                                                      torch.tensor(u_b_pred)[0:1]).squeeze()[:6].detach().numpy()
+                        
                         x_pred_full = np.append(x_pred_full, x0_b_pred.reshape(-1,1), axis=1)
 
                         if x0_b_pred[0]>track_coord[2].max().numpy()/2:
