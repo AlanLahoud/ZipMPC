@@ -82,7 +82,7 @@ params = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_m
 params_H = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_H])
 
 gen = simple_track_generator.trackGenerator(track_density,track_width)
-track_name = 'TEST_TRACK'
+track_name = 'DEMO_TRACK'
 
 track_function = {
     'DEMO_TRACK'    : track_functions.demo_track,
