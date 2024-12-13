@@ -161,8 +161,10 @@ if dyn_model=='kin':
     p_manual_H = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
 
-    idx_to_casadi = [7,1,2,3,4,5,10,11]
-    idx_to_NN = [1,2,4]
+    idx_to_casadi = [5,1,2,3,8,9]
+    idx_to_NN = [1,2,3]
+    
+    
     
 else:
     print('PACEJKA')
@@ -183,9 +185,10 @@ else:
         np.array([0, 3.0, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NL, 0)
     p_manual_H = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
-
-    idx_to_casadi = [5,1,2,3,8,9]
-    idx_to_NN = [1,2,3]
+    
+    idx_to_casadi = [7,1,2,3,4,5,10,11]
+    idx_to_NN = [1,2,4]
+    
 
 grad_method = GradMethods.AUTO_DIFF
 
