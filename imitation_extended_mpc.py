@@ -82,7 +82,7 @@ params = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_m
 params_H = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_H])
 
 gen = simple_track_generator.trackGenerator(track_density,track_width)
-track_name = 'DEMO_TRACK'
+track_name = 'TEST_TRACK'
 
 track_function = {
     'DEMO_TRACK'    : track_functions.demo_track,
@@ -136,7 +136,7 @@ if load_model==True:
 
 #opt = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
 #opt = torch.optim.RMSprop(model.parameters(), lr=0.0001)
-opt = torch.optim.AdamW(model.parameters(), lr=2e-4, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
 
 control = utils_new.CasadiControl(track_coord, params)
 Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3., .5, 0.01, 0, 0.01, 1, 1, 0.01, .5]), 0), mpc_T, 0)
