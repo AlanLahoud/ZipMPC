@@ -148,7 +148,6 @@ if dyn_model=='kin':
     lqr_iter = 20
     eps=0.00001
     true_dx = utils_car.FrenetKinBicycleDx(track_coord, params, 'cpu')
-    
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = np.repeat(np.expand_dims(
         np.array([0.0, 3.0, 0.5, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NS, 0)
@@ -173,7 +172,6 @@ else:
     lqr_iter = 35
     eps=0.00001
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
-
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = np.repeat(np.expand_dims(
         np.array([0, 3.0, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NS, 0)
@@ -321,7 +319,7 @@ for ep in range(epochs):
                 # This sampling should bring always the same set of initial states (sn fixed)
                 x0_val = utils_car.sample_init(BS_val, true_dx, sn=0).float()
 
-                curv_val = utils_new.get_curve_hor_from_x(x0_val, track_coord, NL)
+                curv_val = utils.get_curve_hor_from_x(x0_val, track_coord, NL)
                 inp_val = torch.hstack((x0_val[:,idx_to_NN], curv_val))
                 inp_val_norm = inp_val/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(NL*[3.333])))
                 q_p_pred_val = model(inp_val_norm)

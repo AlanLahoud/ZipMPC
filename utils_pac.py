@@ -22,17 +22,15 @@ import time
 
 
 
-class FrenetKinBicycleDx(nn.Module):
+class FrenetDynBicycleDx(nn.Module):
     def __init__(self, track_coordinates, params, dev):
         super().__init__()
 
-        self.params = params
-
-        # states: sigma, d, phi, v (4) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1)
-        self.n_state = 4+2+1+1
-        #print('Number of states:', self.n_state)
-
-        self.n_ctrl = 2 # control: a, delta
+        # states: sigma, d, phi, r, v_x, v_y (6) + sigma_0, sigma_diff (2) + d_pen (1) + v_ub (1)
+        self.n_state = 6+2+1+1
+        print(self.n_state)          # here add amount of states plus amount of exact penalty terms
+        # control: a, delta
+        self.n_ctrl = 2
 
         self.track_coordinates = track_coordinates.to(dev)
 
@@ -63,22 +61,48 @@ class FrenetKinBicycleDx(nn.Module):
 
         self.delta_max = params[6]
 
-        self.factor_pen = 100.
+        self.factor_pen = 1000.
 
         self.max_track_width_perc = 0.68
 
-
+        # # model parameters: l_r, l_f (beta and curv(sigma) are calculated in the dynamics)
+        # if params is None:
+        #     # l_r, l_f
+        #     self.params = Variable(torch.Tensor((0.2, 0.2)))
+        # else:
+        #     self.params = params
+        #     assert len(self.params) == 2
+        #
+        #     self.delta_threshold_rad = np.pi  #12 * 2 * np.pi / 360
+        #     self.v_max = 2
+        #     self.max_acceleration = 2
+        #
+        #     self.dt = 0.05   # name T in document
+        #
+        #     self.track_width = 0.5
+        #
+        #     self.lower = -self.track_width/2
+        #     self.upper = self.track_width/2
+        #
+        #     self.mpc_eps = 1e-4
+        #     self.linesearch_decay = 0.5
+        #     self.max_linesearch_iter = 2
 
     def curv(self, sigma):
+        '''
+        This function can stay the same
+        '''
 
         num_sf = self.sigma_f.size()
         num_s = sigma.size()
 
         sigma_f_mat = self.sigma_f.repeat(num_s[0],1)
 
+
         sigma_shifted = sigma.reshape(-1,1) - sigma_f_mat
         curv_unscaled = torch.sigmoid(self.smooth_curve*sigma_shifted)
         curv = (curv_unscaled@(self.curv_f.reshape(-1,1))).type(torch.float)
+
 
         return curv.reshape(-1)
 
@@ -92,7 +116,7 @@ class FrenetKinBicycleDx(nn.Module):
 
     def penalty_v(self, v):
         overshoot_pos = (v - self.v_max).clamp(min=0)
-        overshoot_neg = (-v - 0.001).clamp(min=0)
+        overshoot_neg = (-v + 0.001).clamp(min=0)
         penalty_pos = torch.exp(overshoot_pos) - 1
         penalty_neg = torch.exp(overshoot_neg) - 1
         return self.factor_pen*(penalty_pos + penalty_neg)
@@ -105,6 +129,7 @@ class FrenetKinBicycleDx(nn.Module):
         return self.factor_pen*(penalty_pos + penalty_neg)
 
     def forward(self, state, u):
+        softplus_op = torch.nn.Softplus(20)
         squeeze = state.ndimension() == 1
         if squeeze:
             state = state.unsqueeze(0)
@@ -112,40 +137,63 @@ class FrenetKinBicycleDx(nn.Module):
         if state.is_cuda and not self.params.is_cuda:
             self.params = self.params.cuda()
 
+        lr = self.l_r
+        lf = self.l_f
 
-        a, delta = torch.unbind(u, dim=1)
+        tau, delta = torch.unbind(u, dim=1)
 
-        try:
-            sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
-        except:
-            sigma, d, phi, v, sigma_0, sigma_diff = torch.unbind(state, dim=1)
+        sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
 
-        #beta = torch.atan(self.l_r/(self.l_r+self.l_f)*torch.tan(delta))
-        k = self.curv(sigma)
+        # car params
+        m = 0.200
+        I_z = 0.0004
 
-        #dsigma = v*(torch.cos(phi+beta)/(1.-k*d))
-        #dd = v*torch.sin(phi+beta)
-        #dphi = v/self.l_f*torch.sin(beta)-k*v*(torch.cos(phi+beta)/(1-k*d))
-        #dv = a
+        # lateral force params
+        Df = 0.43
+        Cf = 1.4
+        Bf = 0.5
+        Dr = 0.6
+        Cr = 1.7
+        Br = 0.5
 
-        dsigma = v * torch.cos(phi) / (1 - d * k)
-        dd = v * torch.sin(phi)
-        dphi = (v * torch.tan(delta)) / (self.l_r+self.l_f) - k * dsigma
-        dv = a
+        # longitudinal force params
+        Cm1 = 0.98028992
+        Cm2 = 0.01814131
+        Cd = 0.02750696
+        Croll = 0.08518052
+
+        a_f = -(torch.atan2((- v_y - lf*r),torch.abs(v_x))+delta)
+        a_r = -(torch.atan2((-v_y + lr*r),torch.abs(v_x)))
+
+
+        # forces on the wheels
+        F_x = (Cm1 - Cm2 * v_x) * tau - Cd * v_x * v_x - Croll  # motor force
+
+        F_f = -Df*torch.sin(Cf*torch.atan(Bf*a_f))
+        F_r = -Dr*torch.sin(Cr*torch.atan(Br*a_r))
+
+
+        dsigma = (v_x*torch.cos(phi)-v_y*torch.sin(phi))/(1.-self.curv(sigma)*d)
+        dd = v_x*torch.sin(phi)+v_y*torch.cos(phi)
+        dphi = r-self.curv(sigma)*((v_x*torch.cos(phi)-v_y*torch.sin(phi))/(1.-self.curv(sigma)*d))
+        dr = 1/I_z*(F_f * lf * torch.cos(delta) - F_r * lr)
+        dv_x = 1/m*(F_x - F_f * torch.sin(delta) + m * v_y * r)
+        dv_y = 1/m*(F_r + F_f * torch.cos(delta) - m * v_x * r)
 
         sigma = sigma + self.dt * dsigma
         d = d + self.dt * dd
         phi = phi + self.dt * dphi
-        v = v + self.dt * dv
-
-        #v = torch.clamp(v, 0, self.v_max)
-
+        r = r + self.dt * dr
+        v_x = v_x + self.dt * dv_x
+        v_y = v_y + self.dt * dv_y
+        sigma_0 = sigma_0
         sigma_diff = sigma - sigma_0
 
         d_pen = self.penalty_d(d)
-        v_ub = self.penalty_v(v)
 
-        state = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), 1)
+        v_ub = self.penalty_v(v_x)
+
+        state = torch.stack((sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff, d_pen, v_ub), 1)
 
         return state
 
@@ -346,11 +394,6 @@ class CasadiControl():
         return x, u
 
 
-
-
-
-
-
 def sample_init(BS, dyn, sn=None):
 
     # If sn!=None, we makesure that we always sample the same set of initial states
@@ -362,22 +405,23 @@ def sample_init(BS, dyn, sn=None):
         gen.manual_seed(sn)
 
     di = 1000
-    sigma_sample = torch.randint(int(0.0*di), int(16.0*di), (BS,1), generator=gen)/di
-    d_sample = torch.randint(int(-0.14*di), int(0.14*di), (BS,1), generator=gen)/di
-    phi_sample = torch.randint(int(-0.5*di), int(0.5*di), (BS,1), generator=gen)/di
-    v_sample = torch.randint(int(.1*di), int(1.8*di), (BS,1), generator=gen)/di
+    sigma_sample = torch.randint(int(0.0*di), int(14.5*di), (BS,1), generator=gen)/di
+    d_sample = torch.randint(int(-0.13*di), int(0.13*di), (BS,1), generator=gen)/di
+    phi_sample = torch.randint(int(-0.4*di), int(0.4*di), (BS,1), generator=gen)/di
+    r_sample = torch.randint(int(-0.01*di), int(0.01*di), (BS,1), generator=gen)/di
+    vx_sample = torch.randint(int(0.1*di), int(1.8*di), (BS,1), generator=gen)/di
+    vy_sample = torch.randint(int(0.0*di), int(0.03*di), (BS,1), generator=gen)/di
 
     sigma_diff_sample = torch.zeros((BS,1))
 
     d_pen = dyn.penalty_d(d_sample)
-    v_pen = dyn.penalty_v(v_sample)
+    v_pen = dyn.penalty_v(vx_sample)
 
     x_init_sample = torch.hstack((
-        sigma_sample, d_sample, phi_sample, v_sample,
+        sigma_sample, d_sample, phi_sample, r_sample, vx_sample, vy_sample,
         sigma_sample, sigma_diff_sample, d_pen, v_pen))
 
     return x_init_sample
-
 
 
 def sample_init_test(BS, dyn, sn=None):
@@ -394,15 +438,17 @@ def sample_init_test(BS, dyn, sn=None):
     sigma_sample = torch.zeros((BS,1))
     d_sample = torch.randint(int(-0.01*di), int(0.01*di), (BS,1), generator=gen)/di
     phi_sample = torch.randint(int(-0.002*di), int(0.002*di), (BS,1), generator=gen)/di
-    v_sample = torch.zeros((BS,1))
+    r_sample = torch.ones((BS,1))*0.0
+    vx_sample = torch.ones((BS,1))*0.0
+    vy_sample = torch.ones((BS,1))*0.0
 
     sigma_diff_sample = torch.zeros((BS,1))
 
     d_pen = dyn.penalty_d(d_sample)
-    v_pen = dyn.penalty_v(v_sample)
+    v_pen = dyn.penalty_v(vx_sample)
 
     x_init_sample = torch.hstack((
-        sigma_sample, d_sample, phi_sample, v_sample,
+        sigma_sample, d_sample, phi_sample, r_sample, vx_sample, vy_sample,
         sigma_sample, sigma_diff_sample, d_pen, v_pen))
 
     return x_init_sample
@@ -422,6 +468,7 @@ def sample_init_traj_dist(BS, dyn, traj, num_patches, sn=None):
     di = 1000
 
     traj_steps = np.shape(traj)
+    #print('traj_steps:',traj_steps)
     patch_steps = np.floor(traj_steps[0]/num_patches)
 
     traj_ind_sample = torch.zeros([BS,1]).int()
@@ -429,17 +476,19 @@ def sample_init_traj_dist(BS, dyn, traj, num_patches, sn=None):
         traj_ind_sample[i*int(BS/num_patches):(i+1)*int(BS/num_patches)] = torch.randint(int(patch_steps*i),int(patch_steps*(i+1)),(int(BS/num_patches),1), generator=gen)
     traj_sample = traj[traj_ind_sample.detach().numpy().flatten(),:]
 
-    d_sample = torch.clamp(torch.from_numpy(traj_sample[:,1].reshape(-1,1))+torch.randint(int(-.04*di), int(.04*di), (BS,1), generator=gen)/di,-0.17,0.17)
+    d_sample = torch.clamp(torch.from_numpy(traj_sample[:,1].reshape(-1,1))+torch.randint(int(-.02*di), int(.02*di), (BS,1), generator=gen)/di,-0.16,0.16)
     phi_sample = torch.from_numpy(traj_sample[:,2].reshape(-1,1))+torch.randint(int(-0.05*di), int(0.05*di), (BS,1), generator=gen)/di
-    v_sample = torch.clamp(torch.from_numpy(traj_sample[:,3].reshape(-1,1))+torch.randint(int(-0.2*di), int(0.2*di), (BS,1), generator=gen)/di,0.0,1.8)
-    
+    r_sample = torch.from_numpy(traj_sample[:,3].reshape(-1,1))+torch.randint(int(-0.001*di), int(0.001*di), (BS,1), generator=gen)/di  # currently fixed
+    vx_sample = torch.clamp(torch.from_numpy(traj_sample[:,4].reshape(-1,1))+torch.randint(int(-0.3*di), int(0.1*di), (BS,1), generator=gen)/di,0.07,1.8)
+    vy_sample = torch.from_numpy(traj_sample[:,5].reshape(-1,1))+torch.randint(int(-0.00*di), int(0.001*di), (BS,1), generator=gen)/di # currently fixed
+
     sigma_diff_sample = torch.zeros((BS,1))
 
     d_pen = dyn.penalty_d(d_sample)
-    v_pen = dyn.penalty_v(v_sample)
+    v_pen = dyn.penalty_v(vx_sample)
 
     x_init_sample = torch.hstack((
-        torch.from_numpy(traj_sample[:,0].reshape(-1,1)), d_sample, phi_sample, v_sample,
+        torch.from_numpy(traj_sample[:,0].reshape(-1,1)), d_sample, phi_sample, r_sample, vx_sample, vy_sample,
         torch.from_numpy(traj_sample[:,0].reshape(-1,1)), sigma_diff_sample, d_pen, v_pen))
 
     return x_init_sample
@@ -464,8 +513,26 @@ def solve_casadi(q_np,p_np,x0_np,dx,du,control):
     return x_star, u_star
 
 
+
+def solve_casadi(q_np,p_np,x0_np,dx,du,control):
+
+    mpc_T = q_np.shape[1]
+
+    x_curr_opt, u_curr_opt = control.mpc_casadi_dyn(q_np,p_np,x0_np,dx,du)
+
+    sigzero_curr_opt = np.expand_dims(x_curr_opt[[0],0].repeat(mpc_T+1), 1)
+    sigsiff_curr_opt = x_curr_opt[:,[0]]-x_curr_opt[0,0]
+
+    x_curr_opt_plus = np.concatenate((
+        x_curr_opt,sigzero_curr_opt,sigsiff_curr_opt), axis = 1)
+
+    x_star = x_curr_opt_plus[:-1]
+    u_star = u_curr_opt
+
+    return x_star, u_star
+
 def process_single_casadi(sample, q, p, x0, dx, du, control):
-    x, u = solve_casadi(
+    x, u = solve_casadi_dyn(
         q[:,sample], p[:,sample],
         x0[sample], dx, du, control)
     return sample, x, u
@@ -476,7 +543,7 @@ def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
 
     with ProcessPoolExecutor(max_workers=4) as executor:
         futures = [executor.submit(
-            process_single_casadi,
+            process_single_casadi_dyn,
             sample, q, p, x0, dx, du, control) for sample in range(BS)]
 
         for future in futures:
@@ -487,22 +554,21 @@ def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
     return x, u
 
 
+
+
 def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
-    # Cost order:
-    # [for casadi] sigma_diff, d, phi, v, a, delta
-    # [for model]  sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_pen, a, delta
 
     n_Q, BS, _ = q_p_pred.shape
 
-    q_p_pred = q_p_pred.repeat_interleave(mpc_T//n_Q, dim=0)
+    q_p_pred = q_p_pred.repeat(mpc_T//n_Q, 1, 1)
 
     e = 1e-9
 
-    q = e*torch.ones((mpc_T,BS,10)) + torch.tensor(Q_manual).unsqueeze(1).float()
-    p = torch.zeros((mpc_T,BS,10)) + torch.tensor(p_manual).unsqueeze(1).float()
+    q = e*torch.ones((mpc_T,BS,12)) + torch.tensor(Q_manual).unsqueeze(1).float()
+    p = torch.zeros((mpc_T,BS,12)) + torch.tensor(p_manual).unsqueeze(1).float()
 
     #sigma_diff
-    p[:,:,5] = p[:,:,5] + q_p_pred[:,:,0]
+    p[:,:,7] = p[:,:,7] + q_p_pred[:,:,0]
 
     #d
     p[:,:,1] = p[:,:,1] + q_p_pred[:,:,1]
@@ -511,9 +577,9 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
     p[:,:,2] = p[:,:,2] + q_p_pred[:,:,2]
 
     #a
-    p[:,:,8] = p[:,:,8] + q_p_pred[:,:,3]
+    p[:,:,10] = p[:,:,10] + q_p_pred[:,:,3]
 
     #delta
-    p[:,:,9] = p[:,:,9] + q_p_pred[:,:,4]
+    p[:,:,11] = p[:,:,11] + q_p_pred[:,:,4]
 
     return q, p
