@@ -70,7 +70,7 @@ np.random.seed(seed_n)
 
 
 # Car axis length
-if dyn=='kin':
+if dyn_model=='kin':
     l_r = 0.10
 
 else:
