@@ -245,7 +245,7 @@ for ep in range(epochs):
         x_true, u_true = utils_car.solve_casadi_parallel(
             np.repeat(q_manual_casadi, BS, 1),
             np.repeat(p_manual_casadi, BS, 1),
-            x0.detach().numpy()[:,:dx], BS, dx, du, control_H)
+            x0.detach().numpy()[:,:dx+2], BS, dx, du, control_H)
 
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
