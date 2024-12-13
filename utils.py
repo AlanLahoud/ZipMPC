@@ -5,331 +5,93 @@ import numpy as np
 from mpc import mpc
 from mpc.mpc import GradMethods, QuadCost, LinDx
 
-from matplotlib import pyplot as plt
 
 
 
-class NN(nn.Module):
-    def __init__(self, H, S, O, mpc_T):
-        super(NN, self).__init__()
-        self.fc1 = nn.Linear(H + S, 1024)
-        self.fc2 = nn.Linear(1024, 512)
-        self.output1 = nn.Linear(512, O*mpc_T)
-        self.output2 = nn.Linear(512, O*mpc_T)
+class TCN(nn.Module):
+    def __init__(self, mpc_H, mpc_T, O, K):
+        super(TCN, self).__init__()
+        input_size = 3
+
+        # Convolutional feature extractor
+        self.conv1 = nn.Conv1d(1, 4, kernel_size=3, padding=1)  
+        self.conv2 = nn.Conv1d(4, 8, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm1d(4)
+        self.bn2 = nn.BatchNorm1d(8)
+        self.dropout = nn.Dropout(0.2) 
+
+        # Fully connected layers for shared representation
+        self.fc1 = nn.Linear(8 * mpc_H + input_size, 512)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc3 = nn.Linear(512, 512)
+        self.fc4 = nn.Linear(512, 512)
+
+        # Global representation layer
+        self.fc_global = nn.Linear(512, O)
+
+        # Modulation layer for time-varying outputs
+        self.fc_modulation = nn.Linear(512, mpc_T * O)
+
+        # Activation functions
+        self.activation = nn.LeakyReLU(0.1)
+        self.output_activation = nn.Tanh()
+
+        # Model parameters
         self.mpc_T = mpc_T
         self.O = O
+        self.K = K
 
-    def forward(self, c, x0):
-        combined = torch.cat((c, x0), dim=1)
-        x = F.relu(self.fc1(combined))
-        x = F.relu(self.fc2(x))
-        q = F.relu(self.output1(x)) + 0.00001
-        p = self.output2(x)
-        q = q.reshape(self.mpc_T, -1, self.O)
-        p = p.reshape(self.mpc_T, -1, self.O)
-        return q, p
+    def forward(self, x):
+        global_context, time_series = x[:, :3], x[:, 3:]
 
+        time_series = time_series.unsqueeze(1) 
+        time_series = self.activation(self.bn1(self.conv1(time_series)))
+        time_series = self.dropout(self.activation(self.bn2(self.conv2(time_series))))
 
-class NN2(nn.Module):
-    def __init__(self, H, S, O, mpc_T):
-        super(NN, self).__init__()
-        self.fc1 = nn.Linear(H + S, 1024)
-        self.fc2 = nn.Linear(1024, 512)
-        self.output1 = nn.Linear(512, O)
-        self.output2 = nn.Linear(512, O)
-        self.mpc_T = mpc_T
-        self.O = O
+        time_series = time_series.view(time_series.size(0), -1) 
 
-    def forward(self, c, x0):
-        combined = torch.cat((c, x0), dim=1)
-        x = F.relu(self.fc1(combined))
-        x = F.relu(self.fc2(x))
-        q = F.relu(self.output1(x)) + 0.00001
-        p = self.output2(x)
-        return q, p
+        x = torch.cat([time_series, global_context], dim=1)
 
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.activation(self.fc3(x))
+        x = self.fc4(x)
 
-def sample_xinit(n_batch, track_width, v_max, true_dx):
-    def uniform(shape, low, high):
-        r = high-low
-        return torch.rand(shape)*r+low
-    sigma = uniform(n_batch, 5.01, 8.05)
-    d = uniform(n_batch, -track_width*0.27, track_width*0.27)
-    phi = uniform(n_batch, -0.37*np.pi, 0.37*np.pi)
-    v = uniform(n_batch, .01, 0.99*v_max)
+        global_cost = self.fc_global(x) 
 
-    #sigma = uniform(n_batch, 6.01, 8.05)
-    #d = uniform(n_batch, -track_width*0.35, track_width*0.35)
-    #phi = uniform(n_batch, -0.4*np.pi, 0.4*np.pi)
-    #v = uniform(n_batch, .01, 0.01*v_max)
+        modulation = self.fc_modulation(x) 
+        modulation = modulation.view(self.mpc_T, -1, self.O) 
 
-    sigma_0 = sigma
-    sigma_diff = sigma-sigma_0
+        global_cost = global_cost.unsqueeze(0) 
+        outputs = global_cost + modulation 
 
-    d_pen = penalty_d(d, 0.30*track_width)
-    v_ub = penalty_v(v, v_max)
+        outputs = self.K * self.output_activation(outputs / self.K)
+        return outputs
 
-    k = true_dx.curv(sigma)
-
-    xinit = torch.stack((sigma, d, phi, v, sigma_0, sigma_diff, d_pen, v_ub), dim=1)
-    return xinit
-
-
-def penalty_d(d, th, factor=1000):
-    overshoot_pos = (d - th).clamp(min=0)
-    overshoot_neg = (-d - th).clamp(min=0)
-    penalty_pos = torch.exp(overshoot_pos) - 1
-    penalty_neg = torch.exp(overshoot_neg) - 1
-    return factor*(penalty_pos + penalty_neg)
-
-
-def penalty_v(v, th, factor=1000):
-    overshoot_pos = (v - th).clamp(min=0)
-    overshoot_neg = (-v + 0.001).clamp(min=0)
-    penalty_pos = torch.exp(overshoot_pos) - 1
-    penalty_neg = torch.exp(overshoot_neg) - 1
-    return factor*(penalty_pos + penalty_neg)
-
-
-def get_nearest_index(point_f, ref_path):
-    return ((point_f[0] - ref_path[2,:])**2).argmin()
-
-
-def compute_x_coord(point_f, ref_path, nearest_index):
-    return ref_path[0,nearest_index] - point_f[1]*torch.sin(ref_path[3,nearest_index])
-
-
-def compute_y_coord(point_f, ref_path, nearest_index):
-    return ref_path[1,nearest_index] + point_f[1]*torch.cos(ref_path[3,nearest_index])
-
-
-def frenet_to_cartesian(point_f, ref_path):
-    nearest_index = get_nearest_index(point_f, ref_path)
-    x = compute_x_coord(point_f, ref_path, nearest_index)
-    y = compute_y_coord(point_f, ref_path, nearest_index)
-    return torch.tensor([x, y])
-
-
-def get_loss_progress(x_init, dx, _Q, _p, mpc_T):
-        pred_x, pred_u, pred_objs = mpc.MPC(
-            dx.n_state, dx.n_ctrl, mpc_T,
-            u_lower=u_lower, u_upper=u_upper, u_init=u_init,
-            lqr_iter=lqr_iter,
-            verbose=1,
-            exit_unconverged=False,
-            detach_unconverged=False,
-            linesearch_decay=.8,
-            max_linesearch_iter=10,
-            grad_method=grad_method,
-            eps=eps,
-            n_batch=n_batch,
-        )(x_init, QuadCost(_Q, _p), dx)
-        progress_loss = torch.mean(-pred_x[mpc_T-1,:,0] + pred_x[0,:,0])
-        return progress_loss
-
-
-
-def get_loss_progress_new(x_init_train, x_init_sim,
-                          dx, dx_sim, true_sim_dx,
-                          _Q, _p, u_lower, u_upper, u_init,
-                          lqr_iter, eps, n_batch, grad_method,
-                          mpc_T, H_curve):
-
-        assert H_curve%mpc_T == 0
-
-        x_curr_sim = x_init_sim
-        x_curr_train = x_init_train
-
-        #if np.random.random()<0.05:
-        #    import pdb
-        #    pdb.set_trace()
-
-        progress_loss_ = 0.
-
-        for s in range(H_curve//mpc_T):
-
-            pred_x, pred_u, pred_objs = mpc.MPC(
-                dx.n_state, dx.n_ctrl, mpc_T,
-                u_lower=u_lower, u_upper=u_upper, u_init=u_init,
-                lqr_iter=lqr_iter,
-                verbose=0,
-                exit_unconverged=False,
-                detach_unconverged=False,
-                linesearch_decay=.8,
-                max_linesearch_iter=4,
-                grad_method=grad_method,
-                eps=eps,
-                n_batch=n_batch,
-            )(x_curr_train, QuadCost(_Q, _p), dx)
-
-            for ss in range(mpc_T):
-                x_curr_sim_ = x_curr_sim.clone()
-                x_curr_sim = true_sim_dx.forward(x_curr_sim_, pred_u[ss])
-                #progress_loss_ = progress_loss_ + x_curr_sim[:,0] - x_init_train[:,0]
-
-            x_curr_train = x_curr_sim
-            x_curr_train[:,4] = x_curr_train[:,0]
-            x_curr_train[:,5] = 0.
-
-        #progress_loss = -progress_loss_.mean()
-
-        progress_loss = torch.mean(-x_curr_train[:,0] + x_init_train[:,0])
-
-        # Below is to check if negative sigma isbeing outputted
-        #mask_weird = x_curr_train[:,0]<x_init_train[:,0]
-        #print(x_init_train[mask_weird].shape)
-
-
-        d_loss = torch.mean(x_curr_train[:,1]**2)
-
-        return progress_loss, d_loss
 
 
 def get_curve_hor_from_x(x, track_coord, H_curve):
-    idx_track_batch = ((x[:,0]-track_coord[[2],:].T)**2).argmin(0)
-    idcs_track_batch = idx_track_batch[:, None] + torch.arange(H_curve)
-    curvs = track_coord[4,idcs_track_batch].float()
+    # Find the closest indices on the track for x[:,0]
+    idx_track_batch = ((x[:, 0] - track_coord[[2], :].T) ** 2).argmin(0)
+    
+    # Calculate the maximum allowed value based on sigma
+    max_sigma = 1.8 * 0.03 * H_curve + x[:, 0]
+    idx_track_batch_max = ((max_sigma - track_coord[[2], :].T) ** 2).argmin(0)
+    
+    # Ensure stepsize is valid and avoid division by zero
+    stepsize = torch.clamp((idx_track_batch_max - idx_track_batch) // H_curve, min=1)
+    
+    # Generate batch indices with fixed length H_curve
+    range_indices = torch.arange(H_curve).unsqueeze(0)  # Shape (1, H_curve)
+    batch_arange = idx_track_batch.unsqueeze(1) + range_indices * stepsize.unsqueeze(1)
+    
+    # Ensure indices are within bounds
+    idcs_track_batch = torch.clip(batch_arange, 0, track_coord.shape[1] - 1)
+    
+    # Retrieve the curvature values
+    curvs = track_coord[4, idcs_track_batch].float()
+    
+    # Ensure the result has exactly H_curve elements for each batch
+    assert curvs.shape[1] == H_curve, f"Curvs does not match H_curve: {curvs.shape[1]} != {H_curve}"
+    
     return curvs
-
-
-#def cost_to_batch_NN(q, p, n_batch, mpc_T):
-#    Q_batch = torch.zeros(n_batch, q.shape[1], q.shape[1])
-#    rows, cols = torch.arange(q.shape[1]), torch.arange(q.shape[1])
-#    Q_batch[:, rows, cols] = q
-#    Q_batch = Q_batch.unsqueeze(0).repeat(
-#                mpc_T, 1, 1, 1)
-#    p_batch = p.unsqueeze(0).repeat(mpc_T, 1, 1)
-#    return Q_batch, p_batch
-
-
-def cost_to_batch_NN(q, p, n_batch, mpc_T):
-    Q_batch = torch.zeros(mpc_T, n_batch, q.shape[2], q.shape[2])
-    rows, cols = torch.arange(q.shape[2]), torch.arange(q.shape[2])
-    Q_batch[:, :, rows, cols] = q
-    return Q_batch, p
-
-
-def cost_to_batch(q, p, n_batch, mpc_T):
-    Q_batch = torch.diag(q).unsqueeze(0).unsqueeze(0).repeat(
-                mpc_T, n_batch, 1, 1
-            )
-    p_batch = p.unsqueeze(0).repeat(mpc_T, n_batch, 1)
-    return Q_batch, p_batch
-
-
-#def bound_params(q, p):
-#    q[:,1] = 1.
-#    q[:,2] = 1.
-#    q[:,3] = 0.00001
-
-    #q = q + 1.
-#    q[:,0] = 0.00001
-#    q[:,4] = 0.00001
-#    q[:,5] = 0.00001
-#    q = q.clip(0.00001, 40.)
-#    p[:,0] = 0.0
-    #p[:,1] = 0.0
-    #p[:,2] = 0.0
-    #p[:,3] = 0.0
-#    p[:,4] = 0.0
-#    p[:,5] = 0.0
-#    p2 = p.clone()
-#    p2 = p.clip(-200.,200.)
-#    q2 = q.clone()
-#    return q2, p2
-
-
-def bound_params(q, p):
-    q[:,:,0] = 0.00001
-    #q[:,:,1] = 0.1
-    #q[:,:,2] = 0.1
-    #q[:,:,3] = 0.00001
-    #q = q + 1.
-    q[:,:,4] = 0.00001
-    #q[:,:,5] = 0.00001
-    #q[:,:,-1] = 0.00001
-    #q[:,:,-2] = 0.00001
-    q = q.clip(0.00001, 40.)
-    p[:,:,0] = 0.0
-    #p[:,:,1] = 0.0
-    #p[:,:,2] = 0.0
-    #p[:,:,3] = 0.0
-    p[:,:,4] = 0.0
-    #p[:,:,5] = 0.0
-    #p[:,:,-1] = 0.0
-    #p[:,:,-2] = 0.0
-    p2 = p.clone()
-    p2 = p.clip(-200.,200.)
-    q2 = q.clone()
-    return q2, p2
-
-
-def bound_params_paj(q, p):
-    q[:,1] = q[:,1] + 10.0
-    #q = q + 1.
-    q[:,0] = 0.00001
-    q[:,6] = 0.00001
-    q = q.clip(0.00001, 40.)
-    p[:,0] = 0.0
-    p[:,1] = 0.0
-    p[:,2] = 0.0
-    p[:,6] = 0.0
-    p2 = p.clone()
-    p2 = p.clip(-200.,200.)
-    q2 = q.clone()
-    return q2, p2
-
-
-def normalize_x(x):
-    x[:,1] = (x[:,1]+0.135)/0.27
-    x[:,3] = (x[:,3])/3
-    x[:,2] = (x[:,2]+3.14*0.37)/(3.14*0.74)
-    return x
-
-def inference_params(x_in, track_coord, H_curve, model, q_pen, p_pen, N, mpc_T):
-    #x_in = normalize_x(x_in)
-    curvs = get_curve_hor_from_x(x_in, track_coord, H_curve)
-    q, p = model(curvs, x_in[:,1:4])
-    q = torch.cat((q[:,:,:6], q_pen, q[:,:,6:]), dim=2)
-    p = torch.cat((p[:,:,:6], p_pen, p[:,:,6:]), dim=2)
-    q2, p2 = bound_params(q, p)
-    Q_batch, p_batch = cost_to_batch_NN(q2, p2, N, mpc_T)
-    return Q_batch, p_batch
-
-
-def inference_params_paj(x_in, track_coord, H_curve, model, q_pen, p_pen, N, mpc_T):
-    curvs = get_curve_hor_from_x(x_in, track_coord, H_curve)
-    q, p = model(curvs, x_in[:,1:6])
-    q = torch.cat((q[:,:8], q_pen, q[:,8:]), dim=1)
-    p = torch.cat((p[:,:8], p_pen, p[:,8:]), dim=1)
-    q2, p2 = bound_params(q, p)
-    Q_batch, p_batch = cost_to_batch_NN(q2, p2, N, mpc_T)
-    return Q_batch, p_batch
-
-
-def plot_traj(x_sim, track_coord, gen, dim_color=4):
-    x_list = []
-    y_list = []
-
-    for i in range(x_sim.shape[0]):
-        xy = frenet_to_cartesian(x_sim[i,:2], track_coord)
-        x_list.append(xy[0].numpy())
-        y_list.append(xy[1].numpy())
-
-    x_plot = np.array(x_list)
-    y_plot = np.array(y_list)
-
-    fig, ax = plt.subplots(1,1, figsize=(10,5), dpi=150)
-    gen.plotPoints(ax)
-
-    custom_cmap = plt.get_cmap('cubehelix').reversed()
-    sct = ax.scatter(x_plot, y_plot, c=x_sim[:,dim_color], cmap=custom_cmap, s=1)
-
-    cbar = plt.colorbar(sct)
-    cbar.set_label('Velocity')
-
-    print('x_init: ' + str(gen.xCoords[0]))
-    print('y_init: ' + str(gen.yCoords[0]))
-    print('yaw_init: ' + str(gen.tangentAngle[0]))
-    print('Total Arc Length: ' + str(gen.arcLength[-1]/2))
-    plt.show()
