@@ -141,7 +141,7 @@ track_coord = torch.from_numpy(np.vstack(
 
 # Setting the learnable model dynamics (short horizon)
 # Here, we also set manual cost parameters / initial guess
-if dyn=='kin':
+if dyn_model=='kin':
     dx=4
     du=2
     lqr_iter = 20
