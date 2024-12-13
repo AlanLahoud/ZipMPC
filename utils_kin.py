@@ -346,24 +346,6 @@ class CasadiControl():
         return x, u
 
 
-    def solve_casadi(self,q_np,p_np,x0_np,dx,du):
-
-        mpc_T = q_np.shape[1]
-    
-        x_curr_opt, u_curr_opt = self.mpc_casadi(q_np,p_np,x0_np,dx,du)
-    
-        sigzero_curr_opt = np.expand_dims(x_curr_opt[[0],0].repeat(mpc_T+1), 1)
-        sigsiff_curr_opt = x_curr_opt[:,[0]]-x_curr_opt[0,0]
-    
-        x_curr_opt_plus = np.concatenate((
-            x_curr_opt,sigzero_curr_opt,sigsiff_curr_opt), axis = 1)
-    
-        x_star = x_curr_opt_plus[:-1]
-        u_star = u_curr_opt
-    
-        return x_star, u_star
-
-
 
 
 
@@ -462,6 +444,24 @@ def sample_init_traj_dist(BS, dyn, traj, num_patches, sn=None):
 
     return x_init_sample
 
+
+
+def solve_casadi(q_np,p_np,x0_np,dx,du,control):
+
+    mpc_T = q_np.shape[1]
+
+    x_curr_opt, u_curr_opt = self.mpc_casadi(q_np,p_np,x0_np,dx,du)
+
+    sigzero_curr_opt = np.expand_dims(x_curr_opt[[0],0].repeat(mpc_T+1), 1)
+    sigsiff_curr_opt = x_curr_opt[:,[0]]-x_curr_opt[0,0]
+
+    x_curr_opt_plus = np.concatenate((
+        x_curr_opt,sigzero_curr_opt,sigsiff_curr_opt), axis = 1)
+
+    x_star = x_curr_opt_plus[:-1]
+    u_star = u_curr_opt
+
+    return x_star, u_star
 
 
 def process_single_casadi(sample, q, p, x0, dx, du, control):
