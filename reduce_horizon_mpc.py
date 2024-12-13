@@ -22,7 +22,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
     parser.add_argument('--dyn', type=str, default='kin')
-    parser.add_argument('--seed_n', type=int, default='seed_n')
+    parser.add_argument('--seed_n', type=int, default=0)
     parser.add_argument('--NS', type=int, default=10)
     parser.add_argument('--NH', type=int, default=20)
     parser.add_argument('--n_Q', type=int, default=1)
