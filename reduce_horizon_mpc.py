@@ -206,9 +206,9 @@ u_init_val = torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(NS, BS_
 ##########################################################################################
 
 model = utils.TCN(NL, n_Q, 5, max_p)
-opt = torch.optim.AdamW(model.parameters(), lr=2e-4, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
-its_per_epoch = 40
+its_per_epoch = 20
 
 loss_val_best = np.inf
 
