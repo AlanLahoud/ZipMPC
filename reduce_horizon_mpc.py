@@ -210,6 +210,8 @@ opt = torch.optim.AdamW(model.parameters(), lr=2e-4, weight_decay=1e-4)
 
 its_per_epoch = 40
 
+loss_val_best = np.inf
+
 for ep in range(epochs):
 
     print(f'Epoch {ep}')
@@ -366,3 +368,13 @@ for ep in range(epochs):
                       round(0.01*loss_a_val.item(), 5),
                       round(0.1*loss_delta_val.item(), 5),
                       round(loss_val.item(), 5))
+                
+                if loss_val <= loss_val_best:
+                    counter_term = 0
+                    loss_val_best = loss_val
+                    torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
+
+                else:
+                    counter_term = counter_tem + 1
+                    if counter_term>=3:
+                        sys.exit()
