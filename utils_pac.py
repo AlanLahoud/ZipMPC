@@ -269,60 +269,95 @@ class CasadiControl():
         return curv
 
 
-    def mpc_casadi(self,q,p,x0_np,dx,du):
-        mpc_T = self.mpc_T
-
-        x_sym = SX.sym('x_sym',dx,mpc_T+1)
-        u_sym = SX.sym('u_sym',du,mpc_T)
-
-        dt = self.dt
-
-        #beta = np.arctan(l_r/(l_r+l_f)*np.tan(u_sym[1,0:mpc_T]))
-
-        #dyn1 = horzcat(
-        #    (x_sym[0,0] - x0_np[0]),
-        #    (x_sym[0,1:mpc_T+1] - x_sym[0,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T]+beta)/(1.-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
-
-        #dyn2 = horzcat(
-        #    (x_sym[1,0] - x0_np[1]),
-        #    (x_sym[1,1:mpc_T+1] - x_sym[1,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*np.sin(x_sym[2,0:mpc_T]+beta))))
-
-        #dyn3 = horzcat(
-        #    (x_sym[2,0] - x0_np[2]),
-        #    (x_sym[2,1:mpc_T+1] - x_sym[2,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*(1/l_f)*np.sin(beta)-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T]+beta)/(1-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
-
-        #dyn4 = horzcat(
-        #    (x_sym[3,0] - x0_np[3]),
-        #    (x_sym[3,1:mpc_T+1] - x_sym[3,0:mpc_T] - dt*(u_sym[0,0:mpc_T])))
+    def mpc_casadi(self,q,p,x0,dx,du):
 
 
+        # here the q and the p scale the following
+        # feature vector [sigma-sigma_0, d, phi, v, penalty_d,penalty_v,a,delta]
 
-        #dphi = v/self.l_f*torch.sin(beta)-k*v*(torch.cos(phi+beta)/(1-k*d))
 
-        #dphi = (v * torch.tan(delta)) / (self.l_r+self.l_f) - k * dsigma
+        N=self.mpc_T
+        l_r = self.l_r
+        l_f = self.l_f
+
+        Ts = self.dt
+
+        # car params
+        m = 0.200
+        I_z = 0.0004
+
+        # lateral force params
+        Df = 0.43
+        Cf = 1.4
+        Bf = 0.5
+        Dr = 0.6
+        Cr = 1.7
+        Br = 0.5
+
+        # longitudinal force params
+        Cm1 = 0.98028992
+        Cm2 = 0.01814131
+        Cd = 0.02750696
+        Croll = 0.08518052
+
+        x_sym = SX.sym('x_sym',dx,N+1)
+        u_sym = SX.sym('u_sym',du,N)
+
+        a_f = -(np.arctan2((-x_sym[5,0:N] - l_f*x_sym[3,0:N]),((x_sym[4,0:N])+0.00001))+u_sym[1,0:N])
+        a_r = -(np.arctan2((-x_sym[5,0:N] + l_r*x_sym[3,0:N]),((x_sym[4,0:N])+0.00001)))
+
+        # forces on the wheels
+        F_x = (Cm1 - Cm2 * x_sym[4,0:N]) * u_sym[0,0:N] - Cd * x_sym[4,0:N]* x_sym[4,0:N] - Croll  # motor force
+
+        F_f = -Df*np.sin(Cf*np.arctan(Bf*a_f))
+        F_r = -Dr*np.sin(Cr*np.arctan(Br*a_r))
+
+        #solver parameters
+        options = {}
+        options['ipopt.max_iter'] = 2000
+        options['verbose'] = False
 
         dyn1 = horzcat(
-            (x_sym[0,0] - x0_np[0]),
-            (x_sym[0,1:mpc_T+1] - x_sym[0,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T])/(1.-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
+            (x_sym[0,0] - x0[0]),
+            (x_sym[0,1:N+1] - x_sym[0,0:N] - \
+             Ts*((x_sym[4,0:N]*cos(x_sym[2,0:N])-x_sym[5,0:N]*sin(
+                x_sym[2,0:N]))/(1.-self.curv_casadi(x_sym[0,0:N])*x_sym[1,0:N]))))
 
         dyn2 = horzcat(
-            (x_sym[1,0] - x0_np[1]),
-            (x_sym[1,1:mpc_T+1] - x_sym[1,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*np.sin(x_sym[2,0:mpc_T]))))
+            (x_sym[1,0] - x0[1]),
+            (x_sym[1,1:N+1] - x_sym[1,0:N] - \
+             Ts*(x_sym[4,0:N]*sin(x_sym[2,0:N])+x_sym[5,0:N]*cos(
+                x_sym[2,0:N]))))
 
         dyn3 = horzcat(
-            (x_sym[2,0] - x0_np[2]),
-            (x_sym[2,1:mpc_T+1] - x_sym[2,0:mpc_T] - \
-             dt*(x_sym[3,0:mpc_T]*(1/(self.l_f+self.l_r))*np.tan(u_sym[1,0:mpc_T])\
-                 -self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T])/(1-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
+            (x_sym[2,0] - x0[2]),
+            (x_sym[2,1:N+1] - x_sym[2,0:N] - \
+             Ts*(x_sym[3,0:N] - self.curv_casadi(
+                x_sym[0,0:N])*(x_sym[4,0:N]*cos(
+                x_sym[2,0:N])-x_sym[5,0:N]*sin(x_sym[2,0:N]))/(1-self.curv_casadi(
+                x_sym[0,0:N])*x_sym[1,0:N]))))
 
         dyn4 = horzcat(
-            (x_sym[3,0] - x0_np[3]),
-            (x_sym[3,1:mpc_T+1] - x_sym[3,0:mpc_T] - dt*(u_sym[0,0:mpc_T])))
+            (x_sym[3,0] - x0[3]),
+            (x_sym[3,1:N+1] - x_sym[3,0:N] - \
+             Ts*(1/I_z*(F_f * l_f *cos(u_sym[1,0:N])- F_r * l_r))))
 
-        feat = vertcat(x_sym[0,0:mpc_T]-x0_np[0],x_sym[1:,0:mpc_T],u_sym[:,0:mpc_T])
+        dyn5 = horzcat(
+            (x_sym[4,0] - x0[4]),
+            (x_sym[4,1:N+1] - x_sym[4,0:N] - \
+             Ts*1/m*(F_x - F_f *sin(u_sym[1,0:N]) + m *x_sym[5,0:N]* x_sym[3,0:N])))
 
-        q_sym = SX.sym('q_sym',dx+du,mpc_T)
-        p_sym = SX.sym('p_sym',dx+du,mpc_T)
+        dyn6 = horzcat(
+            (x_sym[5,0] - x0[5]),
+            (x_sym[5,1:N+1] - x_sym[5,0:N] - \
+             Ts*1/m*(F_r + F_f * cos(u_sym[1,0:N]) - m *x_sym[4,0:N]* x_sym[3,0:N])))
+
+        # think about how to integrate the curvature function
+
+        # define symbolic variables for cost parameters
+        feat = vertcat(x_sym[0,0:N]-x0[0],x_sym[1:,0:N],u_sym[:,0:N])
+        q_sym = SX.sym('q_sym',dx+du,N)
+        p_sym = SX.sym('p_sym',dx+du,N)
         Q_sym = diag(q_sym)
 
         l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat))
@@ -333,35 +368,40 @@ class CasadiControl():
                 transpose(dyn2),
                 transpose(dyn3),
                 transpose(dyn4),
-                transpose(u_sym[0,0:mpc_T]),
-                transpose(u_sym[1,0:mpc_T]),
-                transpose(x_sym[1,0:mpc_T+1]),
-                transpose(x_sym[3,0:mpc_T+1]))
+                transpose(dyn5),
+                transpose(dyn6),
+                transpose(u_sym[0,0:N]),
+                transpose(u_sym[1,0:N]),
+                transpose(x_sym[1,0:N+1]),
+                transpose(x_sym[4,0:N+1]))
 
-        lbg = np.r_[np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    -self.a_max*np.ones(mpc_T),
-                    -self.delta_max*np.ones(mpc_T),
-                    -0.5*self.max_track_width_perc*self.track_width*np.ones(mpc_T+1),
-                    -0.001*np.ones(mpc_T+1)]
+        lbg = np.r_[np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    -self.a_max*np.ones(N),
+                    -self.delta_max*np.ones(N),
+                    -0.5*self.max_track_width_perc*self.track_width*np.ones(N+1),
+                    0.1*np.ones(N+1)]
 
-        ubg = np.r_[np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    np.zeros(mpc_T+1),
-                    self.a_max*np.ones(mpc_T),
-                    self.delta_max*np.ones(mpc_T),
-                    0.5*self.max_track_width_perc*self.track_width*np.ones(mpc_T+1),
-                    self.v_max*np.ones(mpc_T+1)]
+        ubg = np.r_[np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    np.zeros(N+1),
+                    self.a_max*np.ones(N),
+                    self.delta_max*np.ones(N),
+                    0.5*self.max_track_width_perc*self.track_width*np.ones(N+1),
+                    self.v_max*np.ones(N+1)]
 
+        lbx = -np.inf * np.ones(dx*(N+1)+du*N)
+        ubx = np.inf * np.ones(dx*(N+1)+du*N)
 
-        lbx = -np.inf * np.ones(dx*(mpc_T+1)+du*mpc_T)
-        ubx = np.inf * np.ones(dx*(mpc_T+1)+du*mpc_T)
-
-        x = vertcat(reshape(x_sym[:,0:mpc_T+1],(dx*(mpc_T+1),1)),
-                    reshape(u_sym[:,0:mpc_T],(du*mpc_T,1)))
+        x = vertcat(reshape(x_sym[:,0:N+1],(dx*(N+1),1)),reshape(u_sym[:,0:N],(du*N,1)))
+        #w_ws = np.vstack([np.reshape(x_warmstart[:dx,0:N+1],(dx*(N+1),1)),np.reshape(x_warmstart[dx+dc+df:,0:N],(du*(N),1))])
 
         options = {
                     'verbose': False,
@@ -369,28 +409,36 @@ class CasadiControl():
                     'print_time': False,
                     'ipopt.sb': 'yes',
                     'print_time': 0,
-                    'ipopt.tol': 1e-4,
-                    'ipopt.max_iter': 4000,
+                    'ipopt.tol': 1e-2,
+                    'ipopt.max_iter': 400,
                     'ipopt.hessian_approximation': 'limited-memory'
                 }
 
         nlp = {'x':x,'f':dl, 'g':const}
         solver = nlpsol('solver','ipopt', nlp, options)
 
+        # create solver input
         solver_input = {}
         solver_input['lbx'] = lbx
         solver_input['ubx'] = ubx
         solver_input['lbg'] = lbg
         solver_input['ubg'] = ubg
 
+        # add initial guess to solver
+        #solver_input['x0'] = w_ws
+
+        # solve optimization problem
         solver_output = solver(**solver_input)
 
+        # process ouput
         sol = solver_output['x']
-
         sol_evalf = np.squeeze(evalf(sol))
-        u = sol_evalf[-du*mpc_T:].reshape(-1,du)
-        x = sol_evalf[:-du*mpc_T].reshape(-1,dx)
+        u = sol_evalf[-du*N:].reshape(-1,du)
+        x = sol_evalf[:-du*N].reshape(-1,dx)
 
+        #print(sol.solveroutput.info.lambda)
+
+        # print solution
         return x, u
 
 
