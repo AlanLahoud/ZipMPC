@@ -604,7 +604,7 @@ def sample_init(BS, dyn, sn=None):
         gen.manual_seed(sn)
 
     di = 1000
-    sigma_sample = torch.randint(int(0.0*di), int(14.5*di), (BS,1), generator=gen)/di
+    sigma_sample = torch.randint(int(0.0*di), int(16.0*di), (BS,1), generator=gen)/di
     d_sample = torch.randint(int(-0.14*di), int(0.14*di), (BS,1), generator=gen)/di
     phi_sample = torch.randint(int(-0.5*di), int(0.5*di), (BS,1), generator=gen)/di
     v_sample = torch.randint(int(.1*di), int(1.8*di), (BS,1), generator=gen)/di
@@ -862,8 +862,20 @@ def sample_init_traj_dist_dyn(BS, dyn, traj, num_patches, sn=None):
     return x_init_sample
 
 def get_curve_hor_from_x(x, track_coord, H_curve):
+
     idx_track_batch = ((x[:,0]-track_coord[[2],:].T)**2).argmin(0)
-    idcs_track_batch = idx_track_batch[:, None] + torch.arange(H_curve)
+    
+    max_sigma = 1.8*0.03*H_curve + x[:,0]
+    
+    idx_track_batch_max = ((max_sigma-track_coord[[2],:].T)**2).argmin(0)
+    
+    stepsize = (idx_track_batch_max-idx_track_batch)//H_curve
+    
+    max_length = ((idx_track_batch_max - idx_track_batch) / stepsize).ceil().int().max().item() 
+    range_indices = torch.arange(max_length).unsqueeze(0)
+    batch_arange = idx_track_batch.unsqueeze(1) + range_indices * stepsize.unsqueeze(1)
+    idcs_track_batch = batch_arange.masked_fill(batch_arange >= idx_track_batch_max.unsqueeze(1), 0) 
+    
     try:
         idcs_track_batch = torch.clip(idcs_track_batch, None, track_coord.shape[1]-1)
         curvs = track_coord[4,idcs_track_batch].float()

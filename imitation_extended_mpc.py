@@ -125,7 +125,7 @@ lqr_iter = 20
 
 grad_method = GradMethods.AUTO_DIFF
 
-model = utils_new.TCN2(mpc_H, n_Q, 8, max_p)
+model = utils_new.TCN2(mpc_H, n_Q, 5, max_p)
 
 if load_model==True:
     try:
