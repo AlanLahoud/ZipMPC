@@ -117,7 +117,7 @@ params_H = torch.tensor(
 
 # Generating track
 gen = simple_track_generator.trackGenerator(track_density,track_width)
-track_name = 'TEST_TRACK'
+track_name = 'DEMO_TRACK'
 track_function = {
     'DEMO_TRACK'    : track_functions.demo_track,
     'HARD_TRACK'    : track_functions.hard_track,
@@ -309,9 +309,12 @@ for ep in range(epochs):
 
 
         if it%its_per_epoch==its_per_epoch-1:
-            d_pen = true_dx.penalty_d(pred_x[:, :, 1].detach())
-            v_pen = true_dx.penalty_v(pred_x[:, :, 3].detach())
-            print('V max: ', pred_x[:, :, 3].detach().max().item())
+            #d_pen = true_dx.penalty_d(pred_x[:, :, 1].detach())
+            #v_pen = true_dx.penalty_v(pred_x[:, :, 3].detach())
+            if dyn_model == 'kin':
+                print('V max: ', pred_x[:, :, 3].detach().max().item())
+            else:
+                print('V max: ', pred_x[:, :, 4].detach().max().item())
             print('N useful samples: ', pred_x.detach()[:, args_conv, 5].shape)
 
             # L O S S   V A LI D A T I O N
@@ -375,6 +378,6 @@ for ep in range(epochs):
                     torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
 
                 else:
-                    counter_term = counter_tem + 1
+                    counter_term = counter_term + 1
                     if counter_term>=3:
                         sys.exit()
