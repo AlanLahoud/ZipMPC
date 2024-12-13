@@ -64,7 +64,7 @@ delta_max = args.delta_max
 p_sigma_manual = args.p_sigma_manual
 
 # Seed for reproducibility
-seed_n = = args.p_sigma_manual
+seed_n= args.seed_n
 torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
