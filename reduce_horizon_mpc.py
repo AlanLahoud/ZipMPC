@@ -24,10 +24,10 @@ def parse_arguments():
     parser.add_argument('--dyn', type=str, default='kin')
     parser.add_argument('--seed_n', type=int, default=0)
     parser.add_argument('--NS', type=int, default=10)
-    parser.add_argument('--NH', type=int, default=20)
+    parser.add_argument('--NL', type=int, default=20)
     parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--v_max', type=float, default=1.8)
-    parser.add_argument('--delta_max', type=float, default=0.50)
+    parser.add_argument('--delta_max', type=float, default=0.55)
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
 
     return parser.parse_args()
@@ -52,7 +52,7 @@ else:
     import utils_pac as utils_car
 
 NS = args.NS # Short horizon Length 
-NH = args.NH # Long Horizon Length
+NL = args.NL # Long Horizon Length
 n_Q = args.n_Q # Number of learnable parameters through the short horizon
 
 assert n_Q<=NS
@@ -98,7 +98,7 @@ BS_test = 1
 epochs = 20
 
 # Model path to save
-str_model = f'{dyn_model}_{mpc_T}_{mpc_H}_{n_Q}_{delta_max}_{v_max}_{p_sigma_manual}'
+str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{delta_max}_{v_max}_{p_sigma_manual}'
 
 # Track parameters
 track_density = 300
@@ -110,9 +110,9 @@ init_track = [0,0,0]
 
 # Parameters as tensors for both Short and Long horizons
 params = torch.tensor(
-    [l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_T])
+    [l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, NS])
 params_H = torch.tensor(
-    [l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_H])
+    [l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, NL])
 
 
 # Generating track
@@ -150,15 +150,15 @@ if dyn=='kin':
     
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = np.repeat(np.expand_dims(
-        np.array([0.0, 3.0, 0.5, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), mpc_T, 0)
+        np.array([0.0, 3.0, 0.5, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NS, 0)
     p_manual = np.repeat(np.expand_dims(
-        np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
+        np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
     Q_manual_H = np.repeat(np.expand_dims(
-        np.array([0.0, 3., .5, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), mpc_H, 0)
+        np.array([0.0, 3., .5, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NL, 0)
     p_manual_H = np.repeat(np.expand_dims(
-        np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
+        np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
 
     idx_to_casadi = [7,1,2,3,4,5,10,11]
     idx_to_NN = [1,2,4]
@@ -172,15 +172,15 @@ else:
 
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = np.repeat(np.expand_dims(
-        np.array([0, 3.0, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), mpc_T, 0)
+        np.array([0, 3.0, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NS, 0)
     p_manual = np.repeat(np.expand_dims(
-        np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
+        np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
     Q_manual_H = np.repeat(np.expand_dims(
-        np.array([0, 3.0, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), mpc_H, 0)
+        np.array([0, 3.0, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NL, 0)
     p_manual_H = np.repeat(np.expand_dims(
-        np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
+        np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
 
     idx_to_casadi = [5,1,2,3,8,9]
     idx_to_NN = [1,2,3]
@@ -188,13 +188,13 @@ else:
 grad_method = GradMethods.AUTO_DIFF
 
 # Bounds and init for control variables 
-u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)
-u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)
-u_init= torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS, 1)
+u_lower = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(NS, BS, 1)
+u_upper = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(NS, BS, 1)
+u_init= torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(NS, BS, 1)
 
-u_lower_val = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
-u_upper_val = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(dev)
-u_init_val = torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, BS_val, 1)#.to(device)
+u_lower_val = torch.tensor([-a_max, -delta_max]).unsqueeze(0).unsqueeze(0).repeat(NS, BS_val, 1)#.to(dev)
+u_upper_val = torch.tensor([a_max, delta_max]).unsqueeze(0).unsqueeze(0).repeat(NS, BS_val, 1)#.to(dev)
+u_init_val = torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(NS, BS_val, 1)#.to(device)
 
 
 
@@ -202,7 +202,7 @@ u_init_val = torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(mpc_T, 
 ################### M O D E L  &  T R A I N ##############################################
 ##########################################################################################
 
-model = utils.TCN2(mpc_H, n_Q, 5, max_p)
+model = utils.TCN2(NL, n_Q, 5, max_p)
 opt = torch.optim.AdamW(model.parameters(), lr=2e-4, weight_decay=1e-4)
 
 its_per_epoch = 40
@@ -224,15 +224,15 @@ for ep in range(epochs):
         model.train()
         x0 = utils_car.sample_init(BS, true_dx).float()
 
-        curv = utils.get_curve_hor_from_x(x0, track_coord, mpc_H)
+        curv = utils.get_curve_hor_from_x(x0, track_coord, NL)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
 
         # Normalizing input
-        inp_norm = inp/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
+        inp_norm = inp/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(NL*[3.333])))
 
         q_p_pred = model(inp_norm)
 
-        q, p = utils_car.q_and_p(mpc_T, q_p_pred, Q_manual, p_manual)
+        q, p = utils_car.q_and_p(NS, q_p_pred, Q_manual, p_manual)
         Q = torch.diag_embed(q, offset=0, dim1=-2, dim2=-1)
 
         q_manual_casadi = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
@@ -256,7 +256,7 @@ for ep in range(epochs):
         u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)
 
         pred_x, pred_u, pred_objs = mpc.MPC(
-                    true_dx.n_state, true_dx.n_ctrl, mpc_T,
+                    true_dx.n_state, true_dx.n_ctrl, NS,
                     u_lower=u_lower, u_upper=u_upper, u_init=u_init,
                     lqr_iter=lqr_iter,
                     verbose=0,
@@ -276,13 +276,13 @@ for ep in range(epochs):
             + (u_true_torch_S[:, :, 1] - pred_u[:, :, 1])**2).mean(0)
         args_conv = torch.argwhere(diff_shorts<0.005)
 
-        loss_dsigma = ((x_true_torch[:mpc_T, args_conv, 5] - pred_x[:mpc_T, args_conv, 5])**2).sum(0).mean()
-        loss_d = ((x_true_torch[:mpc_T, args_conv, 1] - pred_x[:mpc_T, args_conv, 1])**2).sum(0).mean()
-        loss_phi = ((x_true_torch[:mpc_T, args_conv, 2] - pred_x[:mpc_T, args_conv, 2])**2).sum(0).mean()
-        loss_v = ((x_true_torch[:mpc_T, args_conv, 3] - pred_x[:mpc_T, args_conv, 3])**2).sum(0).mean()
+        loss_dsigma = ((x_true_torch[:NS, args_conv, 5] - pred_x[:NS, args_conv, 5])**2).sum(0).mean()
+        loss_d = ((x_true_torch[:NS, args_conv, 1] - pred_x[:NS, args_conv, 1])**2).sum(0).mean()
+        loss_phi = ((x_true_torch[:NS, args_conv, 2] - pred_x[:NS, args_conv, 2])**2).sum(0).mean()
+        loss_v = ((x_true_torch[:NS, args_conv, 3] - pred_x[:NS, args_conv, 3])**2).sum(0).mean()
 
-        loss_a = ((u_true_torch[:mpc_T, args_conv, 0] - pred_u[:mpc_T, args_conv, 0])**2).sum(0).mean()
-        loss_delta = ((u_true_torch[:mpc_T, args_conv, 1] - pred_u[:mpc_T, args_conv, 1])**2).sum(0).mean()
+        loss_a = ((u_true_torch[:NS, args_conv, 0] - pred_u[:NS, args_conv, 0])**2).sum(0).mean()
+        loss_delta = ((u_true_torch[:NS, args_conv, 1] - pred_u[:NS, args_conv, 1])**2).sum(0).mean()
 
         # The constants below is for normalization purpose, 
         # to avoid giving more emphasis in a specific term
@@ -316,12 +316,12 @@ for ep in range(epochs):
                 # This sampling should bring always the same set of initial states (sn fixed)
                 x0_val = utils_car.sample_init(BS_val, true_dx, sn=0).float()
 
-                curv_val = utils_new.get_curve_hor_from_x(x0_val, track_coord, mpc_H)
+                curv_val = utils_new.get_curve_hor_from_x(x0_val, track_coord, NL)
                 inp_val = torch.hstack((x0_val[:,idx_to_NN], curv_val))
-                inp_val_norm = inp_val/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
+                inp_val_norm = inp_val/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(NL*[3.333])))
                 q_p_pred_val = model(inp_val_norm)
 
-                q_val, p_val = utils_car.q_and_p(mpc_T, q_p_pred_val, Q_manual, p_manual)
+                q_val, p_val = utils_car.q_and_p(NS, q_p_pred_val, Q_manual, p_manual)
                 Q_val = torch.diag_embed(q_val, offset=0, dim1=-2, dim2=-1)
 
                 q_val_np_casadi = torch.permute(q_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
@@ -338,13 +338,13 @@ for ep in range(epochs):
                     x0_val.detach().numpy()[:,:6], BS_val, dx, du, control_H)
 
 
-                loss_dsigma_val = ((x_true_val[:mpc_T, :, 5] - x_pred_val[:mpc_T, :, 5])**2).sum(0).mean()
-                loss_d_val = ((x_true_val[:mpc_T, :, 1] - x_pred_val[:mpc_T, :, 1])**2).sum(0).mean()
-                loss_phi_val = ((x_true_val[:mpc_T, :, 2] - x_pred_val[:mpc_T, :, 2])**2).sum(0).mean()
-                loss_v_val = ((x_true_val[:mpc_T, :, 3] - x_pred_val[:mpc_T, :, 3])**2).sum(0).mean()
+                loss_dsigma_val = ((x_true_val[:NS, :, 5] - x_pred_val[:NS, :, 5])**2).sum(0).mean()
+                loss_d_val = ((x_true_val[:NS, :, 1] - x_pred_val[:NS, :, 1])**2).sum(0).mean()
+                loss_phi_val = ((x_true_val[:NS, :, 2] - x_pred_val[:NS, :, 2])**2).sum(0).mean()
+                loss_v_val = ((x_true_val[:NS, :, 3] - x_pred_val[:NS, :, 3])**2).sum(0).mean()
 
-                loss_a_val = ((u_true_val[:mpc_T, :, 0] - u_pred_val[:mpc_T, :, 0])**2).sum(0).mean()
-                loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_pred_val[:mpc_T, :, 1])**2).sum(0).mean()
+                loss_a_val = ((u_true_val[:NS, :, 0] - u_pred_val[:NS, :, 0])**2).sum(0).mean()
+                loss_delta_val = ((u_true_val[:NS, :, 1] - u_pred_val[:NS, :, 1])**2).sum(0).mean()
 
                 loss_val = 100*loss_dsigma_val + 10*loss_d_val + 0.1*loss_phi_val + 0.01*loss_a_val + 0.1*loss_delta_val
 
