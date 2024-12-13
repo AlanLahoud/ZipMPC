@@ -518,7 +518,7 @@ def solve_casadi(q_np,p_np,x0_np,dx,du,control):
 
     mpc_T = q_np.shape[1]
 
-    x_curr_opt, u_curr_opt = control.mpc_casadi_dyn(q_np,p_np,x0_np,dx,du)
+    x_curr_opt, u_curr_opt = control.mpc_casadi(q_np,p_np,x0_np,dx,du)
 
     sigzero_curr_opt = np.expand_dims(x_curr_opt[[0],0].repeat(mpc_T+1), 1)
     sigsiff_curr_opt = x_curr_opt[:,[0]]-x_curr_opt[0,0]
@@ -532,7 +532,7 @@ def solve_casadi(q_np,p_np,x0_np,dx,du,control):
     return x_star, u_star
 
 def process_single_casadi(sample, q, p, x0, dx, du, control):
-    x, u = solve_casadi_dyn(
+    x, u = solve_casadi(
         q[:,sample], p[:,sample],
         x0[sample], dx, du, control)
     return sample, x, u
@@ -543,7 +543,7 @@ def solve_casadi_parallel(q, p, x0, BS, dx, du, control):
 
     with ProcessPoolExecutor(max_workers=4) as executor:
         futures = [executor.submit(
-            process_single_casadi_dyn,
+            process_single_casadi,
             sample, q, p, x0, dx, du, control) for sample in range(BS)]
 
         for future in futures:
