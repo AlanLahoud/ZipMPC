@@ -255,7 +255,7 @@ for ep in range(epochs):
         p_manual_casadi_S = torch.permute(p[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
         x_true_S, u_true_S = utils_car.solve_casadi_parallel(
             q_manual_casadi_S, p_manual_casadi_S,
-            x0.detach().numpy()[:,:dx], BS, dx, du, control)
+            x0.detach().numpy()[:,:dx+2], BS, dx, du, control)
 
         x_true_torch_S = torch.tensor(x_true_S, dtype=torch.float32)
         u_true_torch_S = torch.tensor(u_true_S, dtype=torch.float32)
@@ -333,14 +333,14 @@ for ep in range(epochs):
                 p_val_np_casadi = torch.permute(p_val[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                 x_pred_val, u_pred_val = utils_car.solve_casadi_parallel(
                     q_val_np_casadi, p_val_np_casadi,
-                    x0_val.detach().numpy()[:,:6], BS_val, dx, du, control)
+                    x0_val.detach().numpy()[:,:dx+2], BS_val, dx, du, control)
 
                 q_manual_casadi_val = np.expand_dims((Q_manual_H[:,idx_to_casadi].T), 1)
                 p_manual_casadi_val = np.expand_dims((p_manual_H[:,idx_to_casadi].T), 1)
                 x_true_val, u_true_val = utils_car.solve_casadi_parallel(
                     np.repeat(q_manual_casadi_val, BS_val, 1),
                     np.repeat(p_manual_casadi_val, BS_val, 1),
-                    x0_val.detach().numpy()[:,:6], BS_val, dx, du, control_H)
+                    x0_val.detach().numpy()[:,:dx+2], BS_val, dx, du, control_H)
 
 
                 loss_dsigma_val = ((x_true_val[:NS, :, 5] - x_pred_val[:NS, :, 5])**2).sum(0).mean()
