@@ -453,9 +453,9 @@ def sample_init(BS, dyn, sn=None):
         gen.manual_seed(sn)
 
     di = 1000
-    sigma_sample = torch.randint(int(0.0*di), int(14.5*di), (BS,1), generator=gen)/di
-    d_sample = torch.randint(int(-0.13*di), int(0.13*di), (BS,1), generator=gen)/di
-    phi_sample = torch.randint(int(-0.4*di), int(0.4*di), (BS,1), generator=gen)/di
+    sigma_sample = torch.randint(int(0.0*di), int(16.0*di), (BS,1), generator=gen)/di
+    d_sample = torch.randint(int(-0.15*di), int(0.17*di), (BS,1), generator=gen)/di
+    phi_sample = torch.randint(int(-0.7*di), int(0.7*di), (BS,1), generator=gen)/di
     r_sample = torch.randint(int(-0.01*di), int(0.01*di), (BS,1), generator=gen)/di
     vx_sample = torch.randint(int(0.1*di), int(1.8*di), (BS,1), generator=gen)/di
     vy_sample = torch.randint(int(0.0*di), int(0.03*di), (BS,1), generator=gen)/di

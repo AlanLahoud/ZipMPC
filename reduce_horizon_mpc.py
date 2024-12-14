@@ -95,7 +95,7 @@ BS_val = 80
 BS_test = 1
 
 # N epochs
-epochs = 20
+epochs = 30
 
 # Model path to save
 str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{delta_max}_{v_max}_{p_sigma_manual}'
@@ -206,7 +206,7 @@ u_init_val = torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(NS, BS_
 ##########################################################################################
 
 model = utils.TCN(NL, n_Q, 5, max_p)
-opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=1e-4)
 
 its_per_epoch = 20
 
@@ -227,6 +227,7 @@ for ep in range(epochs):
     for it in range(its_per_epoch):
 
         model.train()
+        
         x0 = utils_car.sample_init(BS, true_dx).float()
 
         curv = utils.get_curve_hor_from_x(x0, track_coord, NL)
@@ -379,5 +380,5 @@ for ep in range(epochs):
 
                 else:
                     counter_term = counter_term + 1
-                    if counter_term>=3:
+                    if counter_term>=4:
                         sys.exit()
