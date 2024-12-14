@@ -281,7 +281,7 @@ for ep in range(epochs):
             + (u_true_torch_S[:, :, 1] - pred_u[:, :, 1])**2).mean(0)
         args_conv = torch.argwhere(diff_shorts<0.005)
 
-        loss_dsigma = ((x_true_torch[:NS, args_conv, 5] - pred_x[:NS, args_conv, 5])**2).sum(0).mean()
+        loss_dsigma = ((x_true_torch[:NS, args_conv, idx_to_casadi[0]] - pred_x[:NS, args_conv, idx_to_casadi[0]])**2).sum(0).mean()
         loss_d = ((x_true_torch[:NS, args_conv, 1] - pred_x[:NS, args_conv, 1])**2).sum(0).mean()
         loss_phi = ((x_true_torch[:NS, args_conv, 2] - pred_x[:NS, args_conv, 2])**2).sum(0).mean()
         loss_v = ((x_true_torch[:NS, args_conv, 3] - pred_x[:NS, args_conv, 3])**2).sum(0).mean()

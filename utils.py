@@ -95,3 +95,20 @@ def get_curve_hor_from_x(x, track_coord, H_curve):
     assert curvs.shape[1] == H_curve, f"Curvs does not match H_curve: {curvs.shape[1]} != {H_curve}"
     
     return curvs
+
+
+def compute_x_coord(point_f, ref_path, nearest_index):
+    return ref_path[0,nearest_index] - point_f[1]*torch.sin(ref_path[3,nearest_index])
+
+def compute_y_coord(point_f, ref_path, nearest_index):
+    return ref_path[1,nearest_index] + point_f[1]*torch.cos(ref_path[3,nearest_index])
+
+def get_nearest_index(point_f, ref_path):
+    return ((point_f[0] - ref_path[2,:])**2).argmin()
+
+def frenet_to_cartesian(point_f, ref_path):
+    nearest_index = get_nearest_index(point_f, ref_path)
+    x = compute_x_coord(point_f, ref_path, nearest_index)
+    y = compute_y_coord(point_f, ref_path, nearest_index)    
+    y = compute_y_coord(point_f, ref_path, nearest_index)
+    return torch.tensor([x, y])
