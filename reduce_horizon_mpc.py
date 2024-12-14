@@ -346,7 +346,7 @@ for ep in range(epochs):
                     x0_val.detach().numpy()[:,:dx+2], BS_val, dx, du, control_H)
 
 
-                loss_dsigma_val = ((x_true_val[:NS, :, 5] - x_pred_val[:NS, :, 5])**2).sum(0).mean()
+                loss_dsigma_val = ((x_true_val[:NS, :, idx_to_casadi[0]] - x_pred_val[:NS, :, idx_to_casadi[0]])**2).sum(0).mean()
                 loss_d_val = ((x_true_val[:NS, :, 1] - x_pred_val[:NS, :, 1])**2).sum(0).mean()
                 loss_phi_val = ((x_true_val[:NS, :, 2] - x_pred_val[:NS, :, 2])**2).sum(0).mean()
                 loss_v_val = ((x_true_val[:NS, :, 3] - x_pred_val[:NS, :, 3])**2).sum(0).mean()
