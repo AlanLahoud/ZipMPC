@@ -201,6 +201,98 @@ u_init_val = torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(NS, BS_
 
 
 
+
+# Get initial lap_time
+
+# This sampling should bring always the same set of initial states
+x0_lap = utils_car.sample_init_test(1, true_dx, sn=0).numpy()
+
+x0_lap_manual = x0_lap[:,:dx+4]
+
+finish_list = np.zeros((BS_test,))
+lap_time_list = np.zeros((BS_test,))
+
+finished = 0
+crashed = 0
+steps = 0
+max_steps=500
+
+x0_b_manual = x0_lap_manual[0].copy()
+x_manual_full_H = x0_b_manual.reshape(-1,1)
+
+while finished==0 and crashed==0:
+    q_lap_manual_casadi = Q_manual_H[:,idx_to_casadi].T
+    p_lap_manual_casadi = p_manual_H[:,idx_to_casadi].T
+
+    x_b_manual, u_b_manual = utils_car.solve_casadi(
+        q_lap_manual_casadi, p_lap_manual_casadi,
+        x0_b_manual, dx, du, control_H)
+
+    x0_b_manual = x_b_manual[1]
+    x_manual_full_H = np.append(x_manual_full_H, x0_b_manual.reshape(-1,1), axis=1)
+    #print("x_manual:", x_b_manual[1])
+
+    if x0_b_manual[0]>track_coord[2].max().numpy()/2:
+        finished=1
+
+    if x0_b_manual[1]>bound_d_casadi+0.001 or x0_b_manual[1]<-bound_d_casadi-0.001 or steps>max_steps:
+        crashed=1
+
+    steps = steps+1
+    #print("long horizon step:", steps)
+
+lap_time = dt*steps
+
+finish_list[b] = finished
+lap_time_list[b] = lap_time
+
+print(f'Manual extended mpc_H = {mpc_H}, lap time: {lap_time}')
+
+
+
+
+finish_list = np.zeros((BS_test,))
+lap_time_list = np.zeros((BS_test,))
+
+finished = 0
+crashed = 0
+steps = 0
+max_steps=1500
+
+x0_b_manual = x0_lap_manual[0].copy()
+x_manual_full = x0_b_manual.reshape(-1,1)
+
+while finished==0 and crashed==0:
+    q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
+    p_lap_manual_casadi = p_manual[:,idx_to_casadi].T
+
+    x_b_manual, u_b_manual = utils_car.solve_casadi(
+        q_lap_manual_casadi, p_lap_manual_casadi,
+        x0_b_manual, dx, du, control)
+
+    x0_b_manual = x_b_manual[1]
+    x_manual_full = np.append(x_manual_full, x0_b_manual.reshape(-1,1), axis=1)
+
+    if x0_b_manual[0]>track_coord[2].max().numpy()/2:
+        finished=1
+
+    if x0_b_manual[1]>bound_d_casadi+0.001 or x0_b_manual[1]<-bound_d_casadi-0.001 or steps>max_steps:
+        crashed=1
+
+    steps = steps+1
+    #print("short horizon step:", steps)
+
+lap_time = dt*steps
+
+finish_list[b] = finished
+lap_time_list[b] = lap_time
+
+print(f'Manual mpc_T = {mpc_T}, lap time: {lap_time}')
+
+x_current_full = x_manual_full
+current_time = lap_time
+
+
 ##########################################################################################
 ################### M O D E L  &  T R A I N ##############################################
 ##########################################################################################
@@ -224,11 +316,16 @@ for ep in range(epochs):
     loss_a_avg = 0.
     loss_delta_avg = 0.
 
+    x_star = np.transpose(x_current_full)
+
     for it in range(its_per_epoch):
 
         model.train()
         
-        x0 = utils_car.sample_init(BS, true_dx).float()
+        x0_1 = utils_car.sample_init(BS//2, true_dx).float()
+        x0_2 = utils_car.sample_init_traj_dist(BS//2, true_dx, x_star, 20).float()
+
+        x0 = torch.vstack((x0_1, x0_2))
 
         curv = utils.get_curve_hor_from_x(x0, track_coord, NL)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
@@ -373,12 +470,87 @@ for ep in range(epochs):
                       round(0.1*loss_delta_val.item(), 5),
                       round(loss_val.item(), 5))
                 
-                if loss_val <= loss_val_best:
-                    counter_term = 0
-                    loss_val_best = loss_val
+                #if loss_val <= loss_val_best:
+                #    counter_term = 0
+                #    loss_val_best = loss_val
+                #    torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
+
+                #else:
+                #    counter_term = counter_term + 1
+                #    if counter_term>=4:
+                #        sys.exit()
+
+
+
+
+            # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
+            model.eval()
+            with torch.no_grad():
+
+                # This sampling should bring always the same set of initial states
+                x0_lap = utils_car.sample_init_test(BS_test, true_dx, sn=0).numpy()
+
+                x0_lap_pred = x0_lap[:,:dx+4]
+                x0_lap_manual = x0_lap[:,:dx+4]
+
+                finish_list = np.zeros((BS_test,))
+                lap_time_list = np.zeros((BS_test,))
+
+                finished = 0
+                crashed = 0
+                steps = 0
+                max_steps=500
+
+                x0_b_pred = x0_lap_pred[0].copy()
+
+                x_pred_full = x0_b_pred.reshape(-1,1)
+
+                while finished==0 and crashed==0:
+
+                    x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
+                    curv_lap = utils.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
+                    inp_lap = torch.hstack((x0_lap_pred_torch[:,idx_to_NN], curv_lap))
+                    inp_lap_norm = inp_lap/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
+                    q_p_pred_lap = model(inp_lap_norm)
+                    q_lap, p_lap = utils_car.q_and_p(mpc_T, q_p_pred_lap, Q_manual, p_manual)
+
+                    q_lap_np_casadi = torch.permute(q_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+                    p_lap_np_casadi = torch.permute(p_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
+
+
+                    x_b_pred, u_b_pred = utils_car.solve_casadi(
+                        q_lap_np_casadi[:,0,:], p_lap_np_casadi[:,0,:],
+                        x0_b_pred, dx, du, control)
+
+                    x0_b_pred = true_dx.forward((torch.tensor(x0_b_pred)).unsqueeze(0), 
+                                                  torch.tensor(u_b_pred)[0:1]).squeeze()[:dx+4].detach().numpy()
+                    
+                    x_pred_full = np.append(x_pred_full, x0_b_pred.reshape(-1,1), axis=1)
+
+                    if x0_b_pred[0]>track_coord[2].max().numpy()/2:
+                        finished=1
+
+                    if x0_b_pred[1]>bound_d_casadi+0.04 or x0_b_pred[1]<-bound_d_casadi-0.04 or steps>max_steps:
+                        crashed=1
+
+                    steps = steps+1
+
+                lap_time = dt*steps
+
+                x_current_full = x_pred_full
+                if finished == 1 and lap_time <= current_time:
+                    current_time = lap_time
+                    q_current = q_lap_np_casadi
+                    p_current = p_lap
                     torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
 
-                else:
-                    counter_term = counter_term + 1
-                    if counter_term>=4:
-                        sys.exit()
+
+                print(f'current lap time: {current_time} \t Pred lap time: {lap_time} \t Finished: {finished}')
+
+                try:
+                    print(x_pred_full[0,60], x_pred_full[0,90], x_pred_full[0,120], x_pred_full[0,150], x_pred_full[0,180])
+                    print(x_manual_full_H[0,60], x_manual_full_H[0,90], x_manual_full_H[0,120], x_manual_full_H[0,150], x_manual_full_H[0,180])
+                except:
+                    print('crash')
+
+
