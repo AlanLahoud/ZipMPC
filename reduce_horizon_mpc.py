@@ -207,7 +207,7 @@ u_init_val = torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(NS, BS_
 # This sampling should bring always the same set of initial states
 x0_lap = utils_car.sample_init_test(1, true_dx, sn=0).numpy()
 
-x0_lap_manual = x0_lap[:,:dx+2]
+x0_lap_manual = x0_lap[:,:dx+4]
 
 finish_list = np.zeros((BS_test,))
 lap_time_list = np.zeros((BS_test,))
@@ -217,7 +217,7 @@ crashed = 0
 steps = 0
 max_steps=500
 
-x0_b_manual = x0_lap_manual[0].copy()
+x0_b_manual = x0_lap_manual[0, :dx+2].copy()
 x_manual_full_H = x0_b_manual.reshape(-1,1)
 
 while finished==0 and crashed==0:
