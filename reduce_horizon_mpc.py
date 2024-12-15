@@ -207,7 +207,7 @@ u_init_val = torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(NS, BS_
 # This sampling should bring always the same set of initial states
 x0_lap = utils_car.sample_init_test(1, true_dx, sn=0).numpy()
 
-x0_lap_manual = x0_lap[:,:dx+4]
+x0_lap_manual = x0_lap[:,:dx+2]
 
 finish_list = np.zeros((BS_test,))
 lap_time_list = np.zeros((BS_test,))
@@ -242,9 +242,6 @@ while finished==0 and crashed==0:
     #print("long horizon step:", steps)
 
 lap_time = dt*steps
-
-finish_list[b] = finished
-lap_time_list[b] = lap_time
 
 print(f'Manual extended mpc_H = {mpc_H}, lap time: {lap_time}')
 
@@ -283,9 +280,6 @@ while finished==0 and crashed==0:
     #print("short horizon step:", steps)
 
 lap_time = dt*steps
-
-finish_list[b] = finished
-lap_time_list[b] = lap_time
 
 print(f'Manual mpc_T = {mpc_T}, lap time: {lap_time}')
 
