@@ -228,7 +228,11 @@ while finished==0 and crashed==0:
         q_lap_manual_casadi, p_lap_manual_casadi,
         x0_b_manual, dx, du, control_H)
 
-    x0_b_manual = x_b_manual[1]
+    #x0_b_manual = x_b_manual[1]
+
+    x0_b_manual = true_dx.forward((torch.tensor(x0_b_manual)).unsqueeze(0), 
+                                                  torch.tensor(u_b_manual)[0:1]).squeeze()[:dx+4].detach().numpy()
+    
     x_manual_full_H = np.append(x_manual_full_H, x0_b_manual.reshape(-1,1), axis=1)
     #print("x_manual:", x_b_manual[1])
 
@@ -267,7 +271,11 @@ while finished==0 and crashed==0:
         q_lap_manual_casadi, p_lap_manual_casadi,
         x0_b_manual, dx, du, control)
 
-    x0_b_manual = x_b_manual[1]
+    #x0_b_manual = x_b_manual[1]
+
+    x0_b_manual = true_dx.forward((torch.tensor(x0_b_manual)).unsqueeze(0), 
+                                                  torch.tensor(u_b_manual)[0:1]).squeeze()[:dx+4].detach().numpy()
+    
     x_manual_full = np.append(x_manual_full, x0_b_manual.reshape(-1,1), axis=1)
 
     if x0_b_manual[0]>track_coord[2].max().numpy()/2:
