@@ -243,7 +243,7 @@ while finished==0 and crashed==0:
 
 lap_time = dt*steps
 
-print(f'Manual extended mpc_H = {mpc_H}, lap time: {lap_time}')
+print(f'Manual extended NL = {NL}, lap time: {lap_time}')
 
 
 
@@ -281,7 +281,7 @@ while finished==0 and crashed==0:
 
 lap_time = dt*steps
 
-print(f'Manual mpc_T = {mpc_T}, lap time: {lap_time}')
+print(f'Manual NS = {NS}, lap time: {lap_time}')
 
 x_current_full = x_manual_full
 current_time = lap_time
@@ -502,11 +502,11 @@ for ep in range(epochs):
                 while finished==0 and crashed==0:
 
                     x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
-                    curv_lap = utils.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, mpc_H)
+                    curv_lap = utils.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, NL)
                     inp_lap = torch.hstack((x0_lap_pred_torch[:,idx_to_NN], curv_lap))
-                    inp_lap_norm = inp_lap/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(mpc_H*[3.333])))
+                    inp_lap_norm = inp_lap/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(NL*[3.333])))
                     q_p_pred_lap = model(inp_lap_norm)
-                    q_lap, p_lap = utils_car.q_and_p(mpc_T, q_p_pred_lap, Q_manual, p_manual)
+                    q_lap, p_lap = utils_car.q_and_p(NS, q_p_pred_lap, Q_manual, p_manual)
 
                     q_lap_np_casadi = torch.permute(q_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
                     p_lap_np_casadi = torch.permute(p_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
