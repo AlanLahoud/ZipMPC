@@ -217,7 +217,7 @@ crashed = 0
 steps = 0
 max_steps=500
 
-x0_b_manual = x0_lap_manual[0, :dx+2].copy()
+x0_b_manual = x0_lap_manual[0].copy()
 x_manual_full_H = x0_b_manual.reshape(-1,1)
 
 while finished==0 and crashed==0:
