@@ -150,13 +150,13 @@ if dyn_model=='kin':
     true_dx = utils_car.FrenetKinBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = np.repeat(np.expand_dims(
-        np.array([0.0, 3.0, 0.5, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NS, 0)
+        np.array([0.0, 3.0, 3.0, 0.01, 0.01, 0.01, 1, 1, 0.01, 3.0]), 0), NS, 0)
     p_manual = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
     Q_manual_H = np.repeat(np.expand_dims(
-        np.array([0.0, 3., .5, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NL, 0)
+        np.array([0.0, 3.0, 3.0, 0.01, 0.01, 0.01, 1, 1, 0.01, 3.0]), 0), NL, 0)
     p_manual_H = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
 
@@ -174,13 +174,13 @@ else:
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = np.repeat(np.expand_dims(
-        np.array([0, 3.0, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NS, 0)
+        np.array([0.0, 3.0, 3.0, 0.01, 0.01, 0.01, 1, 1, 0.01, 3.0]), 0), NS, 0)
     p_manual = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
     Q_manual_H = np.repeat(np.expand_dims(
-        np.array([0, 3.0, 0.5, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.5]), 0), NL, 0)
+        np.array([0.0, 3.0, 3.0, 0.01, 0.01, 0.01, 1, 1, 0.01, 3.0]), 0), NL, 0)
     p_manual_H = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
     
@@ -206,7 +206,7 @@ u_init_val = torch.tensor([a_max, 0.0]).unsqueeze(0).unsqueeze(0).repeat(NS, BS_
 ##########################################################################################
 
 model = utils.TCN(NL, n_Q, 5, max_p)
-opt = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=8e-5, weight_decay=1e-4)
 
 its_per_epoch = 20
 
