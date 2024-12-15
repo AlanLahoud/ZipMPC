@@ -278,17 +278,17 @@ for ep in range(epochs):
         # To use only samples such that the differentiable MPC converged 
         # to approx the same as casadi
         diff_shorts = (
-            (u_true_torch_S[:, :, 0] - pred_u[:, :, 0])**2 
-            + (u_true_torch_S[:, :, 1] - pred_u[:, :, 1])**2).mean(0)
+            (u_true_torch_S[:5, :, 0] - pred_u[:5, :, 0])**2 
+            + (u_true_torch_S[:5, :, 1] - pred_u[:5, :, 1])**2).mean(0)
         args_conv = torch.argwhere(diff_shorts<0.005)
 
-        loss_dsigma = ((x_true_torch[:NS, args_conv, idx_to_casadi[0]] - pred_x[:NS, args_conv, idx_to_casadi[0]])**2).sum(0).mean()
-        loss_d = ((x_true_torch[:NS, args_conv, 1] - pred_x[:NS, args_conv, 1])**2).sum(0).mean()
-        loss_phi = ((x_true_torch[:NS, args_conv, 2] - pred_x[:NS, args_conv, 2])**2).sum(0).mean()
-        loss_v = ((x_true_torch[:NS, args_conv, 3] - pred_x[:NS, args_conv, 3])**2).sum(0).mean()
+        loss_dsigma = ((x_true_torch[:5, args_conv, idx_to_casadi[0]] - pred_x[:5, args_conv, idx_to_casadi[0]])**2).sum(0).mean()
+        loss_d = ((x_true_torch[:5, args_conv, 1] - pred_x[:5, args_conv, 1])**2).sum(0).mean()
+        loss_phi = ((x_true_torch[:5, args_conv, 2] - pred_x[:5, args_conv, 2])**2).sum(0).mean()
+        loss_v = ((x_true_torch[:5, args_conv, 3] - pred_x[:5, args_conv, 3])**2).sum(0).mean()
 
-        loss_a = ((u_true_torch[:NS, args_conv, 0] - pred_u[:NS, args_conv, 0])**2).sum(0).mean()
-        loss_delta = ((u_true_torch[:NS, args_conv, 1] - pred_u[:NS, args_conv, 1])**2).sum(0).mean()
+        loss_a = ((u_true_torch[:5, args_conv, 0] - pred_u[:5, args_conv, 0])**2).sum(0).mean()
+        loss_delta = ((u_true_torch[:5, args_conv, 1] - pred_u[:5, args_conv, 1])**2).sum(0).mean()
 
         # The constants below is for normalization purpose, 
         # to avoid giving more emphasis in a specific term
@@ -347,13 +347,13 @@ for ep in range(epochs):
                     x0_val.detach().numpy()[:,:dx+2], BS_val, dx, du, control_H)
 
 
-                loss_dsigma_val = ((x_true_val[:NS, :, idx_to_casadi[0]] - x_pred_val[:NS, :, idx_to_casadi[0]])**2).sum(0).mean()
-                loss_d_val = ((x_true_val[:NS, :, 1] - x_pred_val[:NS, :, 1])**2).sum(0).mean()
-                loss_phi_val = ((x_true_val[:NS, :, 2] - x_pred_val[:NS, :, 2])**2).sum(0).mean()
-                loss_v_val = ((x_true_val[:NS, :, 3] - x_pred_val[:NS, :, 3])**2).sum(0).mean()
+                loss_dsigma_val = ((x_true_val[:5, :, idx_to_casadi[0]] - x_pred_val[:5, :, idx_to_casadi[0]])**2).sum(0).mean()
+                loss_d_val = ((x_true_val[:5, :, 1] - x_pred_val[:5, :, 1])**2).sum(0).mean()
+                loss_phi_val = ((x_true_val[:5, :, 2] - x_pred_val[:5, :, 2])**2).sum(0).mean()
+                loss_v_val = ((x_true_val[:5, :, 3] - x_pred_val[:5, :, 3])**2).sum(0).mean()
 
-                loss_a_val = ((u_true_val[:NS, :, 0] - u_pred_val[:NS, :, 0])**2).sum(0).mean()
-                loss_delta_val = ((u_true_val[:NS, :, 1] - u_pred_val[:NS, :, 1])**2).sum(0).mean()
+                loss_a_val = ((u_true_val[:5, :, 0] - u_pred_val[:5, :, 0])**2).sum(0).mean()
+                loss_delta_val = ((u_true_val[:5, :, 1] - u_pred_val[:5, :, 1])**2).sum(0).mean()
 
                 loss_val = 100*loss_dsigma_val + 10*loss_d_val + 0.1*loss_phi_val + 0.01*loss_a_val + 0.1*loss_delta_val
 
