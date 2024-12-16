@@ -299,7 +299,7 @@ current_time = lap_time
 ################### M O D E L  &  T R A I N ##############################################
 ##########################################################################################
 
-model = utils.TCN(NL, n_Q, 5, max_p)
+model = utils.TCN(NL, n_Q, 8, max_p)
 opt = torch.optim.AdamW(model.parameters(), lr=8e-5, weight_decay=1e-4)
 
 its_per_epoch = 20
