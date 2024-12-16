@@ -239,7 +239,7 @@ while finished==0 and crashed==0:
     if x0_b_manual[0]>track_coord[2].max().numpy()/2:
         finished=1
 
-    if x0_b_manual[1]>bound_d_casadi+0.001 or x0_b_manual[1]<-bound_d_casadi-0.001 or steps>max_steps:
+    if x0_b_manual[1]>bound_d_casadi+0.04 or x0_b_manual[1]<-bound_d_casadi-0.04 or steps>max_steps:
         crashed=1
 
     steps = steps+1
@@ -281,7 +281,7 @@ while finished==0 and crashed==0:
     if x0_b_manual[0]>track_coord[2].max().numpy()/2:
         finished=1
 
-    if x0_b_manual[1]>bound_d_casadi+0.001 or x0_b_manual[1]<-bound_d_casadi-0.001 or steps>max_steps:
+    if x0_b_manual[1]>bound_d_casadi+0.04 or x0_b_manual[1]<-bound_d_casadi-0.04 or steps>max_steps:
         crashed=1
 
     steps = steps+1
