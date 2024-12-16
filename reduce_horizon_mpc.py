@@ -95,7 +95,7 @@ BS_val = 80
 BS_test = 1
 
 # N epochs
-epochs = 30
+epochs = 25
 
 # Model path to save
 str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{delta_max}_{v_max}_{p_sigma_manual}'
