@@ -78,7 +78,7 @@ else:
 l_f = l_r
 
 # Curve smoothness
-k_curve = 25.
+k_curve = 15.
 
 #discretization
 dt = 0.03
@@ -95,7 +95,7 @@ BS_val = 80
 BS_test = 1
 
 # N epochs
-epochs = 25
+epochs = 20
 
 # Model path to save
 str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{delta_max}_{v_max}_{p_sigma_manual}'
@@ -324,10 +324,12 @@ for ep in range(epochs):
 
         model.train()
         
-        x0_1 = utils_car.sample_init(BS//2, true_dx).float()
-        x0_2 = utils_car.sample_init_traj_dist(BS//2, true_dx, x_star, 20).float()
+        #x0_1 = utils_car.sample_init(BS//2, true_dx).float()
+        #x0_2 = utils_car.sample_init_traj_dist(BS//2, true_dx, x_star, 20).float()
 
-        x0 = torch.vstack((x0_1, x0_2))
+        #x0 = torch.vstack((x0_1, x0_2))
+
+        x0= utils_car.sample_init(BS, true_dx).float()
 
         curv = utils.get_curve_hor_from_x(x0, track_coord, NL)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
