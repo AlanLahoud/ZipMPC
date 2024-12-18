@@ -26,8 +26,7 @@ def parse_arguments():
     parser.add_argument('--NS', type=int, default=10)
     parser.add_argument('--NL', type=int, default=20)
     parser.add_argument('--n_Q', type=int, default=1)
-    parser.add_argument('--v_max', type=float, default=1.8)
-    parser.add_argument('--delta_max', type=float, default=0.55)
+    parser.add_argument('--v_max', type=float, default=1.5)
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
 
     return parser.parse_args()
@@ -58,7 +57,6 @@ n_Q = args.n_Q # Number of learnable parameters through the short horizon
 assert n_Q<=NS
 
 v_max = args.v_max
-delta_max = args.delta_max
 
 # Manual progress cost parameter (initial guess)
 p_sigma_manual = args.p_sigma_manual
@@ -68,17 +66,20 @@ seed_n= args.seed_n
 torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
-
 # Car axis length
-if dyn_model=='kin':
-    l_r = 0.10
-
-else:
-    l_r = 0.03
+l_r = 0.05
 l_f = l_r
 
+
+if dyn_model=='kin':
+    delta_max = 0.40
+
+else:
+    delta_max = 0.50
+    
+
 # Curve smoothness
-k_curve = 15.
+k_curve = 25.
 
 #discretization
 dt = 0.03
@@ -150,13 +151,13 @@ if dyn_model=='kin':
     true_dx = utils_car.FrenetKinBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = np.repeat(np.expand_dims(
-        np.array([0.0, 3.0, 3.0, 0.01, 0.01, 0.01, 1, 1, 0.01, 3.0]), 0), NS, 0)
+        np.array([0.0, 3.0, 1.0, 0.01, 0.01, 0.01, 1, 1, 0.01, 1.0]), 0), NS, 0)
     p_manual = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
     Q_manual_H = np.repeat(np.expand_dims(
-        np.array([0.0, 3., 3.0, 0.01, 0.01, 0.01, 1, 1, 0.01, 3.0]), 0), NL, 0)
+        np.array([0.0, 3.0, 1.0, 0.01, 0.01, 0.01, 1, 1, 0.01, 1.0]), 0), NL, 0)
     p_manual_H = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
 
@@ -174,13 +175,13 @@ else:
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = np.repeat(np.expand_dims(
-        np.array([0, 3.0, 3.0, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 3.0]), 0), NS, 0)
+        np.array([0, 3.0, 1.0, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 1.0]), 0), NS, 0)
     p_manual = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
     Q_manual_H = np.repeat(np.expand_dims(
-        np.array([0, 3.0, 3.0, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 3.0]), 0), NL, 0)
+        np.array([0, 3.0, 1.0, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 1.0]), 0), NL, 0)
     p_manual_H = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
     
@@ -215,7 +216,7 @@ lap_time_list = np.zeros((BS_test,))
 finished = 0
 crashed = 0
 steps = 0
-max_steps=500
+max_steps=600
 
 x0_b_manual = x0_lap_manual[0].copy()
 x_manual_full_H = x0_b_manual.reshape(-1,1)
@@ -247,7 +248,7 @@ while finished==0 and crashed==0:
 
 lap_time = dt*steps
 
-print(f'Manual extended NL = {NL}, lap time: {lap_time}')
+print(f'Manual extended NL = {NL}, lap time: {lap_time}, finished: {finished}')
 
 
 
@@ -289,7 +290,7 @@ while finished==0 and crashed==0:
 
 lap_time = dt*steps
 
-print(f'Manual NS = {NS}, lap time: {lap_time}')
+print(f'Manual NS = {NS}, lap time: {lap_time}, finished: {finished}')
 
 x_current_full = x_manual_full
 current_time = lap_time
@@ -334,10 +335,7 @@ for ep in range(epochs):
         curv = utils.get_curve_hor_from_x(x0, track_coord, NL)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
 
-        # Normalizing input
-        inp_norm = inp/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(NL*[3.333])))
-
-        q_p_pred = model(inp_norm)
+        q_p_pred = model(inp)
 
         q, p = utils_car.q_and_p(NS, q_p_pred, Q_manual, p_manual)
         Q = torch.diag_embed(q, offset=0, dim1=-2, dim2=-1)
@@ -428,8 +426,7 @@ for ep in range(epochs):
 
                 curv_val = utils.get_curve_hor_from_x(x0_val, track_coord, NL)
                 inp_val = torch.hstack((x0_val[:,idx_to_NN], curv_val))
-                inp_val_norm = inp_val/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(NL*[3.333])))
-                q_p_pred_val = model(inp_val_norm)
+                q_p_pred_val = model(inp_val)
 
                 q_val, p_val = utils_car.q_and_p(NS, q_p_pred_val, Q_manual, p_manual)
                 Q_val = torch.diag_embed(q_val, offset=0, dim1=-2, dim2=-1)
@@ -486,7 +483,6 @@ for ep in range(epochs):
 
 
 
-
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
             model.eval()
             with torch.no_grad():
@@ -514,8 +510,7 @@ for ep in range(epochs):
                     x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
                     curv_lap = utils.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, NL)
                     inp_lap = torch.hstack((x0_lap_pred_torch[:,idx_to_NN], curv_lap))
-                    inp_lap_norm = inp_lap/torch.hstack((torch.tensor([0.05,0.05,1.8]), torch.tensor(NL*[3.333])))
-                    q_p_pred_lap = model(inp_lap_norm)
+                    q_p_pred_lap = model(inp_lap)
                     q_lap, p_lap = utils_car.q_and_p(NS, q_p_pred_lap, Q_manual, p_manual)
 
                     q_lap_np_casadi = torch.permute(q_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()

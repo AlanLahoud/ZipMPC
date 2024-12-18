@@ -44,9 +44,11 @@ class FrenetKinBicycleDx(nn.Module):
         self.track_curv_shift[1:] = self.track_curv[0:-1]
         self.track_curv_shift[0] = self.track_curv[-1]
         self.track_curv_diff = self.track_curv - self.track_curv_shift
+        self.track_curv_diff[0] = 0.
 
         self.mask = torch.where(torch.absolute(self.track_curv_diff) < 0.1, False, True)
         self.sigma_f = self.track_sigma[self.mask]
+        
         self.curv_f = self.track_curv_diff[self.mask]
 
         self.l_r = params[0]
@@ -69,8 +71,12 @@ class FrenetKinBicycleDx(nn.Module):
 
 
 
+
     def curv(self, sigma):
 
+        #import pdb
+        #pdb.set_trace()
+        
         num_sf = self.sigma_f.size()
         num_s = sigma.size()
 
@@ -120,18 +126,18 @@ class FrenetKinBicycleDx(nn.Module):
         except:
             sigma, d, phi, v, sigma_0, sigma_diff = torch.unbind(state, dim=1)
 
-        #beta = torch.atan(self.l_r/(self.l_r+self.l_f)*torch.tan(delta))
+        beta = torch.atan(self.l_r/(self.l_r+self.l_f)*torch.tan(delta))
         k = self.curv(sigma)
 
-        #dsigma = v*(torch.cos(phi+beta)/(1.-k*d))
-        #dd = v*torch.sin(phi+beta)
-        #dphi = v/self.l_f*torch.sin(beta)-k*v*(torch.cos(phi+beta)/(1-k*d))
-        #dv = a
-
-        dsigma = v * torch.cos(phi) / (1 - d * k)
-        dd = v * torch.sin(phi)
-        dphi = (v * torch.tan(delta)) / (self.l_r+self.l_f) - k * dsigma
+        dsigma = v*(torch.cos(phi+beta)/(1.-k*d))
+        dd = v*torch.sin(phi+beta)
+        dphi = v/self.l_f*torch.sin(beta)-k*v*(torch.cos(phi+beta)/(1-k*d))
         dv = a
+
+        #dsigma = v * torch.cos(phi) / (1 - d * k)
+        #dd = v * torch.sin(phi)
+        #dphi = (v * torch.tan(delta)) / (self.l_r+self.l_f) - k * dsigma
+        #dv = a
 
         sigma = sigma + self.dt * dsigma
         d = d + self.dt * dd
@@ -167,19 +173,27 @@ class CasadiControl():
 
         # everything to calculate curvature
         self.track_sigma = self.track_coordinates[2,:]
+        self.track_sigma_np = self.track_coordinates[2,:].numpy()
         self.track_curv = self.track_coordinates[4,:]
+        self.track_curv_casadi = DM(self.track_coordinates[4,:].numpy())
 
         self.track_curv_shift = torch.empty(self.track_curv.size())
         self.track_curv_shift[1:] = self.track_curv[0:-1]
         self.track_curv_shift[0] = self.track_curv[-1]
         self.track_curv_diff = self.track_curv - self.track_curv_shift
+        self.track_curv_diff[0] = 0.
 
         self.mask = torch.where(torch.absolute(self.track_curv_diff) < 0.1, False, True)
         self.sigma_f = self.track_sigma[self.mask]
         self.curv_f = self.track_curv_diff[self.mask]
 
+
         self.params = params
 
+        self.sigma_step = (self.track_sigma[-1]/len(self.track_sigma)).numpy()
+        self.num_points = len(self.track_sigma)
+        
+        
         self.l_r = params[0]
         self.l_f = params[1]
 
@@ -217,8 +231,9 @@ class CasadiControl():
         sigma_shifted = reshape(sigma,num_s[1],1)- sigma_f_mat_np
         curv_unscaled = self.sigmoid(self.smooth_curve*sigma_shifted)
         curv = reshape((curv_unscaled@(curv_f_np.reshape(-1,1))),1,num_s[1])
-
+        
         return curv
+
 
 
     def mpc_casadi(self,q,p,x0_np,dx,du):
@@ -229,23 +244,23 @@ class CasadiControl():
 
         dt = self.dt
 
-        #beta = np.arctan(l_r/(l_r+l_f)*np.tan(u_sym[1,0:mpc_T]))
+        beta = np.arctan(self.l_r/(self.l_r+self.l_f)*np.tan(u_sym[1,0:mpc_T]))
 
-        #dyn1 = horzcat(
-        #    (x_sym[0,0] - x0_np[0]),
-        #    (x_sym[0,1:mpc_T+1] - x_sym[0,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T]+beta)/(1.-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
+        dyn1 = horzcat(
+            (x_sym[0,0] - x0_np[0]),
+            (x_sym[0,1:mpc_T+1] - x_sym[0,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T]+beta)/(1.-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
 
-        #dyn2 = horzcat(
-        #    (x_sym[1,0] - x0_np[1]),
-        #    (x_sym[1,1:mpc_T+1] - x_sym[1,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*np.sin(x_sym[2,0:mpc_T]+beta))))
+        dyn2 = horzcat(
+            (x_sym[1,0] - x0_np[1]),
+            (x_sym[1,1:mpc_T+1] - x_sym[1,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*np.sin(x_sym[2,0:mpc_T]+beta))))
 
-        #dyn3 = horzcat(
-        #    (x_sym[2,0] - x0_np[2]),
-        #    (x_sym[2,1:mpc_T+1] - x_sym[2,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*(1/l_f)*np.sin(beta)-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T]+beta)/(1-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
+        dyn3 = horzcat(
+            (x_sym[2,0] - x0_np[2]),
+            (x_sym[2,1:mpc_T+1] - x_sym[2,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*(1/self.l_f)*np.sin(beta)-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T]+beta)/(1-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
 
-        #dyn4 = horzcat(
-        #    (x_sym[3,0] - x0_np[3]),
-        #    (x_sym[3,1:mpc_T+1] - x_sym[3,0:mpc_T] - dt*(u_sym[0,0:mpc_T])))
+        dyn4 = horzcat(
+            (x_sym[3,0] - x0_np[3]),
+            (x_sym[3,1:mpc_T+1] - x_sym[3,0:mpc_T] - dt*(u_sym[0,0:mpc_T])))
 
 
 
@@ -253,23 +268,23 @@ class CasadiControl():
 
         #dphi = (v * torch.tan(delta)) / (self.l_r+self.l_f) - k * dsigma
 
-        dyn1 = horzcat(
-            (x_sym[0,0] - x0_np[0]),
-            (x_sym[0,1:mpc_T+1] - x_sym[0,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T])/(1.-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
+        #dyn1 = horzcat(
+        #    (x_sym[0,0] - x0_np[0]),
+        #    (x_sym[0,1:mpc_T+1] - x_sym[0,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T])/(1.-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
 
-        dyn2 = horzcat(
-            (x_sym[1,0] - x0_np[1]),
-            (x_sym[1,1:mpc_T+1] - x_sym[1,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*np.sin(x_sym[2,0:mpc_T]))))
+        #dyn2 = horzcat(
+        #    (x_sym[1,0] - x0_np[1]),
+        #    (x_sym[1,1:mpc_T+1] - x_sym[1,0:mpc_T] - dt*(x_sym[3,0:mpc_T]*np.sin(x_sym[2,0:mpc_T]))))
 
-        dyn3 = horzcat(
-            (x_sym[2,0] - x0_np[2]),
-            (x_sym[2,1:mpc_T+1] - x_sym[2,0:mpc_T] - \
-             dt*(x_sym[3,0:mpc_T]*(1/(self.l_f+self.l_r))*np.tan(u_sym[1,0:mpc_T])\
-                 -self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T])/(1-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
+        #dyn3 = horzcat(
+        #    (x_sym[2,0] - x0_np[2]),
+        #    (x_sym[2,1:mpc_T+1] - x_sym[2,0:mpc_T] - \
+        #     dt*(x_sym[3,0:mpc_T]*(1/(self.l_f+self.l_r))*np.tan(u_sym[1,0:mpc_T])\
+        #         -self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[3,0:mpc_T]*(np.cos(x_sym[2,0:mpc_T])/(1-self.curv_casadi(x_sym[0,0:mpc_T])*x_sym[1,0:mpc_T])))))
 
-        dyn4 = horzcat(
-            (x_sym[3,0] - x0_np[3]),
-            (x_sym[3,1:mpc_T+1] - x_sym[3,0:mpc_T] - dt*(u_sym[0,0:mpc_T])))
+        #dyn4 = horzcat(
+        #    (x_sym[3,0] - x0_np[3]),
+        #    (x_sym[3,1:mpc_T+1] - x_sym[3,0:mpc_T] - dt*(u_sym[0,0:mpc_T])))
 
         feat = vertcat(x_sym[0,0:mpc_T]-x0_np[0],x_sym[1:,0:mpc_T],u_sym[:,0:mpc_T])
 
@@ -321,8 +336,8 @@ class CasadiControl():
                     'print_time': False,
                     'ipopt.sb': 'yes',
                     'print_time': 0,
-                    'ipopt.tol': 1e-4,
-                    'ipopt.max_iter': 4000,
+                    'ipopt.tol': 2e-5,
+                    'ipopt.max_iter': 7000,
                     'ipopt.hessian_approximation': 'limited-memory'
                 }
 

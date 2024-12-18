@@ -13,6 +13,7 @@ import torch.autograd.functional as F
 from mpc import casadi_control
 
 import scipy.linalg
+from scipy import interpolate
 
 from tqdm import tqdm
 
@@ -42,6 +43,7 @@ class FrenetDynBicycleDx(nn.Module):
         self.track_curv_shift[1:] = self.track_curv[0:-1]
         self.track_curv_shift[0] = self.track_curv[-1]
         self.track_curv_diff = self.track_curv - self.track_curv_shift
+        self.track_curv_diff[0] = 0.
 
         self.mask = torch.where(torch.absolute(self.track_curv_diff) < 0.1, False, True)
         self.sigma_f = self.track_sigma[self.mask]
@@ -103,7 +105,6 @@ class FrenetDynBicycleDx(nn.Module):
         curv_unscaled = torch.sigmoid(self.smooth_curve*sigma_shifted)
         curv = (curv_unscaled@(self.curv_f.reshape(-1,1))).type(torch.float)
 
-
         return curv.reshape(-1)
 
 
@@ -142,7 +143,10 @@ class FrenetDynBicycleDx(nn.Module):
 
         tau, delta = torch.unbind(u, dim=1)
 
-        sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
+        try:
+            sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
+        except:
+            sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff = torch.unbind(state, dim=1)
 
         # car params
         m = 0.200
@@ -164,7 +168,7 @@ class FrenetDynBicycleDx(nn.Module):
 
         a_f = -(torch.atan2((- v_y - lf*r),torch.abs(v_x))+delta)
         a_r = -(torch.atan2((-v_y + lr*r),torch.abs(v_x)))
-
+        
 
         # forces on the wheels
         F_x = (Cm1 - Cm2 * v_x) * tau - Cd * v_x * v_x - Croll  # motor force
@@ -217,10 +221,13 @@ class CasadiControl():
         self.track_sigma = self.track_coordinates[2,:]
         self.track_curv = self.track_coordinates[4,:]
 
+        self.track_curv_np = self.track_coordinates[4,:].numpy()
+
         self.track_curv_shift = torch.empty(self.track_curv.size())
         self.track_curv_shift[1:] = self.track_curv[0:-1]
         self.track_curv_shift[0] = self.track_curv[-1]
         self.track_curv_diff = self.track_curv - self.track_curv_shift
+        self.track_curv_diff[0] = 0.
 
         self.mask = torch.where(torch.absolute(self.track_curv_diff) < 0.1, False, True)
         self.sigma_f = self.track_sigma[self.mask]
@@ -409,8 +416,8 @@ class CasadiControl():
                     'print_time': False,
                     'ipopt.sb': 'yes',
                     'print_time': 0,
-                    'ipopt.tol': 1e-2,
-                    'ipopt.max_iter': 400,
+                    'ipopt.tol': 1e-3,
+                    'ipopt.max_iter': 800,
                     'ipopt.hessian_approximation': 'limited-memory'
                 }
 
