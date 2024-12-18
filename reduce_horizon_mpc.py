@@ -26,7 +26,6 @@ def parse_arguments():
     parser.add_argument('--NS', type=int, default=10)
     parser.add_argument('--NL', type=int, default=20)
     parser.add_argument('--n_Q', type=int, default=1)
-    parser.add_argument('--v_max', type=float, default=1.5)
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
 
     return parser.parse_args()
@@ -56,7 +55,6 @@ n_Q = args.n_Q # Number of learnable parameters through the short horizon
 
 assert n_Q<=NS
 
-v_max = args.v_max
 
 # Manual progress cost parameter (initial guess)
 p_sigma_manual = args.p_sigma_manual
@@ -84,7 +82,8 @@ k_curve = 25.
 #discretization
 dt = 0.03
 
-# Maximum acceleration
+# Maximum v and a
+v_max=1.8
 a_max = 1.0
 
 # Clip learnable parameters (TanH, check NN)
@@ -99,7 +98,7 @@ BS_test = 1
 epochs = 20
 
 # Model path to save
-str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{delta_max}_{v_max}_{p_sigma_manual}'
+str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}'
 
 # Track parameters
 track_density = 300
