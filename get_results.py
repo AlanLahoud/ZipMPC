@@ -366,9 +366,9 @@ plot_data(curv_full, q_p_full[:,1], r'Lateral Deviation Linear Cost: $p_{d}$', f
 plot_data(curv_full, q_p_full[:,2], r'Heading Angle Linear Cost: $p_{\phi}$', f'./imgs_paper/plot_phi_{str_model}_{track_name}.png')
 plot_data(curv_full, q_p_full[:,4], r'Steering Angle Linear Cost: $p_{\delta}$', f'./imgs_paper/plot_delta_{str_model}_{track_name}.png')
 
-plot_sim(x_full.T, u_full.T, q_p_full[:,1], r'Lateral Deviation Linear Cost: $p_{d}$', f'./imgs_paper/traj_lat_{str_model}_{track_name}.png')
-plot_sim(x_full.T, u_full.T, q_p_full[:,2], r'Heading Angle Linear Cost: $p_{\phi}$', f'./imgs_paper/traj_phi_{str_model}_{track_name}.png')
-plot_sim(x_full.T, u_full.T, q_p_full[:,4], r'Steering Angle Linear Cost: $p_{\delta}$', f'./imgs_paper/traj_delta_{str_model}_{track_name}.png')
+plot_sim(x_full.T, u_full.T, q_p_full[:,1], f'./imgs_paper/traj_lat_{str_model}_{track_name}.png', r'Lateral Deviation Linear Cost: $p_{d}$')
+plot_sim(x_full.T, u_full.T, q_p_full[:,2], f'./imgs_paper/traj_phi_{str_model}_{track_name}.png', r'Heading Angle Linear Cost: $p_{\phi}$')
+plot_sim(x_full.T, u_full.T, q_p_full[:,4], f'./imgs_paper/traj_delta_{str_model}_{track_name}.png', r'Steering Angle Linear Cost: $p_{\delta}$')
 
 plot_sim(x_full_T.T, u_full_T.T, x_full_T[idx_to_NN[2]], r'Velocity$', f'./imgs_paper/traj_vel_T_{str_model}_{track_name}.png')
 plot_sim(x_H_full.T, u_H_full.T, x_H_full[idx_to_NN[2]], r'Velocity$', f'./imgs_paper/traj_vel_H_{str_model}_{track_name}.png')
