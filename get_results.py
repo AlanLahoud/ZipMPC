@@ -15,6 +15,8 @@ from matplotlib.cm import ScalarMappable
 
 from tqdm import tqdm
 
+import argparse
+
 
 
 def parse_arguments():
@@ -88,7 +90,6 @@ a_max = 1.0
 # Clip learnable parameters (TanH, check NN)
 max_p = 10
 
-
 # Model path to save
 str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}'
 
@@ -96,7 +97,9 @@ str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}'
 track_density = 300
 track_width = 0.5
 max_track_width_perc_casadi = 0.68
+max_track_width_perc = 0.68
 bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
+bound_d = 0.5*max_track_width_perc*track_width
 t_track = 0.3
 init_track = [0,0,0]
 
@@ -226,7 +229,7 @@ def plot_sim(x_simulated, u_simulated, vc, output_path, lab_text='Velocity'):
 
 def plot_sim_all(x_simulateds, output_path):
     dict_colors = {0: 'red', 1: 'blue', 2: 'limegreen'}
-    #labels = {0: 'MCSH', 1: 'MCLH', 2: 'Our'}
+    labels = {0: 'MCSH', 1: 'MCLH', 2: 'Our'}
 
     fig, ax = plt.subplots(1, 1, figsize=(7, 5), dpi=250)
     gen.plotPoints(ax)
@@ -347,6 +350,9 @@ model.load_state_dict(torch.load(f'./models/model_{str_model}.pkl'))
 model.eval()
 
 
+x0_lap = utils_car.sample_init_test(1, true_dx, sn=2).numpy().squeeze()
+x0_lap_pred = x0_lap[:dx+4]
+x0_lap_manual = x0_lap[:dx+4]
 
 
 lap_time, finished, x_full, u_full, q_p_full, curv_full = eval_lap(x0_lap_pred, Q_manual, p_manual, control, model=model)
@@ -356,19 +362,19 @@ lap_time_T, finished_T, x_full_T, u_full_T, _, _ = eval_lap(x0_lap_pred, Q_manua
 print('LAP TIMES:', lap_time, lap_time_H, lap_time_T)
 
 
-plot_data(curv_full, q_p_full[:,1], r'Lateral Deviation Linear Cost: $p_{d}$', f'./imgs_paper/plot_lat_{str_model}.png')
-plot_data(curv_full, q_p_full[:,2], r'Heading Angle Linear Cost: $p_{\phi}$', f'./imgs_paper/plot_phi_{str_model}.png')
-plot_data(curv_full, q_p_full[:,4], r'Steering Angle Linear Cost: $p_{\delta}$', f'./imgs_paper/plot_delta_{str_model}.png')
+plot_data(curv_full, q_p_full[:,1], r'Lateral Deviation Linear Cost: $p_{d}$', f'./imgs_paper/plot_lat_{str_model}_{track_name}.png')
+plot_data(curv_full, q_p_full[:,2], r'Heading Angle Linear Cost: $p_{\phi}$', f'./imgs_paper/plot_phi_{str_model}_{track_name}.png')
+plot_data(curv_full, q_p_full[:,4], r'Steering Angle Linear Cost: $p_{\delta}$', f'./imgs_paper/plot_delta_{str_model}_{track_name}.png')
 
-plot_sim(x_full.T, u_full.T, q_p_full[:,1], r'Lateral Deviation Linear Cost: $p_{d}$', f'./imgs_paper/traj_lat_{str_model}.png')
-plot_sim(x_full.T, u_full.T, q_p_full[:,2], r'Heading Angle Linear Cost: $p_{\phi}$', f'./imgs_paper/traj_phi_{str_model}.png')
-plot_sim(x_full.T, u_full.T, q_p_full[:,4], r'Steering Angle Linear Cost: $p_{\delta}$', f'./imgs_paper/traj_delta_{str_model}.png')
+plot_sim(x_full.T, u_full.T, q_p_full[:,1], r'Lateral Deviation Linear Cost: $p_{d}$', f'./imgs_paper/traj_lat_{str_model}_{track_name}.png')
+plot_sim(x_full.T, u_full.T, q_p_full[:,2], r'Heading Angle Linear Cost: $p_{\phi}$', f'./imgs_paper/traj_phi_{str_model}_{track_name}.png')
+plot_sim(x_full.T, u_full.T, q_p_full[:,4], r'Steering Angle Linear Cost: $p_{\delta}$', f'./imgs_paper/traj_delta_{str_model}_{track_name}.png')
 
-plot_sim(x_full_T.T, u_full_T.T, x_full_T[idx_to_NN[2]]), r'Velocity$', f'./imgs_paper/traj_vel_T_{str_model}.png')
-plot_sim(x_H_full.T, u_H_full.T, x_H_full[idx_to_NN[2]]), r'Velocity$', f'./imgs_paper/traj_vel_H_{str_model}.png')
-plot_sim(x_full.T, u_full.T, x_full[idx_to_NN[2]]), r'Velocity$', f'./imgs_paper/traj_vel_{str_model}.png')
+plot_sim(x_full_T.T, u_full_T.T, x_full_T[idx_to_NN[2]], r'Velocity$', f'./imgs_paper/traj_vel_T_{str_model}_{track_name}.png')
+plot_sim(x_H_full.T, u_H_full.T, x_H_full[idx_to_NN[2]], r'Velocity$', f'./imgs_paper/traj_vel_H_{str_model}_{track_name}.png')
+plot_sim(x_full.T, u_full.T, x_full[idx_to_NN[2]], r'Velocity$', f'./imgs_paper/traj_vel_{str_model}_{track_name}.png')
 
-plot_sim_all([x_full_T.T, x_H_full.T, x_full.T], f'./imgs_paper/plot_traj_all_{str_model}.png')
+plot_sim_all([x_full_T.T, x_H_full.T, x_full.T], f'./imgs_paper/plot_traj_all_{str_model}_{track_name}.png')
 
 
 
