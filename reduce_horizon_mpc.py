@@ -294,6 +294,9 @@ print(f'Manual NS = {NS}, lap time: {lap_time}, finished: {finished}')
 x_current_full = x_manual_full
 current_time = lap_time
 
+if finished == 0:
+    current_time = np.inf
+
 
 ##########################################################################################
 ################### M O D E L  &  T R A I N ##############################################
