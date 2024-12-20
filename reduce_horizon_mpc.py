@@ -332,11 +332,13 @@ for ep in range(epochs):
 
         #x0 = torch.vstack((x0_1, x0_2))
 
-        if dyn_model == 'kin':
-            x0= utils_car.sample_init(BS, true_dx).float()
+        x0= utils_car.sample_init(BS, true_dx).float()
+        
+        #if dyn_model == 'kin':
+        #    x0= utils_car.sample_init(BS, true_dx).float()
 
-        else:
-            x0 = utils_car.sample_init_traj_dist(BS, true_dx, x_star, 20).float()
+        #else:
+        #    x0 = utils_car.sample_init_traj_dist(BS, true_dx, x_star, 20).float()
             
         curv = utils.get_curve_hor_from_x(x0, track_coord, NL)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
