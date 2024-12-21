@@ -168,13 +168,13 @@ else:
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = np.repeat(np.expand_dims(
-        np.array([0, 3.0, 1.0, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 1.0]), 0), NS, 0)
+        np.array([0, 50.0, 0.0, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.0]), 0), NS, 0)
     p_manual = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
     Q_manual_H = np.repeat(np.expand_dims(
-        np.array([0, 3.0, 1.0, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 1.0]), 0), NL, 0)
+        np.array([0, 50.0, 0.0, 0.01, 0.01, 0.01, 0.01, 0.01, 1, 1, 0.01, 0.0]), 0), NL, 0)
     p_manual_H = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
     
@@ -270,7 +270,7 @@ def plot_sim_all(x_simulateds, output_path):
 def plot_data(curv_full, var_p, y_label, output_path):
 
     fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
-    
+
     average_curv = curv_full.mean(axis=-1)
     ax.scatter(average_curv, var_p, color='blue', alpha=0.7, edgecolor='k', s=50)
     
@@ -290,7 +290,7 @@ def eval_lap(x0, Q_manual, p_manual, control, model=None):
     finished = 0
     crashed = 0
     steps = 0
-    max_steps=500
+    max_steps=700
 
     x_full = x0.reshape(-1,1).copy()[:dx+2]
     u_full = np.zeros((2,1))
@@ -361,6 +361,8 @@ lap_time_T, finished_T, x_full_T, u_full_T, _, _ = eval_lap(x0_lap_pred, Q_manua
 
 print('LAP TIMES:', lap_time, lap_time_H, lap_time_T)
 
+if q_p_full.ndim == 3:
+    q_p_full = q_p_full.mean(1)
 
 plot_data(curv_full, q_p_full[:,1], r'Lateral Deviation Linear Cost: $p_{d}$', f'./imgs_paper/plot_lat_{str_model}_{track_name}.png')
 plot_data(curv_full, q_p_full[:,2], r'Heading Angle Linear Cost: $p_{\phi}$', f'./imgs_paper/plot_phi_{str_model}_{track_name}.png')

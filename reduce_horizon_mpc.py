@@ -95,7 +95,7 @@ BS_val = 80
 BS_test = 1
 
 # N epochs
-epochs = 20
+epochs = 25
 
 # Model path to save
 str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}'
@@ -303,7 +303,7 @@ if finished == 0:
 ##########################################################################################
 
 model = utils.TCN(NL, n_Q, 5, max_p)
-opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=1e-4)
 
 its_per_epoch = 20
 
