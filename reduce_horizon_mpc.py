@@ -76,7 +76,7 @@ if dyn_model=='kin':
 
 else:
     delta_max = 0.50
-    lr = 5e-5
+    lr = 2e-4
     BS = 120
     
 
