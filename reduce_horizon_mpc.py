@@ -72,10 +72,12 @@ l_f = l_r
 if dyn_model=='kin':
     delta_max = 0.40
     lr = 1e-4
+    BS = 80
 
 else:
     delta_max = 0.50
-    lr = 1e-5
+    lr = 5e-5
+    BS = 160
     
 
 # Curve smoothness
@@ -92,7 +94,6 @@ a_max = 1.0
 max_p = 10
 
 # Batch size
-BS = 80
 BS_val = 80
 BS_test = 1
 

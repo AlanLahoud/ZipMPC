@@ -347,12 +347,12 @@ class CasadiControl():
         dyn4 = horzcat(
             (x_sym[3,0] - x0[3]),
             (x_sym[3,1:N+1] - x_sym[3,0:N] - \
-             Ts*(1/I_z*(F_f * l_f *cos(u_sym[1,0:N])- F_r * l_r))))
+             Ts*((1/I_z)*(F_f * l_f *cos(u_sym[1,0:N])- F_r * l_r))))
 
         dyn5 = horzcat(
             (x_sym[4,0] - x0[4]),
             (x_sym[4,1:N+1] - x_sym[4,0:N] - \
-             Ts*1/m*(F_x - F_f *sin(u_sym[1,0:N]) + m *x_sym[5,0:N]* x_sym[3,0:N])))
+             Ts*(1/m)*(F_x - F_f *sin(u_sym[1,0:N]) + m *x_sym[5,0:N]* x_sym[3,0:N])))
 
         dyn6 = horzcat(
             (x_sym[5,0] - x0[5]),
