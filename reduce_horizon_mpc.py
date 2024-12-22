@@ -73,11 +73,13 @@ if dyn_model=='kin':
     delta_max = 0.40
     lr = 1e-4
     BS = 80
+    epochs = 20
 
 else:
     delta_max = 0.50
-    lr = 2e-4
+    lr = 5e-4
     BS = 120
+    epochs = 35
     
 
 # Curve smoothness
@@ -96,9 +98,6 @@ max_p = 10
 # Batch size
 BS_val = 80
 BS_test = 1
-
-# N epochs
-epochs = 25
 
 # Model path to save
 str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}'
