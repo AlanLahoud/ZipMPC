@@ -71,9 +71,11 @@ l_f = l_r
 
 if dyn_model=='kin':
     delta_max = 0.40
+    lr = 1e-4
 
 else:
     delta_max = 0.50
+    lr = 1e-3
     
 
 # Curve smoothness
@@ -303,7 +305,7 @@ if finished == 0:
 ##########################################################################################
 
 model = utils.TCN(NL, n_Q, 5, max_p)
-opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
 
 its_per_epoch = 20
 
