@@ -77,7 +77,7 @@ if dyn_model=='kin':
 else:
     delta_max = 0.50
     lr = 5e-5
-    BS = 160
+    BS = 120
     
 
 # Curve smoothness
