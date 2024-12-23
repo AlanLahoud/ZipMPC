@@ -79,7 +79,7 @@ else:
     delta_max = 0.50
     lr = 5e-4
     BS = 120
-    epochs = 35
+    epochs = 60
     
 
 # Curve smoothness
