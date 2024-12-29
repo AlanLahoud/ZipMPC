@@ -18,21 +18,37 @@ import sys
 from sys import exit
 
 
-dyn_model = 'kin'
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Set parameters for the program.')
+
+    parser.add_argument('--dyn', type=str, default='kin')
+    parser.add_argument('--seed_n', type=int, default=0)
+    parser.add_argument('--NS', type=int, default=10)
+    parser.add_argument('--NL', type=int, default=20)
+    parser.add_argument('--p_sigma_manual', type=float, default=8.0)
+
+    return parser.parse_args()
+
+
+args = parse_arguments()
+
+
+dyn_model = args.dyn
+
+NS = args.NS
+NL = args.NL
+
+# Manual progress cost parameter (initial guess)
+p_sigma_manual = args.p_sigma_manual
 
 if dyn_model=='kin':
     import utils_kin as utils_car
 else:
     import utils_pac as utils_car
 
-NS = 5
-NL = 18
-
-# Manual progress cost parameter (initial guess)
-p_sigma_manual = 8.0
 
 # Seed for reproducibility
-seed_n = 0
+seed_n = args.seed_n
 torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
