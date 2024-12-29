@@ -54,6 +54,7 @@ NL = args.NL # Long Horizon Length
 n_Q = args.n_Q # Number of learnable parameters through the short horizon
 
 assert n_Q<=NS
+assert NS%n_Q==0
 
 
 # Manual progress cost parameter (initial guess)

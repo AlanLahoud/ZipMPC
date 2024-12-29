@@ -71,24 +71,19 @@ class TCN(nn.Module):
 
 
 def get_curve_hor_from_x(x, track_coord, H_curve):
-    # Find the closest indices on the track for x[:,0]
     idx_track_batch = ((x[:, 0] - track_coord[[2], :].T) ** 2).argmin(0)
     
     # Calculate the maximum allowed value based on sigma
     max_sigma = 1.8 * 0.03 * H_curve + x[:, 0]
     idx_track_batch_max = ((max_sigma - track_coord[[2], :].T) ** 2).argmin(0)
     
-    # Ensure stepsize is valid and avoid division by zero
     stepsize = torch.clamp((idx_track_batch_max - idx_track_batch) // H_curve, min=1)
     
-    # Generate batch indices with fixed length H_curve
     range_indices = torch.arange(H_curve).unsqueeze(0)  # Shape (1, H_curve)
     batch_arange = idx_track_batch.unsqueeze(1) + range_indices * stepsize.unsqueeze(1)
     
-    # Ensure indices are within bounds
     idcs_track_batch = torch.clip(batch_arange, 0, track_coord.shape[1] - 1)
     
-    # Retrieve the curvature values
     curvs = track_coord[4, idcs_track_batch].float()
     
     # Ensure the result has exactly H_curve elements for each batch
