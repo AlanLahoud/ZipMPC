@@ -59,15 +59,15 @@ l_f = l_r
 
 if dyn_model=='kin':
     delta_max = 0.40
-    lr = 1e-4
-    BS = 80
-    epochs = 20
+    lr = 3e-5
+    BS = 120
+    epochs = 50
 
 else:
     delta_max = 0.50
-    lr = 5e-4
-    BS = 120
-    epochs = 60
+    lr = 8e-5
+    BS = 160
+    epochs = 100
     
 
 # Curve smoothness
