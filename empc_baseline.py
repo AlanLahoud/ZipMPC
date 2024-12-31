@@ -61,13 +61,13 @@ if dyn_model=='kin':
     delta_max = 0.40
     lr = 1e-4
     BS = 120
-    epochs = 50
+    epochs = 30
 
 else:
     delta_max = 0.50
-    lr = 2e-4
+    lr = 8e-5
     BS = 160
-    epochs = 100
+    epochs = 60
     
 
 # Curve smoothness
@@ -327,3 +327,6 @@ for ep in range(epochs):
                     print(x_manual_full_H[0,60], x_manual_full_H[0,90], x_manual_full_H[0,120], x_manual_full_H[0,150], x_manual_full_H[0,180])
                 except:
                     print('crash')
+
+if current_time > 9999.:
+    torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
