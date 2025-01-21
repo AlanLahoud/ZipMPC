@@ -23,30 +23,13 @@ import sys
 from sys import exit
 
 
-# def parse_arguments():
-#     parser = argparse.ArgumentParser(description='Set parameters for the program.')
-
-#     parser.add_argument('--mpc_T', type=int, default=10)
-#     parser.add_argument('--mpc_H', type=int, default=20)
-#     parser.add_argument('--n_Q', type=int, default=5)
-#     parser.add_argument('--l_r', type=float, default=0.10)
-#     parser.add_argument('--v_max', type=float, default=1.8)
-#     parser.add_argument('--delta_max', type=float, default=0.40)
-#     parser.add_argument('--p_sigma_manual', type=float, default=3.0)
-
-#     return parser.parse_args()
-
-
-# # Parsing arguments
-# args = parse_arguments()
-
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
     parser.add_argument('--dyn', type=str, default='kin')
     parser.add_argument('--seed_n', type=int, default=0)
     parser.add_argument('--NS', type=int, default=5)
-    parser.add_argument('--NL', type=int, default=18)
+    parser.add_argument('--NL', type=int, default=25)
     parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
 
@@ -203,99 +186,8 @@ else:
     idx_to_casadi = [7,1,2,3,4,5,10,11]
     idx_to_NN = [1,2,4]
 
-# mpc_T = args.mpc_T
-# mpc_H = args.mpc_H
-# n_Q = args.n_Q
-
-# mpc_L = mpc_T
-# #n_Q = mpc_T
-
-# l_r = args.l_r
-# v_max = args.v_max
-# delta_max = args.delta_max
-
-# p_sigma_manual = args.p_sigma_manual
-
-# load_model = False
-
-
-# seed_n = 0
-# torch.manual_seed(seed_n)
-# np.random.seed(seed_n)
-
-# k_curve = 25.
-# dt = 0.03
-
-# l_f = l_r
-
-# assert mpc_T%n_Q==0
-
-# a_max = 1.5
-
-# track_density = 300
-# track_width = 0.5
-# max_track_width_perc_casadi = 0.68
-
-# bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
-
-# t_track = 0.3
-# init_track = [0,0,0]
-
-# max_p = 10
-
-# str_model = f'im_{mpc_T}_{mpc_H}_{n_Q}_{l_r}_{delta_max}_{v_max}_{p_sigma_manual}'
-
-# params = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_T])
-# params_H = torch.tensor([l_r, l_f, track_width, dt, k_curve, v_max, delta_max, a_max, mpc_H])
-
-# gen = simple_track_generator.trackGenerator(track_density,track_width)
-# track_name = 'DEMO_TRACK'
-
-# track_function = {
-#     'DEMO_TRACK'    : track_functions.demo_track,
-#     'HARD_TRACK'    : track_functions.hard_track,
-#     'LONG_TRACK'    : track_functions.long_track,
-#     'LUCERNE_TRACK' : track_functions.lucerne_track,
-#     'BERN_TRACK'    : track_functions.bern_track,
-#     'INFINITY_TRACK': track_functions.infinity_track,
-#     'TEST_TRACK'    : track_functions.test_track,
-#     'TEST_TRACK2'    : track_functions.test_track2,
-#     'SNAIL_TRACK'   : track_functions.snail_track
-# }.get(track_name, track_functions.demo_track)
-
-# track_function(gen, t_track, init_track)
-# gen.populatePointsAndArcLength()
-# gen.centerTrack()
-# track_coord = torch.from_numpy(np.vstack(
-#     [gen.xCoords,
-#      gen.yCoords,
-#      gen.arcLength,
-#      gen.tangentAngle,
-#      gen.curvature]))
-
-# true_dx = utils_new.FrenetKinBicycleDx(track_coord, params, 'cpu')
-
-
-# x0 = torch.tensor([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])
-# u0 = torch.tensor([0.0, 0.0])
-
-
-# dx=4
-# du=2
-
-# BS = 40
 
 gpr = GaussianProcessRegressor(random_state=0)
-
-# control = utils_new.CasadiControl(track_coord, params)
-# Q_manual = np.repeat(np.expand_dims(np.array([0.0, 3., 0.5, 0.1, 0, 0.1, 1, 1, 0.1, 0.5]), 0), mpc_T, 0)
-# p_manual = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_T, 0)
-
-# control_H = utils_new.CasadiControl(track_coord, params_H)
-# Q_manual_H = np.repeat(np.expand_dims(np.array([0.0, 3., 0.5, 0.1, 0, 0.1, 1, 1, 0.1, 0.5]), 0), mpc_H, 0)
-# p_manual_H = np.repeat(np.expand_dims(np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), mpc_H, 0)
-
-# idx_to_casadi = [5,1,2,3,8,9]
 
 # here we should decide how many parameters we would like to learn
 learned_param = 2
@@ -333,20 +225,6 @@ p_bo_base = np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0])
 p_bo_add = np.zeros(10)
 Q_bo = Q_manual
 
-
-# epochs = 35
-# num_patches = 20
-# BS_init = 40
-# BS_val = 10
-
-# Get initial lap_time
-
-# BS_test = 1
-
-# This sampling should bring always the same set of initial states
-# x0_lap = utils_new.sample_init_test(BS_test, true_dx, sn=0).numpy()
-
-# x0_lap_manual = x0_lap[:,:6]
 
 # This sampling should bring always the same set of initial states
 x0_lap = utils_car.sample_init_test(1, true_dx, sn=0).numpy()
