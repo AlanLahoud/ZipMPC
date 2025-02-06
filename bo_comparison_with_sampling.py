@@ -24,9 +24,9 @@ from sys import exit
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--mpc_T', type=int, default=9)
+    parser.add_argument('--mpc_T', type=int, default=10)
     parser.add_argument('--mpc_H', type=int, default=20)
-    parser.add_argument('--n_Q', type=int, default=3)
+    parser.add_argument('--n_Q', type=int, default=5)
     parser.add_argument('--l_r', type=float, default=0.10)
     parser.add_argument('--v_max', type=float, default=1.8)
     parser.add_argument('--delta_max', type=float, default=0.40)
@@ -42,7 +42,7 @@ mpc_T = args.mpc_T
 mpc_H = args.mpc_H
 n_Q = args.n_Q
 
-mpc_L = 5
+mpc_L = mpc_T
 #n_Q = mpc_T
 
 l_r = args.l_r
@@ -156,7 +156,7 @@ idx_to_casadi = [5,1,2,3,8,9]
 learned_param = 2
 idx_to_learned_param = [8,9]
 bo_bound = 2
-bo_step = 10
+bo_step = 100
 array1 = np.linspace(-bo_bound, bo_bound, bo_step).tolist()
 array2 = np.linspace(-bo_bound, bo_bound, bo_step).tolist()
 array3 = np.linspace(-bo_bound, bo_bound, bo_step).tolist()
@@ -493,33 +493,39 @@ for ep in range(epochs):
                     x0_val.detach().numpy()[:,:6], BS_val, dx, du, control_H)
 
 
-                loss_dsigma_val = ((x_true_val[:mpc_T, :, 5] - x_bo_val[:, :, 5])**2).sum(0).mean()
-                loss_d_val = ((x_true_val[:mpc_T, :, 1] - x_bo_val[:, :, 1])**2).sum(0).mean()
-                loss_phi_val = ((x_true_val[:mpc_T, :, 2] - x_bo_val[:, :, 2])**2).sum(0).mean()
-                loss_v_val = ((x_true_val[:mpc_T, :, 3] - x_bo_val[:, :, 3])**2).sum(0).mean()
+                loss_dsigma_val = 1/mpc_T*(((x_true_val[:mpc_T, :, 5] - x_bo_val[:, :, 5])**2).sum(0))
+                loss_d_val = 1/mpc_T*(((x_true_val[:mpc_T, :, 1] - x_bo_val[:, :, 1])**2).sum(0))
+                loss_phi_val = 1/mpc_T*(((x_true_val[:mpc_T, :, 2] - x_bo_val[:, :, 2])**2).sum(0))
+                loss_v_val = 1/mpc_T*(((x_true_val[:mpc_T, :, 3] - x_bo_val[:, :, 3])**2).sum(0))
 
-                loss_a_val = ((u_true_val[:mpc_T, :, 0] - u_bo_val[:, :, 0])**2).sum(0).mean()
-                loss_delta_val = ((u_true_val[:mpc_T, :, 1] - u_bo_val[:, :, 1])**2).sum(0).mean()
+                loss_a_val = 1/mpc_T*(((u_true_val[:mpc_T, :, 0] - u_bo_val[:, :, 0])**2).sum(0))
+                loss_delta_val = 1/mpc_T*(((u_true_val[:mpc_T, :, 1] - u_bo_val[:, :, 1])**2).sum(0))
 
                 # Ideal here would be to scale, but this is fine just to be in the same range
                 loss_val = 100*loss_dsigma_val + 100*loss_d_val + loss_phi_val + 10*loss_v_val + 0.01*loss_a_val + 0.1*loss_delta_val
 
-                print('Train loss:',
-                      round(loss_sig_avg, 5),
-                      round(loss_d_avg, 5),
-                      round(loss_phi_avg, 5),
-                      round(loss_a_avg, 5),
-                      round(loss_delta_avg, 5),
-                      round(loss_train_avg, 5))
+                loss_val_mean = loss_val.mean()
+                loss_val_std = loss_val.std()
 
-                print('Validation loss:',
-                      round(100*loss_dsigma_val.item(), 5),
-                      round(100*loss_d_val.item(), 5),
-                      round(loss_phi_val.item(), 5),
-                      round(10*loss_v_val.item(), 5),
-                      round(0.01*loss_a_val.item(), 5),
-                      round(0.1*loss_delta_val.item(), 5),
-                      round(loss_val.item(), 5))
+                print('mean validation loss', loss_val_mean)
+                print('standard deviation validation loss', loss_val_std)
+
+                # print('Train loss:',
+                #       round(loss_sig_avg, 5),
+                #       round(loss_d_avg, 5),
+                #       round(loss_phi_avg, 5),
+                #       round(loss_a_avg, 5),
+                #       round(loss_delta_avg, 5),
+                #       round(loss_train_avg, 5))
+
+                # print('Validation loss:',
+                #       round(100*loss_dsigma_val.item(), 5),
+                #       round(100*loss_d_val.item(), 5),
+                #       round(loss_phi_val.item(), 5),
+                #       round(10*loss_v_val.item(), 5),
+                #       round(0.01*loss_a_val.item(), 5),
+                #       round(0.1*loss_delta_val.item(), 5),
+                #       round(loss_val.item(), 5))
 
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
             with torch.no_grad():

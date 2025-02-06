@@ -21,15 +21,16 @@ import argparse
 
 
 dyn_model = 'kin'
-empc = True
+#empc = True
+param_model = 'bo'  # 'bo', 'lcredh'
 
 if dyn_model=='kin':
     import utils_kin as utils_car
 else:
     import utils_pac as utils_car
     
-NS = 10
-NL = 25
+NS = 5
+NL = 18
 n_Q = 5
 
 p_sigma_manual = 8.0
@@ -65,7 +66,7 @@ max_p = 10
 
 out=5
 
-if empc:
+if param_model == 'empc':
     max_p = 2.0
     out=2
 
@@ -73,7 +74,7 @@ if empc:
 # Model path to save
 str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}'
 
-if empc:
+if param_model == 'empc':
     str_model = f'empc_{dyn_model}_{NS}_{NL}_{p_sigma_manual}'
 
 # Track parameters
@@ -164,10 +165,12 @@ else:
     idx_to_casadi = [7,1,2,3,4,5,10,11]
     idx_to_NN = [1,2,4]
 
-
-model = utils.TCN(NL, n_Q, out, max_p)
-model.load_state_dict(torch.load(f'./models/model_{str_model}.pkl'))
-model.eval()
+if param_model == 'bo':
+    model = 'bo'
+else:
+    model = utils.TCN(NL, n_Q, out, max_p)
+    model.load_state_dict(torch.load(f'./models/model_{str_model}.pkl'))
+    model.eval()
 
 BS_val = 100
 
@@ -187,8 +190,21 @@ def eval_mse(Q_manual, p_manual, control, model=None, sn=0):
         curv_val = utils.get_curve_hor_from_x(x0_val, track_coord, NL)
         inp_val = torch.hstack((x0_val[:,idx_to_NN], curv_val))
 
-        if empc:
+        if param_model == 'empc':
             control_val = model(inp_val)
+
+        elif param_model == 'bo':
+            # currently hard programmed to kinematic model. 
+            p_bo_base = np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0])
+            p_bo_add = np.zeros(10)
+            Q_bo = Q_manual
+            idx_to_learned_param = [5,1,2,8,9]
+            p_bo_add[idx_to_learned_param] = np.array([-0.175, -0.4, 0.0, -0.1, -0.175])
+            p_bo_app = p_bo_base + p_bo_add
+
+            p_bo = np.repeat(np.expand_dims(p_bo_app, 0), NS, 0)
+            q_S_np_casadi = np.repeat(np.expand_dims((Q_bo[:,idx_to_casadi].T), 1), BS_val, 1)
+            p_S_np_casadi = np.repeat(np.expand_dims((p_bo[:,idx_to_casadi].T), 1), BS_val, 1)
 
         else:    
             q_p_pred_val = model(inp_val)
@@ -203,7 +219,7 @@ def eval_mse(Q_manual, p_manual, control, model=None, sn=0):
         time_nn = end_time_nn - start_time_nn
 
     time_start_short = time()
-    if not empc or model is None:
+    if not param_model == 'empc' or model is None:
         x_pred_val, u_pred_val = utils_car.solve_casadi_parallel(
             q_S_np_casadi, p_S_np_casadi,
             x0_val.detach().numpy()[:,:dx+2], BS_val, dx, du, control)

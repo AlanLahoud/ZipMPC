@@ -22,10 +22,11 @@ import argparse
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
+    parser.add_argument('--param_model', type=str, default='bo')  #'lcredh' or 'bo'
     parser.add_argument('--dyn', type=str, default='kin')
     parser.add_argument('--seed_n', type=int, default=0)
-    parser.add_argument('--NS', type=int, default=10)
-    parser.add_argument('--NL', type=int, default=20)
+    parser.add_argument('--NS', type=int, default=5)
+    parser.add_argument('--NL', type=int, default=18)
     parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
     parser.add_argument('--track', type=str, default='TEST_TRACK')
@@ -40,6 +41,7 @@ args = parse_arguments()
 ##########################################################################################
 
 dyn_model = args.dyn
+param_model = args.param_model
 
 assert dyn_model in ['kin','pac']
 
@@ -201,7 +203,7 @@ def plot_sim(x_simulated, u_simulated, vc, output_path, lab_text='Velocity'):
     fig, ax = plt.subplots(1,1, figsize=(10,5), dpi=250)
     gen.plotPoints(ax)
 
-    custom_cmap = plt.get_cmap('winter').reversed()
+    custom_cmap = plt.get_cmap('Wistia')#.reversed()
     norm = Normalize(vmin=color_data.min(), vmax=color_data.max())
     sm = ScalarMappable(cmap=custom_cmap, norm=norm)
 
@@ -340,74 +342,166 @@ def eval_lap(x0, Q_manual, p_manual, control, model=None):
     return lap_time, finished, x_full, u_full, np.array(q_p_full), np.array(curv_full)
 
 
+def eval_lap_bo(x0, Q_manual, p_manual, Q_bo, p_bo_app, control, test_bo):
+    
+    finished = 0
+    crashed = 0
+    steps = 0
+    max_steps=700
+
+    x_full = x0.reshape(-1,1).copy()[:dx+2]
+    u_full = np.zeros((2,1))
+    q_p_full = []
+    curv_full = []
+
+    while finished==0 and crashed==0:
+        if not test_bo:
+            q_lap_np_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
+            p_lap_np_casadi = np.expand_dims((p_manual[:,idx_to_casadi].T), 1)
+        
+        else:
+            # currently hard programmed to kinematic model.
+            p_bo = np.repeat(np.expand_dims(p_bo_app, 0), NS, 0)
+
+            q_lap_np_casadi = np.expand_dims((Q_bo[:,idx_to_casadi].T), 1)
+            p_lap_np_casadi = np.expand_dims((p_bo[:,idx_to_casadi].T), 1)
+
+        x_b_pred, u_b_pred = utils_car.solve_casadi(
+            q_lap_np_casadi[:,0,:], p_lap_np_casadi[:,0,:],
+            x0, dx, du, control)
+        
+        x0_new = true_dx.forward((torch.tensor(x0)).unsqueeze(0), torch.tensor(u_b_pred)[0:1]).squeeze()[:dx+2].detach().numpy()
+        x0 = x0_new.copy()
+
+        x_full = np.append(x_full, x0.reshape(-1,1), axis=1)
+        u_full = np.append(u_full, u_b_pred[0].reshape(-1,1), axis=1)
+        
+        if x0[0]>=track_coord[2].max().numpy()/2-0.1:
+            finished=1
+        
+        if x0[1]>bound_d + 0.04 or x0[1]<-bound_d - 0.04 or steps>max_steps:
+            crashed=1
+    
+        steps = steps+1
+    
+    lap_time = dt*steps
+
+    return lap_time, finished, x_full, u_full
+
+
 ##########################################################################################
 ################### I N F E R E N C E  ###################################################
 ##########################################################################################
 
+if param_model == 'lcredh':
+    model = utils.TCN(NL, n_Q, 5, max_p)
+    model.load_state_dict(torch.load(f'./models/model_{str_model}.pkl'))
+    model.eval()
 
-model = utils.TCN(NL, n_Q, 5, max_p)
-model.load_state_dict(torch.load(f'./models/model_{str_model}.pkl'))
-model.eval()
-
-
-x0_lap = utils_car.sample_init_test(1, true_dx, sn=2).numpy().squeeze()
-x0_lap_pred = x0_lap[:dx+4]
-x0_lap_manual = x0_lap[:dx+4]
-
-
-lap_time, finished, x_full, u_full, q_p_full, curv_full = eval_lap(x0_lap_pred, Q_manual, p_manual, control, model=model)
-lap_time_H, finished_H, x_H_full, u_H_full, _, _ = eval_lap(x0_lap_pred, Q_manual_H, p_manual_H, control_H)
-lap_time_T, finished_T, x_full_T, u_full_T, _, _ = eval_lap(x0_lap_pred, Q_manual, p_manual, control)
-
-print('LAP TIMES:', lap_time, lap_time_H, lap_time_T)
-
-if q_p_full.ndim == 3:
-    q_p_full = q_p_full.mean(1)
-
-plot_data(curv_full, q_p_full[:,0], r'Sigmadiff Linear Cost: $p_{\sigma}$', f'./imgs_paper/plot_sdf_{str_model}_{track_name}.png')
-plot_data(curv_full, q_p_full[:,1], r'Lateral Deviation Linear Cost: $p_{d}$', f'./imgs_paper/plot_lat_{str_model}_{track_name}.png')
-plot_data(curv_full, q_p_full[:,2], r'Heading Angle Linear Cost: $p_{\phi}$', f'./imgs_paper/plot_phi_{str_model}_{track_name}.png')
-plot_data(curv_full, q_p_full[:,3], r'Acceleration Linear Cost: $p_{a}$', f'./imgs_paper/plot_a_{str_model}_{track_name}.png')
-plot_data(curv_full, q_p_full[:,4], r'Steering Angle Linear Cost: $p_{\delta}$', f'./imgs_paper/plot_delta_{str_model}_{track_name}.png')
-
-plot_sim(x_full.T, u_full.T, q_p_full[:,1], f'./imgs_paper/traj_lat_{str_model}_{track_name}.png', r'Lateral Deviation Linear Cost: $p_{d}$')
-plot_sim(x_full.T, u_full.T, q_p_full[:,2], f'./imgs_paper/traj_phi_{str_model}_{track_name}.png', r'Heading Angle Linear Cost: $p_{\phi}$')
-plot_sim(x_full.T, u_full.T, q_p_full[:,4], f'./imgs_paper/traj_delta_{str_model}_{track_name}.png', r'Steering Angle Linear Cost: $p_{\delta}$')
-
-plot_sim(x_full_T.T, u_full_T.T, x_full_T[idx_to_NN[2]], f'./imgs_paper/traj_vel_T_{str_model}_{track_name}.png', r'Velocity$')
-plot_sim(x_H_full.T, u_H_full.T, x_H_full[idx_to_NN[2]], f'./imgs_paper/traj_vel_H_{str_model}_{track_name}.png', r'Velocity$')
-plot_sim(x_full.T, u_full.T, x_full[idx_to_NN[2]], f'./imgs_paper/traj_vel_{str_model}_{track_name}.png', r'Velocity$')
-
-plot_sim_all([x_full_T.T, x_H_full.T, x_full.T], f'./imgs_paper/plot_traj_all_{str_model}_{track_name}.png')
+    x0_lap = utils_car.sample_init_test(1, true_dx, sn=2).numpy().squeeze()
+    x0_lap_pred = x0_lap[:dx+4]
+    x0_lap_manual = x0_lap[:dx+4]
 
 
+    lap_time, finished, x_full, u_full, q_p_full, curv_full = eval_lap(x0_lap_pred, Q_manual, p_manual, control, model=model)
+    lap_time_H, finished_H, x_H_full, u_H_full, _, _ = eval_lap(x0_lap_pred, Q_manual_H, p_manual_H, control_H)
+    lap_time_T, finished_T, x_full_T, u_full_T, _, _ = eval_lap(x0_lap_pred, Q_manual, p_manual, control)
 
-lap_times = []
-for i in tqdm(range(10)):
-    x0_s = x0_lap_pred.copy()
-    x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
-    x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
-    lap_time, finished, x_full, _, _, _ = eval_lap(x0_s, Q_manual, p_manual, control, model=model)
-    lap_times.append(lap_time)
+    print('LAP TIMES:', lap_time, lap_time_H, lap_time_T)
 
-lap_times_H = []
-for i in tqdm(range(10)):
-    x0_s = x0_lap_pred.copy()
-    x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
-    x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
-    lap_time_H, finished_H, x_H_full, _, _, _ = eval_lap(x0_s, Q_manual_H, p_manual_H, control_H)
-    lap_times_H.append(lap_time_H)
+    if q_p_full.ndim == 3:
+        q_p_full = q_p_full.mean(1)
 
-lap_times_T = []
-for i in tqdm(range(10)):
-    x0_s = x0_lap_pred.copy()
-    x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
-    x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
-    lap_time_T, finished_T, x_full_T, _, _, _ = eval_lap(x0_s, Q_manual, p_manual, control)
-    lap_times_T.append(lap_time_T)
+    plot_data(curv_full, q_p_full[:,0], r'Sigmadiff Linear Cost: $p_{\sigma}$', f'./imgs_paper/plot_sdf_{str_model}_{track_name}.png')
+    plot_data(curv_full, q_p_full[:,1], r'Lateral Deviation Linear Cost: $p_{d}$', f'./imgs_paper/plot_lat_{str_model}_{track_name}.png')
+    plot_data(curv_full, q_p_full[:,2], r'Heading Angle Linear Cost: $p_{\phi}$', f'./imgs_paper/plot_phi_{str_model}_{track_name}.png')
+    plot_data(curv_full, q_p_full[:,3], r'Acceleration Linear Cost: $p_{a}$', f'./imgs_paper/plot_a_{str_model}_{track_name}.png')
+    plot_data(curv_full, q_p_full[:,4], r'Steering Angle Linear Cost: $p_{\delta}$', f'./imgs_paper/plot_delta_{str_model}_{track_name}.png')
+
+    plot_sim(x_full.T, u_full.T, q_p_full[:,1], f'./imgs_paper/traj_lat_{str_model}_{track_name}.png', r'Lateral Deviation Linear Cost: $p_{d}$')
+    plot_sim(x_full.T, u_full.T, q_p_full[:,2], f'./imgs_paper/traj_phi_{str_model}_{track_name}.png', r'Heading Angle Linear Cost: $p_{\phi}$')
+    plot_sim(x_full.T, u_full.T, q_p_full[:,4], f'./imgs_paper/traj_delta_{str_model}_{track_name}.png', r'Steering Angle Linear Cost: $p_{\delta}$')
+
+    plot_sim(x_full_T.T, u_full_T.T, x_full_T[idx_to_NN[2]], f'./imgs_paper/traj_vel_T_{str_model}_{track_name}.png', r'Velocity$')
+    plot_sim(x_H_full.T, u_H_full.T, x_H_full[idx_to_NN[2]], f'./imgs_paper/traj_vel_H_{str_model}_{track_name}.png', r'Velocity$')
+    plot_sim(x_full.T, u_full.T, x_full[idx_to_NN[2]], f'./imgs_paper/traj_vel_{str_model}_{track_name}.png', r'Velocity$')
+
+    plot_sim_all([x_full_T.T, x_H_full.T, x_full.T], f'./imgs_paper/plot_traj_all_{str_model}_{track_name}.png')
+
+    lap_times = []
+    for i in tqdm(range(10)):
+        x0_s = x0_lap_pred.copy()
+        x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
+        x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
+        lap_time, finished, x_full, _, _, _ = eval_lap(x0_s, Q_manual, p_manual, control, model=model)
+        lap_times.append(lap_time)
+
+    lap_times_H = []
+    for i in tqdm(range(10)):
+        x0_s = x0_lap_pred.copy()
+        x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
+        x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
+        lap_time_H, finished_H, x_H_full, _, _, _ = eval_lap(x0_s, Q_manual_H, p_manual_H, control_H)
+        lap_times_H.append(lap_time_H)
+
+    lap_times_T = []
+    for i in tqdm(range(10)):
+        x0_s = x0_lap_pred.copy()
+        x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
+        x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
+        lap_time_T, finished_T, x_full_T, _, _, _ = eval_lap(x0_s, Q_manual, p_manual, control)
+        lap_times_T.append(lap_time_T)
+
+elif param_model == 'bo':
+    x0_lap = utils_car.sample_init_test(1, true_dx, sn=2).numpy().squeeze()
+    x0_lap_pred = x0_lap[:dx+4]
+    x0_lap_manual = x0_lap[:dx+4]
+
+    p_bo_base = np.array([0, 0, 0, 0, 0, -p_sigma_manual, 0, 0, 0, 0])
+    p_bo_add = np.zeros(10)
+    Q_bo = Q_manual
+    idx_to_learned_param = [5,1,2,8,9]
+    p_bo_add[idx_to_learned_param] = np.array([-0.175, -0.4, 0.0, -0.1, -0.175])
+    p_bo_app = p_bo_base + p_bo_add
+
+    lap_time, finished, x_full, u_full = eval_lap_bo(x0_lap_pred, Q_manual, p_manual, Q_bo, p_bo_app, control, True)
+    lap_time_H, finished_H, x_H_full, u_H_full = eval_lap_bo(x0_lap_pred, Q_manual_H, p_manual_H, Q_bo, p_bo_app, control_H, False)
+    lap_time_T, finished_T, x_full_T, u_full_T = eval_lap_bo(x0_lap_pred, Q_manual, p_manual, Q_bo, p_bo_app, control, False)
+
+    print('LAP TIMES:', lap_time, lap_time_H, lap_time_T)
+
+    # plot_sim(x_full_T.T, u_full_T.T, x_full_T[idx_to_NN[2]], f'./imgs_paper/traj_vel_T_{str_model}_{track_name}.png', r'Velocity$')
+    # plot_sim(x_H_full.T, u_H_full.T, x_H_full[idx_to_NN[2]], f'./imgs_paper/traj_vel_H_{str_model}_{track_name}.png', r'Velocity$')
+    # plot_sim(x_full.T, u_full.T, x_full[idx_to_NN[2]], f'./imgs_paper/traj_vel_{str_model}_{track_name}.png', r'Velocity$')
+
+    # plot_sim_all([x_full_T.T, x_H_full.T, x_full.T], f'./imgs_paper/plot_traj_all_{str_model}_{track_name}.png')
+
+    lap_times = []
+    for i in tqdm(range(10)):
+        x0_s = x0_lap_pred.copy()
+        x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
+        x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
+        lap_time, finished, x_full,_ = eval_lap_bo(x0_s, Q_manual, p_manual, Q_bo, p_bo_app, control, True)
+        lap_times.append(lap_time)
+
+    lap_times_H = []
+    for i in tqdm(range(10)):
+        x0_s = x0_lap_pred.copy()
+        x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
+        x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
+        lap_time_H, finished_H, x_H_full,_ = eval_lap_bo(x0_s, Q_manual_H, p_manual_H, Q_bo, p_bo_app, control_H, False)
+        lap_times_H.append(lap_time_H)
+
+    lap_times_T = []
+    for i in tqdm(range(10)):
+        x0_s = x0_lap_pred.copy()
+        x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
+        x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
+        lap_time_T, finished_T, x_full_T,_ = eval_lap_bo(x0_s, Q_manual, p_manual, Q_bo, p_bo_app, control, False)
+        lap_times_T.append(lap_time_T)
+
 
 
 print(lap_times)
 print(lap_times_H)
 print(lap_times_T)
-
