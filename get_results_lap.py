@@ -201,7 +201,7 @@ def plot_sim(x_simulated, u_simulated, vc, output_path, lab_text='Velocity'):
     fig, ax = plt.subplots(1,1, figsize=(10,5), dpi=250)
     gen.plotPoints(ax)
 
-    custom_cmap = plt.get_cmap('Wistia')#.reversed()
+    custom_cmap = plt.get_cmap('winter').reversed()
     norm = Normalize(vmin=color_data.min(), vmax=color_data.max())
     sm = ScalarMappable(cmap=custom_cmap, norm=norm)
 
@@ -364,8 +364,10 @@ print('LAP TIMES:', lap_time, lap_time_H, lap_time_T)
 if q_p_full.ndim == 3:
     q_p_full = q_p_full.mean(1)
 
+plot_data(curv_full, q_p_full[:,0], r'Sigmadiff Linear Cost: $p_{\sigma}$', f'./imgs_paper/plot_sdf_{str_model}_{track_name}.png')
 plot_data(curv_full, q_p_full[:,1], r'Lateral Deviation Linear Cost: $p_{d}$', f'./imgs_paper/plot_lat_{str_model}_{track_name}.png')
 plot_data(curv_full, q_p_full[:,2], r'Heading Angle Linear Cost: $p_{\phi}$', f'./imgs_paper/plot_phi_{str_model}_{track_name}.png')
+plot_data(curv_full, q_p_full[:,3], r'Acceleration Linear Cost: $p_{a}$', f'./imgs_paper/plot_a_{str_model}_{track_name}.png')
 plot_data(curv_full, q_p_full[:,4], r'Steering Angle Linear Cost: $p_{\delta}$', f'./imgs_paper/plot_delta_{str_model}_{track_name}.png')
 
 plot_sim(x_full.T, u_full.T, q_p_full[:,1], f'./imgs_paper/traj_lat_{str_model}_{track_name}.png', r'Lateral Deviation Linear Cost: $p_{d}$')

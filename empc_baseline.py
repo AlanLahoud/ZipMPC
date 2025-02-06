@@ -60,13 +60,13 @@ l_f = l_r
 if dyn_model=='kin':
     delta_max = 0.40
     lr = 1e-4
-    BS = 120
+    BS = 300
     epochs = 30
 
 else:
     delta_max = 0.50
     lr = 8e-5
-    BS = 160
+    BS = 300
     epochs = 60
     
 
