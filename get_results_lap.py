@@ -203,7 +203,7 @@ def plot_sim(x_simulated, u_simulated, vc, output_path, lab_text='Velocity'):
     fig, ax = plt.subplots(1,1, figsize=(10,5), dpi=250)
     gen.plotPoints(ax)
 
-    custom_cmap = plt.get_cmap('Wistia')#.reversed()
+    custom_cmap = plt.get_cmap('winter').reversed()
     norm = Normalize(vmin=color_data.min(), vmax=color_data.max())
     sm = ScalarMappable(cmap=custom_cmap, norm=norm)
 
