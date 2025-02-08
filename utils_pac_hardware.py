@@ -138,8 +138,8 @@ class FrenetDynBicycleDx(nn.Module):
         if state.is_cuda and not self.params.is_cuda:
             self.params = self.params.cuda()
 
-        lr = self.l_r
-        lf = self.l_f
+        lr = self.l_r # 0.038
+        lf = self.l_f #0.052
 
         tau, delta = torch.unbind(u, dim=1)
 
@@ -149,24 +149,25 @@ class FrenetDynBicycleDx(nn.Module):
             sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff = torch.unbind(state, dim=1)
 
         # car params
-        m = 0.200
-        I_z = 0.0004
+        m = 0.181
+        I_z = 0.000505
 
         # lateral force params
-        Df = 0.43
-        Cf = 1.4
-        Bf = 0.5
-        Dr = 0.6
-        Cr = 1.7
-        Br = 0.5
+        Df = 0.65
+        Cf = 1.5
+        Bf = 5.2
+        Dr = 1.0
+        Cr = 1.45
+        Br = 8.5
 
         # longitudinal force params
         Cm1 = 0.98028992
         Cm2 = 0.01814131
-        Cd0 = 0.02750696
-        Cd1 = 0.02750696
+        Cd0 = 0.08518052
+        Cd1 = 0.01
         Cd2 = 0.02750696
         gamma = 0.5
+
 
         a_f = (torch.atan2((- v_y - lf*r),torch.abs(v_x))+delta)
         a_r = (torch.atan2((-v_y + lr*r),torch.abs(v_x)))
@@ -299,22 +300,22 @@ class CasadiControl():
         Ts = self.dt
 
         # car params
-        m = 0.200
-        I_z = 0.0004
+        m = 0.181
+        I_z = 0.000505
 
         # lateral force params
-        Df = 0.43
-        Cf = 1.4
-        Bf = 0.5
-        Dr = 0.6
-        Cr = 1.7
-        Br = 0.5
+        Df = 0.65
+        Cf = 1.5
+        Bf = 5.2
+        Dr = 1.0
+        Cr = 1.45
+        Br = 8.5
 
         # longitudinal force params
         Cm1 = 0.98028992
         Cm2 = 0.01814131
-        Cd0 = 0.02750696
-        Cd1 = 0.02750696
+        Cd0 = 0.08518052
+        Cd1 = 0.01
         Cd2 = 0.02750696
         gamma = 0.5
 

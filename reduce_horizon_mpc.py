@@ -47,7 +47,7 @@ assert dyn_model in ['kin','pac']
 if dyn_model=='kin':
     import utils_kin as utils_car
 else:
-    import utils_pac as utils_car
+    import utils_pac as utils_car #just change here to "utils_pac_hardware"
 
 NS = args.NS # Short horizon Length 
 NL = args.NL # Long Horizon Length
