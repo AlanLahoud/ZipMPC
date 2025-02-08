@@ -66,8 +66,8 @@ torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
 # Car axis length
-l_r = 0.05
-l_f = l_r
+l_r = 0.05  #0.038 (HW)
+l_f = l_r   #0.052 (HW)
 
 
 if dyn_model=='kin':
@@ -77,7 +77,7 @@ if dyn_model=='kin':
     epochs = 20
 
 else:
-    delta_max = 0.50
+    delta_max = 0.50 #0.4 (HW)
     lr = 5e-4
     BS = 120
     epochs = 60
