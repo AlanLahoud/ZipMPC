@@ -27,6 +27,7 @@ def parse_arguments():
     parser.add_argument('--NL', type=int, default=20)
     parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
+    parser.add_argument('--track_name', type=str, default='TEST_TRACK')
 
     return parser.parse_args()
 
@@ -61,6 +62,8 @@ assert NS%n_Q==0
 
 # Manual progress cost parameter (initial guess)
 p_sigma_manual = args.p_sigma_manual
+
+track_name = args.track_name
 
 # Seed for reproducibility
 seed_n= args.seed_n
@@ -133,7 +136,7 @@ params_H = torch.tensor(
 
 # Generating track
 gen = simple_track_generator.trackGenerator(track_density,track_width)
-track_name = 'TEST_TRACK'
+
 track_function = {
     'DEMO_TRACK'    : track_functions.demo_track,
     'HARD_TRACK'    : track_functions.hard_track,
