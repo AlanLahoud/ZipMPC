@@ -42,12 +42,14 @@ args = parse_arguments()
 
 dyn_model = args.dyn
 
-assert dyn_model in ['kin','pac']
+assert dyn_model in ['kin','pac','hard']
 
 if dyn_model=='kin':
     import utils_kin as utils_car
+elif dyn_model=='pac':
+    import utils_pac as utils_car
 else:
-    import utils_pac as utils_car #just change here to "utils_pac_hardware"
+    import utils_pac_hardware as utils_car
 
 NS = args.NS # Short horizon Length 
 NL = args.NL # Long Horizon Length
@@ -66,9 +68,8 @@ torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
 # Car axis length
-l_r = 0.05  #0.038 (HW)
-l_f = l_r   #0.052 (HW)
-
+l_r = 0.05  
+l_f = l_r  
 
 if dyn_model=='kin':
     delta_max = 0.40
@@ -76,11 +77,23 @@ if dyn_model=='kin':
     BS = 80
     epochs = 20
 
-else:
+elif dyn_model=='pac':
     delta_max = 0.50 #0.4 (HW)
     lr = 5e-4
     BS = 120
     epochs = 60
+
+elif dyn_model=='hard':
+    l_r = 0.038 
+    l_f = 0.052  
+    delta_max = 0.40
+    lr = 5e-4
+    BS = 120
+    epochs = 60
+    
+else:
+    print('Not implemented')
+    exit()
     
 
 # Curve smoothness

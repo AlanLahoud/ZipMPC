@@ -22,7 +22,7 @@ import argparse
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--param_model', type=str, default='bo')  #'lcredh' or 'bo'
+    parser.add_argument('--param_model', type=str, default='lcredh')  #'lcredh' or 'bo'
     parser.add_argument('--dyn', type=str, default='kin')
     parser.add_argument('--seed_n', type=int, default=0)
     parser.add_argument('--NS', type=int, default=5)
