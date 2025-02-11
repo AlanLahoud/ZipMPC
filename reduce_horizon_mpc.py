@@ -207,7 +207,7 @@ elif dyn_model=='pac':
     idx_to_NN = [1,2,4]
 
 
-elif dyn_model=='hard'::
+elif dyn_model=='hard':
     print('PACEJKA HARDWARE')
     dx=6
     du=2
@@ -228,6 +228,10 @@ elif dyn_model=='hard'::
     
     idx_to_casadi = [7,1,2,3,4,5,10,11]
     idx_to_NN = [1,2,4]
+
+else:
+    print('Not implemented')
+    exit()
 
 
 
