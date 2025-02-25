@@ -315,7 +315,7 @@ def eval_lap(x0, Q_manual, p_manual, control, model=None):
             curv_full.append(curv_lap.squeeze().detach().numpy())
         
             q_lap, p_lap = utils_car.q_and_p(NS, q_p_pred_lap, Q_manual, p_manual)
-                
+            
             q_lap_np_casadi = torch.permute(q_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
             p_lap_np_casadi = torch.permute(p_lap[:,:,idx_to_casadi], (2, 1, 0)).detach().numpy()
       

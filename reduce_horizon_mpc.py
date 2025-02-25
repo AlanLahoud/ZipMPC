@@ -349,7 +349,8 @@ if finished == 0:
 ################### M O D E L  &  T R A I N ##############################################
 ##########################################################################################
 
-model = utils.TCN(NL, n_Q, NS, max_p)
+# 5 because we are learning 5 parameters (sigma_diff, etc...)
+model = utils.TCN(NL, n_Q, 5, max_p)
 opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
 
 its_per_epoch = 20

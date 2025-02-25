@@ -634,7 +634,7 @@ def q_and_p(mpc_T, q_p_pred, Q_manual, p_manual):
 
     n_Q, BS, _ = q_p_pred.shape
 
-    q_p_pred = q_p_pred.repeat(mpc_T//n_Q, 1, 1)
+    q_p_pred = q_p_pred.repeat_interleave(mpc_T//n_Q, dim=0)
 
     e = 1e-9
 
