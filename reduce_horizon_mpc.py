@@ -29,6 +29,9 @@ def parse_arguments():
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
     parser.add_argument('--track_name', type=str, default='TEST_TRACK')
 
+    parser.add_argument('--v_max', type=float, default=1.8)
+    parser.add_argument('--delta_max', type=float, default=0.4)
+
     return parser.parse_args()
 
 
@@ -81,7 +84,7 @@ if dyn_model=='kin':
     epochs = 20
 
 elif dyn_model=='pac':
-    delta_max = 0.50 #0.4 (HW)
+    delta_max = 0.50
     lr = 5e-4
     BS = 120
     epochs = 60
@@ -106,8 +109,11 @@ k_curve = 25.
 dt = 0.03
 
 # Maximum v and a
-v_max=1.8
+#v_max=1.8
+v_max = args.v_max
 a_max = 1.0
+
+delta_max = args.delta_max
 
 # Clip learnable parameters (TanH, check NN)
 max_p = 10
@@ -117,7 +123,7 @@ BS_val = 80
 BS_test = 1
 
 # Model path to save
-str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}'
+str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}_{v_max}_{delta_max}'
 
 # Track parameters
 track_density = 300
