@@ -128,7 +128,7 @@ str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}_{v_max}_{delta_max}'
 # Track parameters
 track_density = 300
 track_width = 0.5
-max_track_width_perc_casadi = 0.68
+max_track_width_perc_casadi = 0.6
 bound_d_casadi = 0.5*max_track_width_perc_casadi*track_width
 t_track = 0.3
 init_track = [0,0,0]
