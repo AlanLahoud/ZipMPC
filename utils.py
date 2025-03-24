@@ -104,6 +104,5 @@ def get_nearest_index(point_f, ref_path):
 def frenet_to_cartesian(point_f, ref_path):
     nearest_index = get_nearest_index(point_f, ref_path)
     x = compute_x_coord(point_f, ref_path, nearest_index)
-    y = compute_y_coord(point_f, ref_path, nearest_index)    
     y = compute_y_coord(point_f, ref_path, nearest_index)
     return torch.tensor([x, y])

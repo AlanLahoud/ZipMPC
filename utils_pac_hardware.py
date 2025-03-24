@@ -212,6 +212,331 @@ class FrenetDynBicycleDx(nn.Module):
         return state
 
 
+    def forward_(self, state, u):
+        softplus_op = torch.nn.Softplus(20)
+        squeeze = state.ndimension() == 1
+        if squeeze:
+            state = state.unsqueeze(0)
+            u = u.unsqueeze(0)
+        if state.is_cuda and not self.params.is_cuda:
+            self.params = self.params.cuda()
+
+        lr = self.l_r # 0.038
+        lf = self.l_f #0.052
+
+        tau, delta = torch.unbind(u, dim=1)
+
+        try:
+            sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff, d_pen, v_ub = torch.unbind(state, dim=1)
+        except:
+            sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff = torch.unbind(state, dim=1)
+
+        # car params
+        m = 0.181
+        I_z = 0.000505
+
+        # lateral force params
+        Df = 0.65
+        Cf = 1.5
+        Bf = 5.2
+        Dr = 1.0
+        Cr = 1.45
+        Br = 8.5
+
+        # longitudinal force params
+        Cm1 = 0.98028992
+        Cm2 = 0.01814131
+        Cd0 = 0.08518052
+        Cd1 = 0.01
+        Cd2 = 0.02750696
+        gamma = 0.5
+
+
+        a_f = (torch.atan2((- v_y - lf*r),torch.abs(v_x))+delta)
+        a_r = (torch.atan2((-v_y + lr*r),torch.abs(v_x)))
+        
+
+        # forces on the wheels
+        #F_x = (Cm1 - Cm2 * v_x) * tau - Cd * v_x * v_x - Croll  # motor force
+
+        v = torch.sqrt(v_x**2 + v_y**2 + 1e-6)
+        Fm = (Cm1 - Cm2 * v) * tau
+        F_friction = -torch.sign(v_x) * (Cd0 + Cd1 * v + Cd2 * v**2)
+        
+        #forces on the wheels
+        Fm = (Cm1 - Cm2 * v_x) * tau  # motor force
+        Ffriction = torch.sign(v_x) * (-Cd0 - Cd1 * v_x - Cd2 * v_x * v_x)  # friction force
+
+        Fx_f = Fm * (1 - gamma)  # front wheel force, x component
+        Fx_r = Fm * gamma  # rear wheel force, x component
+
+        Fy_f = Df*torch.sin(Cf*torch.atan(Bf*a_f))
+        Fy_r = Dr*torch.sin(Cr*torch.atan(Br*a_r))
+
+        curv_sigma = self.curv(sigma)
+        denominator = torch.clamp(1. - curv_sigma*d, min=0.3)
+    
+        dsigma = (v_x * torch.cos(phi) - v_y * torch.sin(phi)) / denominator
+
+        dd = v_x*torch.sin(phi)+v_y*torch.cos(phi)
+
+        #curvature_effect = torch.where(torch.abs(d) < 0.03, torch.zeros_like(curv_sigma), curv_sigma)
+        #dphi = r - curvature_effect * dsigma
+        
+        dphi = r-self.curv(sigma)*dsigma
+        dr = 1/I_z*(Fy_f * lf * torch.cos(delta) + Fx_f * lf * torch.sin(delta) - Fy_r * lr)
+        dv_x = 1/m*(Fx_r + Fx_f * torch.cos(delta) - Fy_f * torch.sin(delta) + m * v_y * r + Ffriction)
+        dv_y = 1/m*(Fy_r + Fx_f * torch.sin(delta) + Fy_f * torch.cos(delta) - m * v_x * r)
+
+        sigma = sigma + self.dt * dsigma
+        d = d + self.dt * dd
+        phi = phi + self.dt * dphi
+        r = r + self.dt * dr
+        v_x = v_x + self.dt * dv_x
+        v_y = v_y + self.dt * dv_y
+        sigma_0 = sigma_0
+        sigma_diff = sigma - sigma_0
+
+        d_pen = self.penalty_d(d)
+
+        v_ub = self.penalty_v(v_x)
+
+        state = torch.stack((sigma, d, phi, r, v_x, v_y, sigma_0, sigma_diff, d_pen, v_ub), 1)
+
+        return state
+
+    
+
+
+    def forward_(self, state, u):
+        squeeze = state.ndimension() == 1
+        if squeeze:
+            state = state.unsqueeze(0)
+            u = u.unsqueeze(0)
+    
+        tau, delta = torch.unbind(u, dim=1)
+    
+        sigma, d, phi, r, v_x, v_y = torch.unbind(state[:, :6], dim=1)
+    
+        lr, lf = self.l_r, self.l_f
+        m, I_z = 0.181, 0.000505
+        Df, Cf, Bf = 0.65, 1.5, 5.2
+        Dr, Cr, Br = 1.0, 1.45, 8.5
+        Cm1, Cm2 = 0.98028992, 0.01814131
+        Cd0, Cd1, Cd2 = 0.08518052, 0.01, 0.02750696
+        gamma = 0.5
+    
+        a_f = delta - torch.atan2((v_y + lf * r), torch.abs(v_x))
+        a_r = torch.atan2((-v_y + lr * r), torch.abs(v_x))
+    
+        # Forces
+        v = torch.sqrt(v_x**2 + v_y**2 + 1e-6)
+        Fm = (Cm1 - Cm2 * v) * tau
+        F_friction = -torch.sign(v_x) * (Cd0 + Cd1 * v + Cd2 * v**2)
+    
+        Fx_f = Fm * (1 - gamma)
+        Fx_r = Fm * gamma
+    
+        Fy_f = Df * torch.sin(Cf * torch.atan(Bf * a_f))
+        Fy_r = Dr * torch.sin(Cr * torch.atan(Br * a_r))
+    
+        curv_sigma = self.curv(sigma)
+        denominator = torch.clamp(1. - curv_sigma*d, min=0.3)
+    
+        dsigma = (v_x * torch.cos(phi) - v_y * torch.sin(phi)) / denominator
+        dd = v_x * torch.sin(phi) + v_y * torch.cos(phi)
+        
+
+        curvature_effect = torch.where(torch.abs(d) < 0.03, torch.zeros_like(curv_sigma), curv_sigma)
+        dphi = r - curvature_effect * dsigma
+    
+        dr = (lf * Fy_f * torch.cos(delta) + lf * Fx_f * torch.sin(delta) - lr * Fy_r) / I_z
+        dv_x = (Fx_r + Fx_f * torch.cos(delta) - Fy_f * torch.sin(delta) + m * v_y * r + F_friction) / m
+        dv_y = (Fy_r + Fx_f * torch.sin(delta) + Fy_f * torch.cos(delta) - m * v_x * r) / m
+    
+        # Euler integration
+        sigma = sigma + self.dt * dsigma
+        d = d + self.dt * dd
+        phi = phi + self.dt * dphi
+        r = r + self.dt * dr
+        v_x = v_x + self.dt * dv_x
+        v_y = v_y + self.dt * dv_y
+    
+        next_state = torch.stack((sigma, d, phi, r, v_x, v_y), dim=1)
+    
+        if squeeze:
+            next_state = next_state.squeeze(0)
+    
+        return next_state
+
+
+    def forward_cartesian(self, state, u):
+        squeeze = state.ndimension() == 1
+        if squeeze:
+            state = state.unsqueeze(0)
+            u = u.unsqueeze(0)
+    
+        # Unpack state and control
+        pos_x, pos_y, vel_x, vel_y = torch.unbind(state, dim=1)
+        a_tangent, delta = torch.unbind(u, dim=1)
+    
+        # Vehicle parameters
+        lr = self.l_r
+        lf = self.l_f
+        m = 0.181
+        I_z = 0.000505
+    
+        # Tire parameters
+        Df, Cf, Bf = 0.65, 1.5, 5.2
+        Dr, Cr, Br = 1.0, 1.45, 8.5
+    
+        # Longitudinal parameters
+        Cm1, Cm2 = 0.98028992, 0.01814131
+        Cd0, Cd1, Cd2 = 0.08518052, 0.01, 0.02750696
+        gamma = 0.5
+    
+        # Compute heading angle and yaw rate explicitly
+        psi = torch.atan2(vel_y, vel_x)
+        v_x_body = torch.cos(psi) * vel_x + torch.sin(psi) * vel_y
+        v_y_body = -torch.sin(psi) * vel_x + torch.cos(psi) * vel_y
+    
+        r = (v_y_body + lr * 0) / (lr + lf) * torch.tan(delta)  # Approximation for yaw rate at low speeds
+    
+        # Slip angles
+        a_f = delta - torch.atan2(v_y_body + lf * r, torch.abs(v_x_body))
+        a_r = -torch.atan2(v_y_body - lr * r, torch.abs(v_x_body))
+    
+        # Forces
+        v = torch.sqrt(v_x_body**2 + v_y_body**2 + 1e-6)
+        Fm = (Cm1 - Cm2 * v) * a_tangent
+        F_friction = -torch.sign(v) * (Cd0 + Cd1 * v + Cd2 * v**2)
+    
+        Fx_f = Fm * (1 - gamma)
+        Fx_r = Fm * gamma
+    
+        Fy_f = Df * torch.sin(Cf * torch.atan(Bf * a_f))
+        Fy_r = Dr * torch.sin(Cr * torch.atan(Br * a_r))
+    
+        # Equations of motion in body frame
+        dv_x_body = (Fx_r + Fx_f * torch.cos(delta) - Fy_f * torch.sin(delta) + m * v_y_body * r + F_friction) / m
+        dv_y_body = (Fy_r + Fx_f * torch.sin(delta) + Fy_f * torch.cos(delta) - m * v_x_body * r) / m
+        dr = (lf * Fy_f * torch.cos(delta) + lf * Fx_f * torch.sin(delta) - lr * Fy_r) / I_z
+    
+        # Convert back to global frame
+        dv_x = dv_x_body * torch.cos(psi) - dv_y_body * torch.sin(psi)
+        dv_y = dv_x_body * torch.sin(psi) + dv_y_body * torch.cos(psi)
+    
+        dpos_x = vel_x
+        dpos_y = vel_y
+    
+        # Euler integration
+        pos_x = pos_x + self.dt * dpos_x
+        pos_y = pos_y + self.dt * dpos_y
+        vel_x = vel_x + self.dt * dv_x
+        vel_y = vel_y + self.dt * dv_y
+    
+        next_state = torch.stack((pos_x, pos_y, vel_x, vel_y), dim=1)
+    
+        if squeeze:
+            next_state = next_state.squeeze(0)
+    
+        return next_state
+
+
+
+    
+    def cartesian_to_frenet(self, state_cartesian, r_prev, ref_path):
+        squeeze = state_cartesian.ndimension() == 1
+        if squeeze:
+            state_cartesian = state_cartesian.unsqueeze(0)
+    
+        pos_x, pos_y, vel_x, vel_y = torch.unbind(state_cartesian, dim=1)
+    
+        # Find closest point on reference curve
+        sigma = self.closest_sigma(pos_x, pos_y)
+    
+        # Get reference curve position and heading at sigma
+        x_ref, y_ref = self.ref_pos(sigma)
+        psi_ref = self.ref_heading(sigma)
+    
+        # Calculate Frenet lateral deviation
+        dx = pos_x - x_ref
+        dy = pos_y - y_ref
+        d = dx * (-torch.sin(psi_ref)) + dy * torch.cos(psi_ref)
+    
+        # Calculate heading angle deviation
+        psi = torch.atan2(vel_y, vel_x)
+        phi = psi - psi_ref
+    
+        # Compute velocities in Frenet frame
+        v_x = vel_x * torch.cos(psi_ref) + vel_y * torch.sin(psi_ref)
+        v_y = -vel_x * torch.sin(psi_ref) + vel_y * torch.cos(psi_ref)
+    
+        r = r_prev
+    
+        state_frenet = torch.stack((sigma, d, phi, r, v_x, v_y), dim=1)
+    
+        if squeeze:
+            state_frenet = state_frenet.squeeze(0)
+    
+        return state_frenet
+
+    
+    def ref_pos(self, sigma_query):
+        sigma_track = self.track_coordinates[2, :]
+        pos_x_track = self.track_coordinates[0, :]
+        pos_y_track = self.track_coordinates[1, :]
+    
+        # Clamp queries within bounds
+        sigma_query_clamped = sigma_query.clamp(min=sigma_track[0], max=sigma_track[-1])
+    
+        idx_right = torch.searchsorted(sigma_track, sigma_query_clamped)
+        idx_right = torch.clamp(idx_right, 1, len(sigma_track)-1)
+        idx_left = idx_right - 1
+    
+        sigma_left = sigma_track[idx_left]
+        sigma_right = sigma_track[idx_right]
+    
+        weight = (sigma_query_clamped - sigma_left) / (sigma_right - sigma_left + 1e-8)
+    
+        pos_x_query = pos_x_track[idx_left] + weight * (pos_x_track[idx_right] - pos_x_track[idx_left])
+        pos_y_query = pos_y_track[idx_left] + weight * (pos_y_track[idx_right] - pos_y_track[idx_left])
+    
+        return pos_x_query, pos_y_query
+    
+    def ref_heading(self, sigma_query):
+        sigma_track = self.track_coordinates[2, :]
+        psi_track = self.track_coordinates[4, :]
+    
+        # Clamp queries within bounds
+        sigma_query_clamped = sigma_query.clamp(min=sigma_track[0], max=sigma_track[-1])
+    
+        idx_right = torch.searchsorted(sigma_track, sigma_query_clamped)
+        idx_right = torch.clamp(idx_right, 1, len(sigma_track)-1)
+        idx_left = idx_right - 1
+    
+        sigma_left = sigma_track[idx_left]
+        sigma_right = sigma_track[idx_right]
+    
+        weight = (sigma_query_clamped - sigma_left) / (sigma_right - sigma_left + 1e-8)
+    
+        psi_query = psi_track[idx_left] + weight * (psi_track[idx_right] - psi_track[idx_left])
+
+        return psi_query
+    
+    def closest_sigma(self, pos_x, pos_y):
+        # Compute the closest sigma value from the track points
+        dx = self.track_coordinates[0, :].unsqueeze(0) - pos_x.unsqueeze(1)
+        dy = self.track_coordinates[1, :].unsqueeze(0) - pos_y.unsqueeze(1)
+    
+        dist_sq = dx**2 + dy**2
+        closest_idx = torch.argmin(dist_sq, dim=1)
+        sigma_closest = self.track_coordinates[2, closest_idx]
+    
+        return sigma_closest
+
+
+
 
 class CasadiControl():
     def __init__(self, track_coordinates, params):
@@ -286,7 +611,7 @@ class CasadiControl():
         return curv
 
 
-    def mpc_casadi(self,q,p,x0,dx,du):
+    def mpc_casadi(self,q,p,x0,dx,du, u0=np.array([0.,0.])):
 
 
         # here the q and the p scale the following
@@ -343,11 +668,13 @@ class CasadiControl():
         options['ipopt.max_iter'] = 2000
         options['verbose'] = False
 
+        denominator = (1.-self.curv_casadi(x_sym[0,0:N])*x_sym[1,0:N])
+        
         dyn1 = horzcat(
             (x_sym[0,0] - x0[0]),
             (x_sym[0,1:N+1] - x_sym[0,0:N] - \
              Ts*((x_sym[4,0:N]*cos(x_sym[2,0:N])-x_sym[5,0:N]*sin(
-                x_sym[2,0:N]))/(1.-self.curv_casadi(x_sym[0,0:N])*x_sym[1,0:N]))))
+                x_sym[2,0:N]))/denominator)))
 
         dyn2 = horzcat(
             (x_sym[1,0] - x0[1]),
@@ -360,8 +687,7 @@ class CasadiControl():
             (x_sym[2,1:N+1] - x_sym[2,0:N] - \
              Ts*(x_sym[3,0:N] - self.curv_casadi(
                 x_sym[0,0:N])*(x_sym[4,0:N]*cos(
-                x_sym[2,0:N])-x_sym[5,0:N]*sin(x_sym[2,0:N]))/(1-self.curv_casadi(
-                x_sym[0,0:N])*x_sym[1,0:N]))))
+                x_sym[2,0:N])-x_sym[5,0:N]*sin(x_sym[2,0:N]))/denominator)))
 
         dyn4 = horzcat(
             (x_sym[3,0] - x0[3]),
@@ -386,7 +712,16 @@ class CasadiControl():
         p_sym = SX.sym('p_sym',dx+du,N)
         Q_sym = diag(q_sym)
 
-        l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat))
+        #import pdb
+        #pdb.set_trace()
+
+        barr1 = -log(fmax(1e-5, x_sym[1,0:N+1] + 0.50*self.max_track_width_perc*self.track_width*np.ones((1,N+1))))
+        barr2 = -log(fmax(1e-5, 0.50*self.max_track_width_perc*self.track_width*np.ones((1,N+1)) - x_sym[1,0:N+1]))
+        
+        barrier = (1/N)* (barr1 + barr2)
+
+        
+        l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat))/N + sum2(sum1(barrier))
         dl = substitute(substitute(l,q_sym,q),p_sym,p)
 
         const = vertcat(
@@ -429,16 +764,37 @@ class CasadiControl():
         x = vertcat(reshape(x_sym[:,0:N+1],(dx*(N+1),1)),reshape(u_sym[:,0:N],(du*N,1)))
         #w_ws = np.vstack([np.reshape(x_warmstart[:dx,0:N+1],(dx*(N+1),1)),np.reshape(x_warmstart[dx+dc+df:,0:N],(du*(N),1))])
 
+        #options = {
+        #            'verbose': False,
+        #            'ipopt.print_level': 0,
+        #            'print_time': False,
+        #            'ipopt.sb': 'yes',
+        #            'print_time': 0,
+        #            'ipopt.constr_viol_tol': 1e-9,
+        #            'ipopt.tol': 1e-6,
+        #            'ipopt.max_iter': 1000,
+        #            'ipopt.hessian_approximation': 'exact',
+        #            'ipopt.mu_init': 1e4,
+        #            'ipopt.mu_min': 1e-5,
+        #            'ipopt.mu_max': 1e4
+        #        }
+
         options = {
-                    'verbose': False,
-                    'ipopt.print_level': 0,
-                    'print_time': False,
-                    'ipopt.sb': 'yes',
-                    'print_time': 0,
-                    'ipopt.tol': 1e-3,
-                    'ipopt.max_iter': 800,
-                    'ipopt.hessian_approximation': 'limited-memory'
-                }
+            'verbose': False,
+            'ipopt.print_level': 0,
+            'print_time': False,
+            'ipopt.sb': 'yes',
+            'ipopt.constr_viol_tol': 1e-5,
+            'ipopt.tol': 1e-4,
+            'ipopt.acceptable_tol': 5e-2,
+            'ipopt.acceptable_constr_viol_tol': 1e-4,
+            'ipopt.mu_strategy': 'adaptive',
+            'ipopt.mu_init': 1e-1,
+            'ipopt.mu_min': 1e-4,
+            'ipopt.max_iter': 1000,
+            'ipopt.nlp_scaling_method': 'gradient-based',
+            'ipopt.hessian_approximation': 'exact'
+        }
 
         nlp = {'x':x,'f':dl, 'g':const}
         solver = nlpsol('solver','ipopt', nlp, options)
@@ -449,6 +805,14 @@ class CasadiControl():
         solver_input['ubx'] = ubx
         solver_input['lbg'] = lbg
         solver_input['ubg'] = ubg
+
+        x_warm_full = np.zeros(dx*(N+1)+du*N)
+
+        #import pdb
+        #pdb.set_trace()
+        # Insert your u0 guess at the correct position:
+        x_warm_full[-du*N:] = np.repeat(u0, N)
+        solver_input['x0'] = x_warm_full
 
         # add initial guess to solver
         #solver_input['x0'] = w_ws
@@ -462,10 +826,14 @@ class CasadiControl():
         u = sol_evalf[-du*N:].reshape(-1,du)
         x = sol_evalf[:-du*N].reshape(-1,dx)
 
-        #print(sol.solveroutput.info.lambda)
-
-        # print solution
-        return x, u
+        optimal_status = 0
+        status = solver.stats()['return_status']
+        if status == 'Solve_Succeeded':
+            optimal_status = 1
+            
+        print("IPOPT status:", status)
+        
+        return x, u, optimal_status
 
 
 def sample_init(BS, dyn, sn=None):
@@ -588,11 +956,11 @@ def solve_casadi(q_np,p_np,x0_np,dx,du,control):
 
 
 
-def solve_casadi(q_np,p_np,x0_np,dx,du,control):
+def solve_casadi(q_np,p_np,x0_np,dx,du,control,u0=np.array([0,0])):
 
     mpc_T = q_np.shape[1]
 
-    x_curr_opt, u_curr_opt = control.mpc_casadi(q_np,p_np,x0_np,dx,du)
+    x_curr_opt, u_curr_opt, op = control.mpc_casadi(q_np,p_np,x0_np,dx,du,u0)
 
     sigzero_curr_opt = np.expand_dims(x_curr_opt[[0],0].repeat(mpc_T+1), 1)
     sigsiff_curr_opt = x_curr_opt[:,[0]]-x_curr_opt[0,0]
@@ -603,7 +971,7 @@ def solve_casadi(q_np,p_np,x0_np,dx,du,control):
     x_star = x_curr_opt_plus[:-1]
     u_star = u_curr_opt
 
-    return x_star, u_star
+    return x_star, u_star, op
 
 def process_single_casadi(sample, q, p, x0, dx, du, control):
     x, u = solve_casadi(
