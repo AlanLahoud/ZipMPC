@@ -98,13 +98,13 @@ delta_max = 0.40
 k_curve = 25.
 
 #discretization
-dt = 0.015
+dt = 0.02
 
 n_steps_dt = 1
 
 # Maximum v and a
 #v_max=1.8
-v_max = 2.2
+v_max = 2.0
 a_max = 1.0
 
 
