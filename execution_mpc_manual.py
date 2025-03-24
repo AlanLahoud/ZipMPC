@@ -22,7 +22,7 @@ import utils_pac_hardware as utils_car
 from matplotlib import pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import Normalize
-
+from matplotlib.cm import ScalarMappable
 
 
 
@@ -54,6 +54,7 @@ def plot_sim(x_simulated, u_simulated, vc, output_path, lab_text='Velocity'):
         ax.plot(x_plot[i:i+2], y_plot[i:i+2], color=custom_cmap(norm(color_data[i])), alpha=0.5)
 
     #plt.axis('off')
+    ax.annotate(time_lap, xy=(0, -0.5))
     
     cbar = plt.colorbar(sm, ax=ax)
     
@@ -70,41 +71,6 @@ def plot_sim(x_simulated, u_simulated, vc, output_path, lab_text='Velocity'):
     
     plt.savefig(output_path, format='png', dpi=300)
 
-
-def plot_sim_cartesian(x_simulated, u_simulated, output_path, lab_text='Velocity'):
-
-    x_plot = x_simulated[:,0]
-    y_plot = x_simulated[:,1]
-
-    color_data = np.sqrt(x_simulated[:,2]**2 + x_simulated[:,3]**2)
-    
-    fig, ax = plt.subplots(1,1, figsize=(10,5), dpi=250)
-    gen.plotPoints(ax)
-
-    custom_cmap = plt.get_cmap('winter').reversed()
-    norm = Normalize(vmin=color_data.min(), vmax=color_data.max())
-    sm = ScalarMappable(cmap=custom_cmap, norm=norm)
-
-
-    for i in range(len(x_plot) - 1):
-        ax.plot(x_plot[i:i+2], y_plot[i:i+2], color=custom_cmap(norm(color_data[i])), alpha=0.5)
-
-    #plt.axis('off')
-    
-    cbar = plt.colorbar(sm, ax=ax)
-    
-    cbar.set_label(lab_text) 
-    
-    print('x_init: ' + str(gen.xCoords[0]))
-    print('y_init: ' + str(gen.yCoords[0]))
-    print('yaw_init: ' + str(gen.tangentAngle[0]))
-    print('Total Arc Length: ' + str(gen.arcLength[-1]/2))
-    #plt.show()
-
-    plt.tight_layout()
-    #plt.show()
-    
-    plt.savefig(output_path, format='png', dpi=300)
 
 
 def parse_arguments():
