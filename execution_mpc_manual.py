@@ -224,6 +224,8 @@ lap_time = dt*steps
 print(f'Manual extended NL = {NL}, lap time: {lap_time}, finished: {finished}')
 
 
-plot_sim(torch.tensor(x_frenet_full), torch.tensor(x_frenet_full), np.array(u_full)[:,1], f'./outs_imgs/{out_path}.png', lab_text='Steering')
+plot_sim(torch.tensor(x_frenet_full), torch.tensor(x_frenet_full), np.array(u_full)[:,1], 
+         f'./outs_imgs/{out_path}.png', lab_text='Steering', time_lap=lap_time)
 
-plot_sim(torch.tensor(x_frenet_full), torch.tensor(x_frenet_full), np.array(x_frenet_full)[:,4], f'./outs_imgs/{out_path}.png', lab_text='Velocity')
+plot_sim(torch.tensor(x_frenet_full), torch.tensor(x_frenet_full), np.array(x_frenet_full)[:,4], 
+         f'./outs_imgs/{out_path}.png', lab_text='Velocity', time_lap=lap_time)
