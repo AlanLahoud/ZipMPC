@@ -27,7 +27,7 @@ from matplotlib.cm import ScalarMappable
 
 
 
-def plot_sim(x_simulated, u_simulated, vc, output_path, lab_text='Velocity'):
+def plot_sim(x_simulated, u_simulated, vc, output_path, lab_text='Velocity', time_lap=0.0):
     
     x_list = []
     y_list = []
