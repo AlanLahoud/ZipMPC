@@ -669,7 +669,7 @@ class CasadiControl():
             
         print("IPOPT status:", status)
         
-        return x, u, optimal_status
+        return x, u#, optimal_status
 
 
 def sample_init(BS, dyn, sn=None):
@@ -807,7 +807,7 @@ def solve_casadi(q_np,p_np,x0_np,dx,du,control,u0=np.array([0,0])):
     x_star = x_curr_opt_plus[:-1]
     u_star = u_curr_opt
 
-    return x_star, u_star, op
+    return x_star, u_star#, op
 
 def process_single_casadi(sample, q, p, x0, dx, du, control):
     x, u = solve_casadi(
