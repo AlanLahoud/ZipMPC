@@ -192,7 +192,7 @@ while finished==0 and crashed==0:
     q_lap_manual_casadi = Q_manual_H[:,idx_to_casadi].T
     p_lap_manual_casadi = p_manual_H[:,idx_to_casadi].T
 
-    x_b_manual, u_b_manual, opt_status = utils_car.solve_casadi(
+    x_b_manual, u_b_manual = utils_car.solve_casadi(
         q_lap_manual_casadi, p_lap_manual_casadi,
         x0_b_manual, dx, du, control_H, u_step)
 
