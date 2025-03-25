@@ -24,7 +24,7 @@ def parse_arguments():
     parser.add_argument('--dyn', type=str, default='kin')
     parser.add_argument('--seed_n', type=int, default=0)
     parser.add_argument('--NS', type=int, default=10)
-    parser.add_argument('--NL', type=int, default=20)
+    parser.add_argument('--NL', type=int, default=40)
     parser.add_argument('--n_Q', type=int, default=1)
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
     parser.add_argument('--track_name', type=str, default='TEST_TRACK')
@@ -77,6 +77,9 @@ np.random.seed(seed_n)
 l_r = 0.05  
 l_f = l_r  
 
+#discretization
+dt = 0.03
+
 if dyn_model=='kin':
     delta_max = 0.40
     lr = 1e-4
@@ -96,6 +99,7 @@ elif dyn_model=='hard':
     lr = 5e-4
     BS = 120
     epochs = 60
+    dt = 0.02
     
 else:
     print('Not implemented')
@@ -105,8 +109,7 @@ else:
 # Curve smoothness
 k_curve = 25.
 
-#discretization
-dt = 0.03
+
 
 # Maximum v and a
 #v_max=1.8
@@ -217,18 +220,18 @@ elif dyn_model=='hard':
     print('PACEJKA HARDWARE')
     dx=6
     du=2
-    lqr_iter = 35
+    lqr_iter = 40
     eps=0.00001
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = np.repeat(np.expand_dims(
-        np.array([0, 20.0, 10.0, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 0.1, 0.1]), 0), NS, 0)
+        np.array([0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 0.1, 0.1]), 0), NS, 0)
     p_manual = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
     Q_manual_H = np.repeat(np.expand_dims(
-        np.array([0, 20.0, 10.0, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 0.1, 0.1]), 0), NL, 0)
+        np.array([0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 0.1, 0.1]), 0), NL, 0)
     p_manual_H = np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
     
