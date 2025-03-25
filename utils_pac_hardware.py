@@ -620,14 +620,14 @@ class CasadiControl():
             'ipopt.print_level': 0,
             'print_time': False,
             'ipopt.sb': 'yes',
-            'ipopt.constr_viol_tol': 1e-5,
+            'ipopt.constr_viol_tol': 1e-8,
             'ipopt.tol': 1e-4,
             'ipopt.acceptable_tol': 5e-2,
             'ipopt.acceptable_constr_viol_tol': 1e-4,
             'ipopt.mu_strategy': 'adaptive',
             'ipopt.mu_init': 1e-1,
             'ipopt.mu_min': 1e-4,
-            'ipopt.max_iter': 800,
+            'ipopt.max_iter': 1500,
             'ipopt.nlp_scaling_method': 'gradient-based',
             'ipopt.hessian_approximation': 'exact'
         }
