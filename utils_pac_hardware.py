@@ -796,7 +796,8 @@ def solve_casadi(q_np,p_np,x0_np,dx,du,control,u0=np.array([0,0])):
 
     mpc_T = q_np.shape[1]
 
-    x_curr_opt, u_curr_opt, op = control.mpc_casadi(q_np,p_np,x0_np,dx,du,u0)
+    #x_curr_opt, u_curr_opt, op = control.mpc_casadi(q_np,p_np,x0_np,dx,du,u0)
+    x_curr_opt, u_curr_opt = control.mpc_casadi(q_np,p_np,x0_np,dx,du,u0)
 
     sigzero_curr_opt = np.expand_dims(x_curr_opt[[0],0].repeat(mpc_T+1), 1)
     sigsiff_curr_opt = x_curr_opt[:,[0]]-x_curr_opt[0,0]
