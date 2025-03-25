@@ -215,7 +215,7 @@ while finished==0 and crashed==0:
         crashed=1
 
     steps = steps+1
-    print(steps)
+    #print(steps)
 
 #x_manual_full_H = np.array(x_manual_full_H)
 x_frenet_full = np.array(x_frenet_full)

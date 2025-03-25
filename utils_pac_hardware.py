@@ -551,8 +551,8 @@ class CasadiControl():
         #import pdb
         #pdb.set_trace()
 
-        barr1 = -log(fmax(1e-5, x_sym[1,0:N+1] + 0.47*self.max_track_width_perc*self.track_width*np.ones((1,N+1))))
-        barr2 = -log(fmax(1e-5, 0.47*self.max_track_width_perc*self.track_width*np.ones((1,N+1)) - x_sym[1,0:N+1]))
+        barr1 = -log(fmax(1e-5, x_sym[1,0:N+1] + 0.48*self.max_track_width_perc*self.track_width*np.ones((1,N+1))))
+        barr2 = -log(fmax(1e-5, 0.48*self.max_track_width_perc*self.track_width*np.ones((1,N+1)) - x_sym[1,0:N+1]))
         
         barrier = (1/N)* (barr1 + barr2)
 
@@ -627,7 +627,7 @@ class CasadiControl():
             'ipopt.mu_strategy': 'adaptive',
             'ipopt.mu_init': 1e-1,
             'ipopt.mu_min': 1e-4,
-            'ipopt.max_iter': 1000,
+            'ipopt.max_iter': 800,
             'ipopt.nlp_scaling_method': 'gradient-based',
             'ipopt.hessian_approximation': 'exact'
         }

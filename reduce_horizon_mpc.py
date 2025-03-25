@@ -265,8 +265,6 @@ x0_lap = utils_car.sample_init_test(1, true_dx, sn=0).numpy()
 
 x0_lap_manual = x0_lap[:,:dx+4]
 
-finish_list = np.zeros((BS_test,))
-lap_time_list = np.zeros((BS_test,))
 
 finished = 0
 crashed = 0
@@ -274,8 +272,6 @@ steps = 0
 max_steps=600
 
 x0_b_manual = x0_lap_manual[0].copy()
-#x_manual_full_H = x0_b_manual.reshape(-1,1)
-
 x_manual_full_H = []
 u_step = np.array([0.5, 0.])
 while finished==0 and crashed==0:
@@ -300,43 +296,11 @@ while finished==0 and crashed==0:
     steps = steps+1
     print(steps)
 
-x_manual_full_H = np.array(x_manual_full_H)
-
-
-#while finished==0 and crashed==0:
-#    q_lap_manual_casadi = Q_manual_H[:,idx_to_casadi].T
-#    p_lap_manual_casadi = p_manual_H[:,idx_to_casadi].T
-
-#    x_b_manual, u_b_manual = utils_car.solve_casadi(
-#        q_lap_manual_casadi, p_lap_manual_casadi,
-#        x0_b_manual, dx, du, control_H)
-
-    #x0_b_manual = x_b_manual[1]
-
-#    x0_b_manual = true_dx.forward((torch.tensor(x0_b_manual)).unsqueeze(0), 
-#                                                  torch.tensor(u_b_manual)[0:1]).squeeze()[:dx+4].detach().numpy()
-    
-#    x_manual_full_H = np.append(x_manual_full_H, x0_b_manual.reshape(-1,1), axis=1)
-    #print("x_manual:", x_b_manual[1])
-
-#    if x0_b_manual[0]>track_coord[2].max().numpy()/2:
-#        finished=1
-
-#    if x0_b_manual[1]>bound_d_casadi+0.04 or x0_b_manual[1]<-bound_d_casadi-0.04 or steps>max_steps:
-#        crashed=1
-
-#    steps = steps+1
-    #print("long horizon step:", steps)
-
+x_manual_full_H = np.array(x_manual_full_H).T
 lap_time = dt*steps
-
 print(f'Manual extended NL = {NL}, lap time: {lap_time}, finished: {finished}')
 
 
-
-
-finish_list = np.zeros((BS_test,))
-lap_time_list = np.zeros((BS_test,))
 
 finished = 0
 crashed = 0
@@ -344,23 +308,21 @@ steps = 0
 max_steps=1500
 
 x0_b_manual = x0_lap_manual[0].copy()
-x_manual_full = x0_b_manual.reshape(-1,1)
-
+x_manual_full = []
+u_step = np.array([0.5, 0.])
 while finished==0 and crashed==0:
     q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
     p_lap_manual_casadi = p_manual[:,idx_to_casadi].T
 
     x_b_manual, u_b_manual = utils_car.solve_casadi(
         q_lap_manual_casadi, p_lap_manual_casadi,
-        x0_b_manual, dx, du, control)
+        x0_b_manual, dx, du, control, u_step)
 
-    #x0_b_manual = x_b_manual[1]
-
+    u_step = u_b_manual[0:1].mean(0)
     x0_b_manual = true_dx.forward((torch.tensor(x0_b_manual)).unsqueeze(0), 
-                                                  torch.tensor(u_b_manual)[0:1]).squeeze()[:dx+4].detach().numpy()
+                                              torch.tensor(u_step).unsqueeze(0)).squeeze()[:dx+4].detach().numpy()
+    x_manual_full.append(x0_b_manual)
     
-    x_manual_full = np.append(x_manual_full, x0_b_manual.reshape(-1,1), axis=1)
-
     if x0_b_manual[0]>track_coord[2].max().numpy()/2:
         finished=1
 
@@ -368,10 +330,10 @@ while finished==0 and crashed==0:
         crashed=1
 
     steps = steps+1
-    #print("short horizon step:", steps)
+    print(steps)
 
+x_manual_full = np.array(x_manual_full).T
 lap_time = dt*steps
-
 print(f'Manual NS = {NS}, lap time: {lap_time}, finished: {finished}')
 
 x_current_full = x_manual_full
