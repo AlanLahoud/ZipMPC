@@ -224,15 +224,15 @@ elif dyn_model=='hard':
     eps=0.00001
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
-    Q_manual = np.repeat(np.expand_dims(
+    Q_manual = (1/NS)*np.repeat(np.expand_dims(
         np.array([0, 20.1, 10.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 0.1, 0.1]), 0), NS, 0)
-    p_manual = np.repeat(np.expand_dims(
+    p_manual = (1/NS)*np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
-    Q_manual_H = np.repeat(np.expand_dims(
+    Q_manual_H = (1/NL)*np.repeat(np.expand_dims(
         np.array([0, 20.1, 10.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 0.1, 0.1]), 0), NL, 0)
-    p_manual_H = np.repeat(np.expand_dims(
+    p_manual_H = (1/NL)*np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
     
     idx_to_casadi = [7,1,2,3,4,5,10,11]
