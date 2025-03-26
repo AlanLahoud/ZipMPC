@@ -187,6 +187,7 @@ u_full = []
 x0_cart = torch.tensor([0., -1., 1., 0,])
 
 u_step = np.array([0.5, 0.])
+u0N = np.repeat(u_step, NL)
 
 while finished==0 and crashed==0:
     q_lap_manual_casadi = Q_manual_H[:,idx_to_casadi].T
@@ -194,8 +195,10 @@ while finished==0 and crashed==0:
 
     x_b_manual, u_b_manual = utils_car.solve_casadi(
         q_lap_manual_casadi, p_lap_manual_casadi,
-        x0_b_manual, dx, du, control_H, u_step)
+        x0_b_manual, dx, du, control_H, u0N)
 
+    u0N = u_b_manual.reshape(-1)
+    
     u_step = u_b_manual[0:1].mean(0)
 
     for ss in range(n_steps_dt): 

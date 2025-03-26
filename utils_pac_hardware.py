@@ -647,7 +647,7 @@ class CasadiControl():
         #import pdb
         #pdb.set_trace()
         # Insert your u0 guess at the correct position:
-        x_warm_full[-du*N:] = np.repeat(u0, N)
+        x_warm_full[-du*N:] = u0
         solver_input['x0'] = x_warm_full
 
         # add initial guess to solver
