@@ -88,7 +88,7 @@ NL = args.NL
 
 out_path = f'_{NL}'
 
-p_sigma_manual = 50.
+p_sigma_manual = 40.
 
 l_r = 0.038 
 l_f = 0.052  
