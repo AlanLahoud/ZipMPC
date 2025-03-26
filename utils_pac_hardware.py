@@ -554,7 +554,7 @@ class CasadiControl():
         barr1 = -log(fmax(1e-3, x_sym[1,0:N+1] + 0.42*self.max_track_width_perc*self.track_width*np.ones((1,N+1))))
         barr2 = -log(fmax(1e-3, 0.42*self.max_track_width_perc*self.track_width*np.ones((1,N+1)) - x_sym[1,0:N+1]))
         
-        barrier = 50*(1/N)* (barr1 + barr2)
+        barrier = 10*(1/N)* (barr1 + barr2)
 
         
         l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat)) + sum2(sum1(barrier))
@@ -644,8 +644,6 @@ class CasadiControl():
 
         x_warm_full = np.zeros(dx*(N+1)+du*N)
 
-        #import pdb
-        #pdb.set_trace()
         # Insert your u0 guess at the correct position:
         x_warm_full[-du*N:] = u0
         solver_input['x0'] = x_warm_full
