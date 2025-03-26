@@ -195,7 +195,7 @@ while finished==0 and crashed==0:
 
     x_b_manual, u_b_manual = utils_car.solve_casadi(
         q_lap_manual_casadi, p_lap_manual_casadi,
-        x0_b_manual, dx, du, control_H, u0N)
+        x0_b_manual, dx, du, control_H)
 
     u0N = u_b_manual.reshape(-1)
     

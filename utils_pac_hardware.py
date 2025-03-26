@@ -650,11 +650,11 @@ class CasadiControl():
         solver_input['lbg'] = lbg
         solver_input['ubg'] = ubg
 
-        x_warm_full = np.zeros(dx*(N+1)+du*N)
+        #x_warm_full = np.zeros(dx*(N+1)+du*N)
 
         # Insert your u0 guess at the correct position:
-        x_warm_full[-du*N:] = u0
-        solver_input['x0'] = x_warm_full
+        #x_warm_full[-du*N:] = u0
+        #solver_input['x0'] = x_warm_full
 
         # add initial guess to solver
         #solver_input['x0'] = w_ws
