@@ -551,7 +551,7 @@ class CasadiControl():
         #import pdb
         #pdb.set_trace()
 
-        tsh = 0.48*self.max_track_width_perc*self.track_width*np.ones((1,N+1))
+        tsh = 0.45*self.max_track_width_perc*self.track_width*np.ones((1,N+1))
 
         barr1 = if_else(x_sym[1,0:N+1] > tsh, exp(10 * (x_sym[1,0:N+1] - tsh)) - 1, 0)
         barr2 = if_else(x_sym[1,0:N+1] < -tsh, exp(10 * (-tsh - x_sym[1,0:N+1])) - 1, 0)
