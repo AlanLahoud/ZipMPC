@@ -80,6 +80,9 @@ l_f = l_r
 #discretization
 dt = 0.03
 
+# Clip learnable parameters (TanH, check NN)
+max_p = 10
+
 if dyn_model=='kin':
     delta_max = 0.40
     lr = 1e-4
@@ -101,6 +104,7 @@ elif dyn_model=='hard':
     epochs = 60
     dt = 0.02
     p_sigma_manual = 40
+    max_p = 50
     
 else:
     print('Not implemented')
@@ -119,8 +123,7 @@ a_max = 1.0
 
 delta_max = args.delta_max
 
-# Clip learnable parameters (TanH, check NN)
-max_p = 10
+
 
 # Batch size
 BS_val = 80
