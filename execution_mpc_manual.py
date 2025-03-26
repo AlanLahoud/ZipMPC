@@ -157,7 +157,7 @@ true_dx = utils_car.FrenetDynBicycleDx(track_coord, params_dx, 'cpu')
 
 control_H = utils_car.CasadiControl(track_coord, params_casadi)
 Q_manual_H = (1/NL)*np.repeat(np.expand_dims(
-    np.array([0, 200.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]), 0), NL, 0)
+    np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]), 0), NL, 0)
 p_manual_H = (1/NL)*np.repeat(np.expand_dims(
     np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
 #p_manual_H[-1,7] = -p_sigma_manual*NL
