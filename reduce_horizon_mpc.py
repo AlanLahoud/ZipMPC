@@ -100,6 +100,7 @@ elif dyn_model=='hard':
     BS = 120
     epochs = 60
     dt = 0.02
+    p_sigma_manual = 40
     
 else:
     print('Not implemented')
