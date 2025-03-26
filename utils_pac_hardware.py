@@ -673,7 +673,7 @@ class CasadiControl():
         if status == 'Solve_Succeeded':
             optimal_status = 1
             
-        print("IPOPT status:", status)
+        #print("IPOPT status:", status)
         
         return x, u#, optimal_status
 
