@@ -562,7 +562,7 @@ class CasadiControl():
         barrier = (1/N)* (barr1 + barr2)
 
         
-        l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat)) + sum2(sum1(barrier))
+        l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat)) #+ sum2(sum1(barrier))
         dl = substitute(substitute(l,q_sym,q),p_sym,p)
 
         const = vertcat(
