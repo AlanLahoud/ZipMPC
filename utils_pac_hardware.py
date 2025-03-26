@@ -424,7 +424,7 @@ class CasadiControl():
 
         self.mpc_T = int(params[8])
 
-        self.max_track_width_perc = 0.68
+        self.max_track_width_perc = 0.72
 
     def sigmoid(self, x):
         return (tanh(x/2)+1.)/2
@@ -554,7 +554,7 @@ class CasadiControl():
         barr1 = -log(fmax(1e-5, x_sym[1,0:N+1] + 0.47*self.max_track_width_perc*self.track_width*np.ones((1,N+1))))
         barr2 = -log(fmax(1e-5, 0.47*self.max_track_width_perc*self.track_width*np.ones((1,N+1)) - x_sym[1,0:N+1]))
         
-        barrier = (1/N)* (barr1 + barr2)
+        barrier = 5*(1/N)* (barr1 + barr2)
 
         
         l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat)) + sum2(sum1(barrier))
