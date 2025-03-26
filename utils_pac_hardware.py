@@ -556,11 +556,11 @@ class CasadiControl():
         #barr1 = if_else(x_sym[1,0:N+1] > tsh, 1000.*np.ones((1,N+1)), 0*np.ones((1,N+1)))
         #barr2 = if_else(x_sym[1,0:N+1] < -tsh, 1000.*np.ones((1,N+1)), 0*np.ones((1,N+1)))
         
-        barr1 = if_else(x_sym[1,0:N+1] > tsh, exp(500 * (x_sym[1,0:N+1] - tsh)) - 1, 0)
-        barr2 = if_else(x_sym[1,0:N+1] < -tsh, exp(500 * (-tsh - x_sym[1,0:N+1])) - 1, 0)
+        #barr1 = if_else(x_sym[1,0:N+1] > tsh, exp(500 * (x_sym[1,0:N+1] - tsh)) - 1, 0)
+        #barr2 = if_else(x_sym[1,0:N+1] < -tsh, exp(500 * (-tsh - x_sym[1,0:N+1])) - 1, 0)
         
-        #barr1 = -log(fmax(1e-4, x_sym[1,0:N+1] + 0.48*self.max_track_width_perc*self.track_width*np.ones((1,N+1))))
-        #barr2 = -log(fmax(1e-4, 0.48*self.max_track_width_perc*self.track_width*np.ones((1,N+1)) - x_sym[1,0:N+1]))
+        barr1 = -log(fmax(1e-4, x_sym[1,0:N+1] + tsh))
+        barr2 = -log(fmax(1e-4, tsh - x_sym[1,0:N+1]))
         
         barrier = (1/N)* (barr1 + barr2)
 
