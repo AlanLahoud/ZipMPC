@@ -591,7 +591,7 @@ class CasadiControl():
                     np.zeros(N+1),
                     self.a_max*np.ones(N),
                     self.delta_max*np.ones(N),
-                    0.5*self.max_track_width_perc*self.track_width*np.ones(N+1),
+                    1.0*self.max_track_width_perc*self.track_width*np.ones(N+1),
                     self.v_max*np.ones(N+1)]
 
         lbx = -np.inf * np.ones(dx*(N+1)+du*N)
