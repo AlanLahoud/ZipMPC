@@ -65,7 +65,7 @@ class FrenetDynBicycleDx(nn.Module):
 
         self.factor_pen = 1000.
 
-        self.max_track_width_perc = 0.72
+        self.max_track_width_perc = 0.68
 
         # # model parameters: l_r, l_f (beta and curv(sigma) are calculated in the dynamics)
         # if params is None:
@@ -424,7 +424,7 @@ class CasadiControl():
 
         self.mpc_T = int(params[8])
 
-        self.max_track_width_perc = 0.72
+        self.max_track_width_perc = 0.68
 
     def sigmoid(self, x):
         return (tanh(x/2)+1.)/2
