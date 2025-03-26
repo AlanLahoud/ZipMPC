@@ -562,7 +562,7 @@ class CasadiControl():
         barrier = (1/N)* (barr1 + barr2)
 
         
-        l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat)) #+ sum2(sum1(barrier))
+        l = sum2(sum1(0.5*q_sym*feat*feat + p_sym*feat)) + sum2(sum1(barrier))
         dl = substitute(substitute(l,q_sym,q),p_sym,p)
 
         const = vertcat(
@@ -586,7 +586,7 @@ class CasadiControl():
                     -self.a_max*np.ones(N),
                     -self.delta_max*np.ones(N),
                     -0.5*self.max_track_width_perc*self.track_width*np.ones(N+1),
-                    0.05*np.ones(N+1)]
+                    0.1*np.ones(N+1)]
 
         ubg = np.r_[np.zeros(N+1),
                     np.zeros(N+1),
@@ -596,7 +596,7 @@ class CasadiControl():
                     np.zeros(N+1),
                     self.a_max*np.ones(N),
                     self.delta_max*np.ones(N),
-                    1.0*self.max_track_width_perc*self.track_width*np.ones(N+1),
+                    0.5*self.max_track_width_perc*self.track_width*np.ones(N+1),
                     self.v_max*np.ones(N+1)]
 
         lbx = -np.inf * np.ones(dx*(N+1)+du*N)
