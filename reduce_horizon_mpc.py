@@ -221,7 +221,7 @@ elif dyn_model=='hard':
     print('PACEJKA HARDWARE')
     dx=6
     du=2
-    lqr_iter = 35
+    lqr_iter = 50
     eps=0.00001
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
