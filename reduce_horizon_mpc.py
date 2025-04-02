@@ -565,7 +565,7 @@ for ep in range(epochs):
                 while finished==0 and crashed==0:
 
                     x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
-                    curv_lap = utils.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, NL)
+                    curv_lap = utils.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, NL, v_max, dt)
                     inp_lap = torch.hstack((x0_lap_pred_torch[:,idx_to_NN], curv_lap))
                     q_p_pred_lap = model(inp_lap)
                     q_lap, p_lap = utils_car.q_and_p(NS, q_p_pred_lap, Q_manual, p_manual)
