@@ -97,9 +97,9 @@ elif dyn_model=='hard':
     l_f = 0.052  
     delta_max = 0.40
     lr = 5e-4
-    BS = 120
+    BS = 80
     epochs = 60
-    dt = 0.02
+    dt = 0.026
     p_sigma_manual = 40
     
 else:

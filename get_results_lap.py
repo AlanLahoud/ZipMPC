@@ -271,7 +271,7 @@ def plot_sim_all(x_simulateds, output_path):
 
 def plot_data(curv_full, var_p, y_label, output_path):
 
-    fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
+    fig, ax = plt.subplots(figsize=(5, 5), dpi=300)
 
     average_curv = curv_full.mean(axis=-1)
     ax.scatter(average_curv, var_p, color='blue', alpha=0.7, edgecolor='k', s=50)
