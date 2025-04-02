@@ -70,16 +70,16 @@ class TCN(nn.Module):
 
 
 
-def get_curve_hor_from_x(x, track_coord, H_curve):
+def get_curve_hor_from_x(x, track_coord, NL, v_max, dt):
     idx_track_batch = ((x[:, 0] - track_coord[[2], :].T) ** 2).argmin(0)
     
     # Calculate the maximum allowed value based on sigma
-    max_sigma = 1.8 * 0.03 * H_curve + x[:, 0]
+    max_sigma = v_max * dt * NL + x[:, 0]
     idx_track_batch_max = ((max_sigma - track_coord[[2], :].T) ** 2).argmin(0)
     
-    stepsize = torch.clamp((idx_track_batch_max - idx_track_batch) // H_curve, min=1)
+    stepsize = torch.clamp((idx_track_batch_max - idx_track_batch) // NL, min=1)
     
-    range_indices = torch.arange(H_curve).unsqueeze(0)  # Shape (1, H_curve)
+    range_indices = torch.arange(NL).unsqueeze(0)  # Shape (1, NL)
     batch_arange = idx_track_batch.unsqueeze(1) + range_indices * stepsize.unsqueeze(1)
     
     idcs_track_batch = torch.clip(batch_arange, 0, track_coord.shape[1] - 1)
@@ -87,7 +87,7 @@ def get_curve_hor_from_x(x, track_coord, H_curve):
     curvs = track_coord[4, idcs_track_batch].float()
     
     # Ensure the result has exactly H_curve elements for each batch
-    assert curvs.shape[1] == H_curve, f"Curvs does not match H_curve: {curvs.shape[1]} != {H_curve}"
+    assert curvs.shape[1] == NL, f"Curvs does not match NL: {curvs.shape[1]} != {NL}"
     
     return curvs
 

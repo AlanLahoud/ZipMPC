@@ -226,13 +226,13 @@ elif dyn_model=='hard':
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = (1/NS)*np.repeat(np.expand_dims(
-        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]), 0), NS, 0)
+        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 100.0, 100.0, 1.0, 1.0]), 0), NS, 0)
     p_manual = (1/NS)*np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
     Q_manual_H = (1/NL)*np.repeat(np.expand_dims(
-        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]), 0), NL, 0)
+        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 100.0, 100.0, 1.0, 1.0]), 0), NL, 0)
     p_manual_H = (1/NL)*np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
     
@@ -389,7 +389,7 @@ for ep in range(epochs):
 
         x0 = utils_car.sample_init_traj_dist(BS, true_dx, x_star, 20).float()
             
-        curv = utils.get_curve_hor_from_x(x0, track_coord, NL)
+        curv = utils.get_curve_hor_from_x(x0, track_coord, NL, v_max, dt)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
 
         q_p_pred = model(inp)
