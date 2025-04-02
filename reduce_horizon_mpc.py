@@ -96,8 +96,8 @@ elif dyn_model=='hard':
     l_r = 0.038 
     l_f = 0.052  
     delta_max = 0.40
-    lr = 5e-4
-    BS = 80
+    lr = 1e-4
+    BS = 40
     epochs = 60
     dt = 0.026
     p_sigma_manual = 40
@@ -226,13 +226,13 @@ elif dyn_model=='hard':
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
     Q_manual = (1/NS)*np.repeat(np.expand_dims(
-        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 100.0, 100.0, 1.0, 1.0]), 0), NS, 0)
+        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 100.0]), 0), NS, 0)
     p_manual = (1/NS)*np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
     Q_manual_H = (1/NL)*np.repeat(np.expand_dims(
-        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 100.0, 100.0, 1.0, 1.0]), 0), NL, 0)
+        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 100.0]), 0), NL, 0)
     p_manual_H = (1/NL)*np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
     
