@@ -481,7 +481,7 @@ for ep in range(epochs):
                 # This sampling should bring always the same set of initial states (sn fixed)
                 x0_val = utils_car.sample_init(BS_val, true_dx, sn=0).float()
 
-                curv_val = utils.get_curve_hor_from_x(x0_val, track_coord, NL)
+                curv_val = utils.get_curve_hor_from_x(x0_val, track_coord, NL, v_max, dt)
                 inp_val = torch.hstack((x0_val[:,idx_to_NN], curv_val))
                 q_p_pred_val = model(inp_val)
 
