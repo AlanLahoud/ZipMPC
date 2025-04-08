@@ -277,14 +277,14 @@ max_steps=600
 
 x0_b_manual = x0_lap_manual[0].copy()
 x_manual_full_H = []
-u_step = np.array([0.5, 0.])
+
 while finished==0 and crashed==0:
     q_lap_manual_casadi = Q_manual_H[:,idx_to_casadi].T
     p_lap_manual_casadi = p_manual_H[:,idx_to_casadi].T
 
     x_b_manual, u_b_manual = utils_car.solve_casadi(
         q_lap_manual_casadi, p_lap_manual_casadi,
-        x0_b_manual, dx, du, control_H, u_step)
+        x0_b_manual, dx, du, control_H)
 
     u_step = u_b_manual[0:1].mean(0)
     x0_b_manual = true_dx.forward((torch.tensor(x0_b_manual)).unsqueeze(0), 
@@ -313,14 +313,14 @@ max_steps=1500
 
 x0_b_manual = x0_lap_manual[0].copy()
 x_manual_full = []
-u_step = np.array([0.5, 0.])
+
 while finished==0 and crashed==0:
     q_lap_manual_casadi = Q_manual[:,idx_to_casadi].T
     p_lap_manual_casadi = p_manual[:,idx_to_casadi].T
 
     x_b_manual, u_b_manual = utils_car.solve_casadi(
         q_lap_manual_casadi, p_lap_manual_casadi,
-        x0_b_manual, dx, du, control, u_step)
+        x0_b_manual, dx, du, control)
 
     u_step = u_b_manual[0:1].mean(0)
     x0_b_manual = true_dx.forward((torch.tensor(x0_b_manual)).unsqueeze(0), 

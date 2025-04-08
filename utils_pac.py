@@ -276,7 +276,7 @@ class CasadiControl():
         return curv
 
 
-    def mpc_casadi(self,q,p,x0,dx,du, u0=np.array([0.,0.])):
+    def mpc_casadi(self,q,p,x0,dx,du):
 
 
         # here the q and the p scale the following
