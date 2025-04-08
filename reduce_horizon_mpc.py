@@ -78,7 +78,7 @@ l_r = 0.05
 l_f = l_r  
 
 #discretization
-dt = 0.018
+dt = 0.020
 
 if dyn_model=='kin':
     delta_max = 0.40
