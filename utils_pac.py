@@ -410,16 +410,33 @@ class CasadiControl():
         x = vertcat(reshape(x_sym[:,0:N+1],(dx*(N+1),1)),reshape(u_sym[:,0:N],(du*N,1)))
         #w_ws = np.vstack([np.reshape(x_warmstart[:dx,0:N+1],(dx*(N+1),1)),np.reshape(x_warmstart[dx+dc+df:,0:N],(du*(N),1))])
 
+        #options = {
+        #            'verbose': False,
+        #            'ipopt.print_level': 0,
+        #            'print_time': False,
+        #            'ipopt.sb': 'yes',
+        #            'print_time': 0,
+        #            'ipopt.tol': 1e-3,
+        #            'ipopt.max_iter': 800,
+        #            'ipopt.hessian_approximation': 'limited-memory'
+        #        }
+
         options = {
-                    'verbose': False,
-                    'ipopt.print_level': 0,
-                    'print_time': False,
-                    'ipopt.sb': 'yes',
-                    'print_time': 0,
-                    'ipopt.tol': 1e-3,
-                    'ipopt.max_iter': 800,
-                    'ipopt.hessian_approximation': 'limited-memory'
-                }
+            'verbose': False,
+            'ipopt.print_level': 0,
+            'print_time': False,
+            'ipopt.sb': 'yes',
+            'ipopt.constr_viol_tol': 1e-8,
+            'ipopt.tol': 1e-4,
+            'ipopt.acceptable_tol': 1e-1,
+            'ipopt.acceptable_constr_viol_tol': 1e-4,
+            'ipopt.mu_strategy': 'adaptive',
+            'ipopt.mu_init': 1e-1,
+            'ipopt.mu_min': 1e-4,
+            'ipopt.max_iter': 1000,
+            'ipopt.nlp_scaling_method': 'gradient-based',
+            'ipopt.hessian_approximation': 'exact'
+        }
 
         nlp = {'x':x,'f':dl, 'g':const}
         solver = nlpsol('solver','ipopt', nlp, options)
