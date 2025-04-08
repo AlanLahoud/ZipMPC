@@ -282,7 +282,6 @@ class CasadiControl():
         # here the q and the p scale the following
         # feature vector [sigma-sigma_0, d, phi, v, penalty_d,penalty_v,a,delta]
 
-
         N=self.mpc_T
         l_r = self.l_r
         l_f = self.l_f

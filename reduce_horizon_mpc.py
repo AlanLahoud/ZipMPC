@@ -87,9 +87,7 @@ if dyn_model=='kin':
     epochs = 20
 
 elif dyn_model=='pac':
-    l_r = 0.038 
-    l_f = 0.052  
-    delta_max = 0.40
+    delta_max = 0.50
     lr = 1e-4
     BS = 40
     epochs = 60
