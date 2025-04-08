@@ -29,7 +29,7 @@ def parse_arguments():
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
     parser.add_argument('--track_name', type=str, default='TEST_TRACK')
 
-    parser.add_argument('--v_max', type=float, default=1.8)
+    parser.add_argument('--v_max', type=float, default=2.0)
     parser.add_argument('--delta_max', type=float, default=0.4)
 
     return parser.parse_args()
@@ -78,7 +78,7 @@ l_r = 0.05
 l_f = l_r  
 
 #discretization
-dt = 0.03
+dt = 0.018
 
 if dyn_model=='kin':
     delta_max = 0.40
@@ -87,10 +87,13 @@ if dyn_model=='kin':
     epochs = 20
 
 elif dyn_model=='pac':
-    delta_max = 0.50
-    lr = 5e-4
-    BS = 120
+    l_r = 0.038 
+    l_f = 0.052  
+    delta_max = 0.40
+    lr = 1e-4
+    BS = 40
     epochs = 60
+    p_sigma_manual = 40
 
 elif dyn_model=='hard':
     l_r = 0.038 
@@ -198,19 +201,19 @@ elif dyn_model=='pac':
     print('PACEJKA')
     dx=6
     du=2
-    lqr_iter = 35
+    lqr_iter = 50
     eps=0.00001
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
-    Q_manual = np.repeat(np.expand_dims(
-        np.array([0, 50.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 0.1, 0.1]), 0), NS, 0)
-    p_manual = np.repeat(np.expand_dims(
+    Q_manual = (1/NS)*np.repeat(np.expand_dims(
+        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 100.0]), 0), NS, 0)
+    p_manual = (1/NS)*np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
-    Q_manual_H = np.repeat(np.expand_dims(
-        np.array([0, 50.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 0.1, 0.1]), 0), NL, 0)
-    p_manual_H = np.repeat(np.expand_dims(
+    Q_manual_H = (1/NL)*np.repeat(np.expand_dims(
+        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 100.0]), 0), NL, 0)
+    p_manual_H = (1/NL)*np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
     
     idx_to_casadi = [7,1,2,3,4,5,10,11]
