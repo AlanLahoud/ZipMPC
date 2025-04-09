@@ -478,10 +478,11 @@ def sample_init(BS, dyn, sn=None):
     di = 1000
     sigma_sample = torch.randint(int(0.0*di), int(16.0*di), (BS,1), generator=gen)/di
     d_sample = torch.randint(int(-0.14*di), int(0.14*di), (BS,1), generator=gen)/di
-    phi_sample = torch.randint(int(-0.5*di), int(0.5*di), (BS,1), generator=gen)/di
+    phi_sample = torch.randint(int(-0.6*di), int(0.6*di), (BS,1), generator=gen)/di
     r_sample = torch.randint(int(-0.02*di), int(0.02*di), (BS,1), generator=gen)/di
-    vx_sample = torch.randint(int(0.1*di), int(1.8*di), (BS,1), generator=gen)/di
-    vy_sample = torch.randint(int(-0.05*di), int(0.05*di), (BS,1), generator=gen)/di
+    vx_sample = torch.randint(int(0.1*di), int(4.0*di), (BS,1), generator=gen)/di
+    vx_sample = torch.clamp(vx_sample, 0.1, 2.0)
+    vy_sample = torch.randint(int(-0.1*di), int(0.1*di), (BS,1), generator=gen)/di
 
     sigma_diff_sample = torch.zeros((BS,1))
 
