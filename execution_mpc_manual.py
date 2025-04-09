@@ -162,7 +162,7 @@ control = utils_car.CasadiControl(track_coord, params_casadi)
 
 control_H = utils_car.CasadiControl(track_coord, params_casadi)
 Q_manual_H = (1/NL)*np.repeat(np.expand_dims(
-    np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 50.0]), 0), NL, 0)
+    np.array([0, 1000.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 100.0]), 0), NL, 0)
 p_manual_H = (1/NL)*np.repeat(np.expand_dims(
     np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
 
