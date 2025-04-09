@@ -98,7 +98,7 @@ delta_max = 0.50
 k_curve = 25.
 
 #discretization
-dt = 0.022
+dt = 0.020
 
 n_steps_dt = 1
 
