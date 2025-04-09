@@ -17,7 +17,7 @@ import argparse
 import sys
 from sys import exit
 
-import utils_pac_hardware as utils_car
+import utils_pac as utils_car
 
 from matplotlib import pyplot as plt
 from matplotlib import cm
@@ -98,7 +98,7 @@ delta_max = 0.40
 k_curve = 25.
 
 #discretization
-dt = 0.02
+dt = 0.018
 
 n_steps_dt = 1
 
@@ -109,7 +109,7 @@ a_max = 1.0
 
 
 # Track parameters
-track_name = 'DEMO_TRACK'
+track_name = 'TEST_TRACK'
 track_density = 300
 track_width = 0.5
 max_track_width_perc_casadi = 0.68
@@ -148,19 +148,23 @@ track_coord = torch.from_numpy(np.vstack(
      gen.curvature]))
 
 
-print('PACEJKA HARDWARE')
+print('PACEJKA')
 dx=6
 du=2
-lqr_iter = 35
+lqr_iter = 50
 eps=0.00001
-true_dx = utils_car.FrenetDynBicycleDx(track_coord, params_dx, 'cpu')
+true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
+control = utils_car.CasadiControl(track_coord, params)
+Q_manual = (1/NS)*np.repeat(np.expand_dims(
+    np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 50.0]), 0), NS, 0)
+p_manual = (1/NS)*np.repeat(np.expand_dims(
+    np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
 
-control_H = utils_car.CasadiControl(track_coord, params_casadi)
+control_H = utils_car.CasadiControl(track_coord, params_H)
 Q_manual_H = (1/NL)*np.repeat(np.expand_dims(
-    np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]), 0), NL, 0)
+    np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 50.0]), 0), NL, 0)
 p_manual_H = (1/NL)*np.repeat(np.expand_dims(
     np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
-#p_manual_H[-1,7] = -p_sigma_manual*NL
 
 idx_to_casadi = [7,1,2,3,4,5,10,11]
 idx_to_NN = [1,2,4]

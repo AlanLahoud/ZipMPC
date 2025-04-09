@@ -78,7 +78,7 @@ l_r = 0.05
 l_f = l_r  
 
 #discretization
-dt = 0.020
+dt = 0.018
 
 if dyn_model=='kin':
     delta_max = 0.40
@@ -87,6 +87,8 @@ if dyn_model=='kin':
     epochs = 20
 
 elif dyn_model=='pac':
+    l_r = 0.038 
+    l_f = 0.052  
     delta_max = 0.50
     lr = 1e-4
     BS = 40
