@@ -155,12 +155,12 @@ lqr_iter = 50
 eps=0.00001
 true_dx = utils_car.FrenetDynBicycleDx(track_coord, params_dx, 'cpu')
 control = utils_car.CasadiControl(track_coord, params_casadi)
-Q_manual = (1/NS)*np.repeat(np.expand_dims(
-    np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 50.0]), 0), NS, 0)
-p_manual = (1/NS)*np.repeat(np.expand_dims(
-    np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
+#Q_manual = (1/NS)*np.repeat(np.expand_dims(
+#    np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 50.0]), 0), NS, 0)
+#p_manual = (1/NS)*np.repeat(np.expand_dims(
+#    np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
 
-control_H = utils_car.CasadiControl(track_coord, params_H)
+control_H = utils_car.CasadiControl(track_coord, params_casadi)
 Q_manual_H = (1/NL)*np.repeat(np.expand_dims(
     np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 50.0]), 0), NL, 0)
 p_manual_H = (1/NL)*np.repeat(np.expand_dims(
