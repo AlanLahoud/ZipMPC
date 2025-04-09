@@ -91,7 +91,7 @@ elif dyn_model=='pac':
     l_f = 0.052  
     delta_max = 0.50
     lr = 1e-4
-    BS = 40
+    BS = 80
     epochs = 60
     p_sigma_manual = 40
 
