@@ -562,7 +562,7 @@ for ep in range(epochs):
                 finished = 0
                 crashed = 0
                 steps = 0
-                max_steps=500
+                max_steps=1000
 
                 x0_b_pred = x0_lap_pred[0].copy()
 
