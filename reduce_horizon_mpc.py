@@ -94,7 +94,7 @@ elif dyn_model=='pac':
     delta_max = 0.50
     lr = 1e-4
     BS = 80
-    epochs = 60
+    epochs = 40
     p_sigma_manual = 40
     ND=8
 
@@ -104,7 +104,7 @@ elif dyn_model=='hard':
     delta_max = 0.40
     lr = 1e-4
     BS = 40
-    epochs = 60
+    epochs = 40
     dt = 0.026
     p_sigma_manual = 40
     
