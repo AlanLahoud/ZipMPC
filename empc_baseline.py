@@ -204,7 +204,7 @@ for ep in range(epochs):
         model.train()
         x0= utils_car.sample_init(BS, true_dx).float()
         
-        curv = utils.get_curve_hor_from_x(x0, track_coord, NL)
+        curv = utils.get_curve_hor_from_x(x0, track_coord, NL, v_max, dt)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
         
         control = model(inp)
@@ -242,7 +242,7 @@ for ep in range(epochs):
                 # This sampling should bring always the same set of initial states (sn fixed)
                 x0_val = utils_car.sample_init(BS_val, true_dx, sn=0).float()
         
-                curv_val = utils.get_curve_hor_from_x(x0_val, track_coord, NL)
+                curv_val = utils.get_curve_hor_from_x(x0_val, track_coord, NL, v_max, dt)
                 inp_val = torch.hstack((x0_val[:,idx_to_NN], curv_val))
                 control_val = model(inp_val).numpy()
 
@@ -294,7 +294,7 @@ for ep in range(epochs):
                 while finished==0 and crashed==0:
 
                     x0_lap_pred_torch = torch.tensor(x0_b_pred, dtype=torch.float32).unsqueeze(0)
-                    curv_lap = utils.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, NL)
+                    curv_lap = utils.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, NL, v_max, dt)
                     inp_lap = torch.hstack((x0_lap_pred_torch[:,idx_to_NN], curv_lap))
                     control_lap = model(inp_lap).numpy()
 

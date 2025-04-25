@@ -7,6 +7,75 @@ from mpc.mpc import GradMethods, QuadCost, LinDx
 
 
 
+class RNNModel(nn.Module):
+    def __init__(self, mpc_H, mpc_T, O, K):
+        super(RNNModel, self).__init__()
+        input_size = 3  # global context features
+
+        self.rnn_input_size = 1  # since the time series is 1D per timestep
+        self.rnn_hidden_size = 32
+        self.rnn_layers = 1
+
+        # RNN to process time series
+        self.rnn = nn.GRU(
+            input_size=self.rnn_input_size,
+            hidden_size=self.rnn_hidden_size,
+            num_layers=self.rnn_layers,
+            batch_first=True
+        )
+
+        # Fully connected layers for shared representation
+        self.fc1 = nn.Linear(self.rnn_hidden_size * mpc_H + input_size, 512)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc3 = nn.Linear(512, 512)
+        self.fc4 = nn.Linear(512, 512)
+
+        # Global output
+        self.fc_global = nn.Linear(512, O)
+
+        # Time-varying modulation
+        self.fc_modulation = nn.Linear(512, mpc_T * O)
+
+        # Activation functions
+        self.activation = nn.LeakyReLU(0.1)
+        self.output_activation = nn.Tanh()
+
+        # Model parameters
+        self.mpc_T = mpc_T
+        self.O = O
+        self.K = K
+
+    def forward(self, x):
+        global_context, time_series = x[:, :3], x[:, 3:]
+
+        # Reshape time series to (B, mpc_H, 1)
+        time_series = time_series.view(x.size(0), -1, 1)
+
+        # Pass through GRU
+        rnn_out, _ = self.rnn(time_series)  # shape: (B, mpc_H, hidden_size)
+
+        # Flatten RNN output
+        rnn_out_flat = rnn_out.contiguous().view(x.size(0), -1)  # shape: (B, mpc_H * hidden_size)
+
+        # Concatenate with global context
+        x = torch.cat([rnn_out_flat, global_context], dim=1)
+
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.activation(self.fc3(x))
+        x = self.fc4(x)
+
+        global_cost = self.fc_global(x)  # shape: (B, O)
+        modulation = self.fc_modulation(x)  # shape: (B, mpc_T * O)
+        modulation = modulation.view(self.mpc_T, -1, self.O)  # (mpc_T, B, O)
+
+        global_cost = global_cost.unsqueeze(0)  # shape: (1, B, O)
+        outputs = global_cost + modulation  # shape: (mpc_T, B, O)
+
+        outputs = self.K * self.output_activation(outputs / self.K)
+        return outputs
+
+
 
 class TCN(nn.Module):
     def __init__(self, mpc_H, mpc_T, O, K):

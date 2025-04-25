@@ -83,7 +83,6 @@ dt = 0.020
 ND=5
 
 if dyn_model=='kin':
-    delta_max = 0.40
     lr = 1e-4
     BS = 80
     epochs = 20
@@ -91,7 +90,6 @@ if dyn_model=='kin':
 elif dyn_model=='pac':
     l_r = 0.038 
     l_f = 0.052  
-    delta_max = 0.50
     lr = 1e-4
     BS = 80
     epochs = 40
@@ -101,7 +99,6 @@ elif dyn_model=='pac':
 elif dyn_model=='hard':
     l_r = 0.038 
     l_f = 0.052  
-    delta_max = 0.40
     lr = 1e-4
     BS = 40
     epochs = 40

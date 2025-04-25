@@ -22,13 +22,13 @@ import argparse
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Set parameters for the program.')
 
-    parser.add_argument('--param_model', type=str, default='lcredh')  #'lcredh' or 'bo'
-    parser.add_argument('--dyn', type=str, default='kin')
+    parser.add_argument('--param_model', type=str, default='zipmpc')  #'zipmpc' or 'bo'
+    parser.add_argument('--dyn', type=str, default='pac')
     parser.add_argument('--seed_n', type=int, default=0)
-    parser.add_argument('--NS', type=int, default=5)
-    parser.add_argument('--NL', type=int, default=18)
+    parser.add_argument('--NS', type=int, default=20)
+    parser.add_argument('--NL', type=int, default=35)
     parser.add_argument('--n_Q', type=int, default=1)
-    parser.add_argument('--p_sigma_manual', type=float, default=8.0)
+    parser.add_argument('--p_sigma_manual', type=float, default=40.0)
     parser.add_argument('--track', type=str, default='TEST_TRACK')
 
     return parser.parse_args()
@@ -76,24 +76,27 @@ if dyn_model=='kin':
     delta_max = 0.40
 
 else:
-    delta_max = 0.50
+    l_r = 0.038 
+    l_f = 0.052  
+    delta_max = 0.40
+    p_sigma_manual = 40
     
 
 # Curve smoothness
 k_curve = 25.
 
 #discretization
-dt = 0.03
+dt = 0.02
 
 # Maximum v and a
-v_max=1.8
+v_max=2.0
 a_max = 1.0
 
 # Clip learnable parameters (TanH, check NN)
 max_p = 10
 
 # Model path to save
-str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}'
+str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}_{v_max}_{delta_max}'
 
 # Track parameters
 track_density = 300
@@ -160,24 +163,23 @@ if dyn_model=='kin':
     idx_to_NN = [1,2,3]
     
     
-    
 else:
     print('PACEJKA')
     dx=6
     du=2
-    lqr_iter = 35
+    lqr_iter = 50
     eps=0.00001
     true_dx = utils_car.FrenetDynBicycleDx(track_coord, params, 'cpu')
     control = utils_car.CasadiControl(track_coord, params)
-    Q_manual = np.repeat(np.expand_dims(
-        np.array([0, 50.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 0.1, 0.1]), 0), NS, 0)
-    p_manual = np.repeat(np.expand_dims(
+    Q_manual = (1/NS)*np.repeat(np.expand_dims(
+        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 10.0]), 0), NS, 0)
+    p_manual = (1/NS)*np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NS, 0)
     
     control_H = utils_car.CasadiControl(track_coord, params_H)
-    Q_manual_H = np.repeat(np.expand_dims(
-        np.array([0, 50.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1, 1, 0.1, 0.1]), 0), NL, 0)
-    p_manual_H = np.repeat(np.expand_dims(
+    Q_manual_H = (1/NL)*np.repeat(np.expand_dims(
+        np.array([0, 500.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0, 500.0, 500.0, 1.0, 10.0]), 0), NL, 0)
+    p_manual_H = (1/NL)*np.repeat(np.expand_dims(
         np.array([0, 0, 0, 0, 0., 0, 0, -p_sigma_manual, 0, 0, 0, 0]), 0), NL, 0)
     
     idx_to_casadi = [7,1,2,3,4,5,10,11]
@@ -209,7 +211,7 @@ def plot_sim(x_simulated, u_simulated, vc, output_path, lab_text='Velocity'):
 
 
     for i in range(len(x_plot) - 1):
-        ax.plot(x_plot[i:i+2], y_plot[i:i+2], color=custom_cmap(norm(color_data[i])), alpha=0.5)
+        ax.plot(x_plot[i:i+2], y_plot[i:i+2], color=custom_cmap(norm(color_data[i])), alpha=0.5, linewidth=2.0)
 
     plt.axis('off')
     
@@ -251,9 +253,9 @@ def plot_sim_all(x_simulateds, output_path):
         # Plotting the segments and adding a label only for the first segment
         for i in range(len(x_plot) - 1):
             if i == 0:
-                ax.plot(x_plot[i:i+2], y_plot[i:i+2], color=dict_colors[s], label=labels[s], linewidth=1.5, alpha=0.5)
+                ax.plot(x_plot[i:i+2], y_plot[i:i+2], color=dict_colors[s], label=labels[s], linewidth=2.0, alpha=0.5)
             else:
-                ax.plot(x_plot[i:i+2], y_plot[i:i+2], color=dict_colors[s], linewidth=1.5, alpha=0.5)
+                ax.plot(x_plot[i:i+2], y_plot[i:i+2], color=dict_colors[s], linewidth=2.0, alpha=0.5)
 
     plt.axis('off')
     
@@ -292,7 +294,7 @@ def eval_lap(x0, Q_manual, p_manual, control, model=None):
     finished = 0
     crashed = 0
     steps = 0
-    max_steps=700
+    max_steps=1200
 
     x_full = x0.reshape(-1,1).copy()[:dx+2]
     u_full = np.zeros((2,1))
@@ -306,7 +308,7 @@ def eval_lap(x0, Q_manual, p_manual, control, model=None):
         
         else:
             x0_lap_pred_torch = torch.tensor(x0, dtype=torch.float32).unsqueeze(0)
-            curv_lap = utils.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, NL)    
+            curv_lap = utils.get_curve_hor_from_x(x0_lap_pred_torch, track_coord, NL, v_max, dt)    
             inp_lap = torch.hstack((x0_lap_pred_torch[:,idx_to_NN], curv_lap))
 
             q_p_pred_lap = model(inp_lap)
@@ -393,7 +395,7 @@ def eval_lap_bo(x0, Q_manual, p_manual, Q_bo, p_bo_app, control, test_bo):
 ################### I N F E R E N C E  ###################################################
 ##########################################################################################
 
-if param_model == 'lcredh':
+if param_model == 'zipmpc':
     model = utils.TCN(NL, n_Q, 5, max_p)
     model.load_state_dict(torch.load(f'./models/model_{str_model}.pkl'))
     model.eval()
