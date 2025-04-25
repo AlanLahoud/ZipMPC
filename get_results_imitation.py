@@ -22,7 +22,7 @@ import argparse
 
 dyn_model = 'kin'
 #empc = True
-param_model = 'bo'  # 'bo', 'lcredh'
+param_model = 'empc'  # 'bo', 'lcredh'
 
 if dyn_model=='kin':
     import utils_kin as utils_car
@@ -187,7 +187,7 @@ def eval_mse(Q_manual, p_manual, control, model=None, sn=0):
     
     else:
         start_time_nn = time()
-        curv_val = utils.get_curve_hor_from_x(x0_val, track_coord, NL)
+        curv_val = utils.get_curve_hor_from_x(x0_val, track_coord, NL, v_max, dt)
         inp_val = torch.hstack((x0_val[:,idx_to_NN], curv_val))
 
         if param_model == 'empc':

@@ -25,6 +25,7 @@ def parse_arguments():
     parser.add_argument('--seed_n', type=int, default=0)
     parser.add_argument('--NS', type=int, default=10)
     parser.add_argument('--NL', type=int, default=20)
+    parser.add_argument('--RNN', type=bool, default=False)
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
 
     return parser.parse_args()
@@ -37,6 +38,8 @@ dyn_model = args.dyn
 
 NS = args.NS
 NL = args.NL
+
+RNN = args.RNN
 
 # Manual progress cost parameter (initial guess)
 p_sigma_manual = args.p_sigma_manual
@@ -87,9 +90,13 @@ max_p = 10
 BS_val = 80
 BS_test = 1
 
+rnn_str=''
+if RNN:
+    rnn_str = 'rnn'
+
 
 # Model path to save
-str_model = f'empc_{dyn_model}_{NS}_{NL}_{p_sigma_manual}'
+str_model = f'empc{}_{dyn_model}_{NS}_{NL}_{p_sigma_manual}'
 
 
 # Track parameters
@@ -185,6 +192,10 @@ else:
 ##########################################################################################
 
 model = utils.TCN(NL, 5, 2, 2.0)
+
+if RNN:
+    model = utils.RNNModel(NL, 5, 2, 2.0)
+
 opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
 
 its_per_epoch = 20
