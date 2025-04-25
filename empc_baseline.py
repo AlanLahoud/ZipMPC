@@ -96,7 +96,7 @@ if RNN:
 
 
 # Model path to save
-str_model = f'empc{}_{dyn_model}_{NS}_{NL}_{p_sigma_manual}'
+str_model = f'empc{rnn_str}_{dyn_model}_{NS}_{NL}_{p_sigma_manual}'
 
 
 # Track parameters
