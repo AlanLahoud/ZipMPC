@@ -194,7 +194,7 @@ else:
 model = utils.TCN(NL, 5, 2, 2.0)
 
 if RNN:
-    model = utils.RNNModel(NL, 5, 2, 2.0)
+    model = utils.RNNModel(NL, NS, 2, 2.0)
 
 opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
 
@@ -264,8 +264,8 @@ for ep in range(epochs):
                     np.repeat(p_manual_casadi_val, BS_val, 1),
                     x0_val.detach().numpy()[:,:dx+2], BS_val, dx, du, control_H)
 
-                loss_a_val = ((u_true_val[:5, :, 0] - control_val[:5, :, 0])**2).sum(0).mean()
-                loss_delta_val = ((u_true_val[:5, :, 1] - control_val[:5, :, 1])**2).sum(0).mean()
+                loss_a_val = ((u_true_val[:NS, :, 0] - control_val[:NS, :, 0])**2).sum(0).mean()
+                loss_delta_val = ((u_true_val[:NS, :, 1] - control_val[:NS, :, 1])**2).sum(0).mean()
 
                 loss_val = 0.1*loss_a_val + loss_delta_val
 
