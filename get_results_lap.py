@@ -30,7 +30,7 @@ def parse_arguments():
     parser.add_argument('--NS', type=int, default=20)
     parser.add_argument('--NL', type=int, default=35)
     parser.add_argument('--n_Q', type=int, default=1)
-    parser.add_argument('--p_sigma_manual', type=float, default=40.0)
+    parser.add_argument('--p_sigma_manual', type=float, default=8.0)
     parser.add_argument('--track', type=str, default='TEST_TRACK')
 
     return parser.parse_args()
@@ -73,32 +73,41 @@ np.random.seed(seed_n)
 l_r = 0.05
 l_f = l_r
 
-
+v_max=1.8
 if dyn_model=='kin':
     delta_max = 0.40
+    v_max=1.8
+    dt = 0.03
+
+elif dyn_model=='pac':
+    delta_max = 0.50
+    v_max=1.8
+    dt = 0.03
 
 else:
     l_r = 0.038 
     l_f = 0.052  
     delta_max = 0.40
     p_sigma_manual = 40
+    dt = 0.026
     
-
+    
 # Curve smoothness
 k_curve = 25.
 
-#discretization
-dt = 0.02
+
 
 # Maximum v and a
-v_max=2.0
+
 a_max = 1.0
 
 # Clip learnable parameters (TanH, check NN)
 max_p = 10
 
 # Model path to save
-str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}_{v_max}_{delta_max}'
+#str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}_{v_max}_{delta_max}'
+
+str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}'
 
 # Track parameters
 track_density = 300
