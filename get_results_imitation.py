@@ -185,7 +185,7 @@ else:
 if param_model == 'bo':
     model = 'bo'
 elif param_model == 'empcrnn':
-    model = utils.RNNModel(NL, n_Q, out, max_p)
+    model = utils.RNNModel(NL, NS, out, max_p)
     model.load_state_dict(torch.load(f'./models/model_{str_model}.pkl'))
     model.eval()
 else:
