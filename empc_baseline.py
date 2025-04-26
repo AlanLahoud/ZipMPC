@@ -230,8 +230,8 @@ for ep in range(epochs):
         x_true_torch = torch.tensor(x_true, dtype=torch.float32)
         u_true_torch = torch.tensor(u_true, dtype=torch.float32)
         
-        loss_a = ((u_true_torch[:5,:, 0] - control[:5,:, 0])**2).sum(0).mean()
-        loss_delta = ((u_true_torch[:5,:, 1] - control[:5,:, 1])**2).sum(0).mean()
+        loss_a = ((u_true_torch[:NS,:, 0] - control[:NS,:, 0])**2).sum(0).mean()
+        loss_delta = ((u_true_torch[:NS,:, 1] - control[:NS,:, 1])**2).sum(0).mean()
         
         loss = 0.1*loss_a + loss_delta
         

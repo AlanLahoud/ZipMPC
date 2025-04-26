@@ -19,25 +19,39 @@ from time import time
 
 import argparse
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Set parameters for the program.')
+
+    parser.add_argument('--seed_n', type=int, default=0)
+    parser.add_argument('--NS', type=int, default=10)
+    parser.add_argument('--NL', type=int, default=20)
+    parser.add_argument('--n_Q', type=int, default=5)
+    parser.add_argument('--param_model', type=str, default='empcrnn')
+
+    
+    return parser.parse_args()
+
+args = parse_arguments()
+
 
 dyn_model = 'kin'
 #empc = True
-param_model = 'empc'  # 'bo', 'lcredh'
+param_model = args.param_model #'empcrnn'  # 'bo', 'zipmpc'
 
 if dyn_model=='kin':
     import utils_kin as utils_car
 else:
     import utils_pac as utils_car
     
-NS = 5
-NL = 18
-n_Q = 5
+NS = args.NS
+NL = args.NL
+n_Q = args.n_Q
 
 p_sigma_manual = 8.0
 
 track_name = 'TEST_TRACK'
 
-seed_n = 0
+seed_n = args.seed_n
 torch.manual_seed(seed_n)
 np.random.seed(seed_n)
 
@@ -66,7 +80,7 @@ max_p = 10
 
 out=5
 
-if param_model == 'empc':
+if param_model in ['empc', 'empcrnn']:
     max_p = 2.0
     out=2
 
@@ -76,6 +90,9 @@ str_model = f'{dyn_model}_{NS}_{NL}_{n_Q}_{p_sigma_manual}'
 
 if param_model == 'empc':
     str_model = f'empc_{dyn_model}_{NS}_{NL}_{p_sigma_manual}'
+
+if param_model == 'empcrnn':
+    str_model = f'empcrnn_{dyn_model}_{NS}_{NL}_{p_sigma_manual}'
 
 # Track parameters
 track_density = 300
@@ -167,6 +184,10 @@ else:
 
 if param_model == 'bo':
     model = 'bo'
+elif param_model == 'empcrnn':
+    model = utils.RNNModel(NL, n_Q, out, max_p)
+    model.load_state_dict(torch.load(f'./models/model_{str_model}.pkl'))
+    model.eval()
 else:
     model = utils.TCN(NL, n_Q, out, max_p)
     model.load_state_dict(torch.load(f'./models/model_{str_model}.pkl'))
@@ -190,7 +211,7 @@ def eval_mse(Q_manual, p_manual, control, model=None, sn=0):
         curv_val = utils.get_curve_hor_from_x(x0_val, track_coord, NL, v_max, dt)
         inp_val = torch.hstack((x0_val[:,idx_to_NN], curv_val))
 
-        if param_model == 'empc':
+        if param_model in ['empc', 'empcrnn']:
             control_val = model(inp_val)
 
         elif param_model == 'bo':
@@ -219,7 +240,7 @@ def eval_mse(Q_manual, p_manual, control, model=None, sn=0):
         time_nn = end_time_nn - start_time_nn
 
     time_start_short = time()
-    if not param_model == 'empc' or model is None:
+    if not param_model in ['empc', 'empcrnn'] or model is None:
         x_pred_val, u_pred_val = utils_car.solve_casadi_parallel(
             q_S_np_casadi, p_S_np_casadi,
             x0_val.detach().numpy()[:,:dx+2], BS_val, dx, du, control)
