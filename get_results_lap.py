@@ -15,6 +15,8 @@ from matplotlib.cm import ScalarMappable
 
 from tqdm import tqdm
 
+from time import time
+
 import argparse
 
 
@@ -301,6 +303,8 @@ def eval_lap(x0, Q_manual, p_manual, control, model=None):
     q_p_full = []
     curv_full = []
 
+    start_time = time()
+    
     while finished==0 and crashed==0:
         if model==None:
             q_lap_np_casadi = np.expand_dims((Q_manual[:,idx_to_casadi].T), 1)
@@ -341,7 +345,11 @@ def eval_lap(x0, Q_manual, p_manual, control, model=None):
     
     lap_time = dt*steps
 
-    return lap_time, finished, x_full, u_full, np.array(q_p_full), np.array(curv_full)
+    end_time = time()
+
+    exec_time = (end_time - start_time)/steps
+
+    return lap_time, finished, x_full, u_full, np.array(q_p_full), np.array(curv_full), exec_time
 
 
 def eval_lap_bo(x0, Q_manual, p_manual, Q_bo, p_bo_app, control, test_bo):
@@ -405,11 +413,12 @@ if param_model == 'zipmpc':
     x0_lap_manual = x0_lap[:dx+4]
 
 
-    lap_time, finished, x_full, u_full, q_p_full, curv_full = eval_lap(x0_lap_pred, Q_manual, p_manual, control, model=model)
-    lap_time_H, finished_H, x_H_full, u_H_full, _, _ = eval_lap(x0_lap_pred, Q_manual_H, p_manual_H, control_H)
-    lap_time_T, finished_T, x_full_T, u_full_T, _, _ = eval_lap(x0_lap_pred, Q_manual, p_manual, control)
+    lap_time, finished, x_full, u_full, q_p_full, curv_full, exec_time = eval_lap(x0_lap_pred, Q_manual, p_manual, control, model=model)
+    lap_time_H, finished_H, x_H_full, u_H_full, _, _, exec_time_H = eval_lap(x0_lap_pred, Q_manual_H, p_manual_H, control_H)
+    lap_time_T, finished_T, x_full_T, u_full_T, _, _, exec_time_T = eval_lap(x0_lap_pred, Q_manual, p_manual, control)
 
     print('LAP TIMES:', lap_time, lap_time_H, lap_time_T)
+    print('EXEC TIMES:', exec_time, exec_time_H, exec_time_T)
 
     if q_p_full.ndim == 3:
         q_p_full = q_p_full.mean(1)
@@ -431,28 +440,38 @@ if param_model == 'zipmpc':
     plot_sim_all([x_full_T.T, x_H_full.T, x_full.T], f'./imgs_paper/plot_traj_all_{str_model}_{track_name}.png')
 
     lap_times = []
+    exec_times = []
     for i in tqdm(range(10)):
         x0_s = x0_lap_pred.copy()
         x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
         x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
-        lap_time, finished, x_full, _, _, _ = eval_lap(x0_s, Q_manual, p_manual, control, model=model)
+        lap_time, finished, x_full, _, _, _, ex = eval_lap(x0_s, Q_manual, p_manual, control, model=model)
         lap_times.append(lap_time)
+        exec_times.append(ex)
 
     lap_times_H = []
+    exec_times_H = []
     for i in tqdm(range(10)):
         x0_s = x0_lap_pred.copy()
         x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
         x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
-        lap_time_H, finished_H, x_H_full, _, _, _ = eval_lap(x0_s, Q_manual_H, p_manual_H, control_H)
+        lap_time_H, finished_H, x_H_full, _, _, _, exH = eval_lap(x0_s, Q_manual_H, p_manual_H, control_H)
         lap_times_H.append(lap_time_H)
+        exec_times_H.append(exH)
 
     lap_times_T = []
+    exec_times_T = []
     for i in tqdm(range(10)):
         x0_s = x0_lap_pred.copy()
         x0_s[1] = x0_s[1] + 0.03*torch.randn((1,))
         x0_s[2] = x0_s[2] + 0.04*torch.randn((1,))
-        lap_time_T, finished_T, x_full_T, _, _, _ = eval_lap(x0_s, Q_manual, p_manual, control)
+        lap_time_T, finished_T, x_full_T, _, _, _, exT = eval_lap(x0_s, Q_manual, p_manual, control)
         lap_times_T.append(lap_time_T)
+        exec_times_T.append(exT)
+
+    print(exec_times)
+    print(exec_times_H)
+    print(exec_times_T)
 
 elif param_model == 'bo':
     x0_lap = utils_car.sample_init_test(1, true_dx, sn=2).numpy().squeeze()
