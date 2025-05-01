@@ -229,7 +229,11 @@ def plot_sim(x_simulated, u_simulated, vc, output_path, lab_text='Velocity'):
     cbar = plt.colorbar(sm, ax=ax)
     
     cbar.set_label(lab_text) 
-    
+
+    cbar = plt.colorbar(sm, ax=ax)
+    cbar.set_label(lab_text, fontsize=16)  
+    cbar.ax.tick_params(labelsize=16)      
+        
     print('x_init: ' + str(gen.xCoords[0]))
     print('y_init: ' + str(gen.yCoords[0]))
     print('yaw_init: ' + str(gen.tangentAngle[0]))
@@ -289,9 +293,9 @@ def plot_data(curv_full, var_p, y_label, output_path):
     average_curv = curv_full.mean(axis=-1)
     ax.scatter(average_curv, var_p, color='blue', alpha=0.7, edgecolor='k', s=50)
     
-    ax.set_ylabel(y_label, fontsize=14)
-    ax.set_xlabel('Average Curvature (Context)', fontsize=14)
-    ax.tick_params(axis='both', which='major', labelsize=12)
+    ax.set_ylabel(y_label, fontsize=18)
+    ax.set_xlabel('Average Curvature (Context)', fontsize=18)
+    ax.tick_params(axis='both', which='major', labelsize=16)
     ax.grid(True, linestyle='--', alpha=0.6)
 
     plt.tight_layout()
