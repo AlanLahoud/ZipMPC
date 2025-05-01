@@ -1,0 +1,7 @@
+casadi==3.7.0
+matplotlib==3.6.2
+numpy==1.22.3
+scikit_learn==1.6.1
+scipy==1.8.1
+torch==1.12.1
+tqdm==4.64.0
