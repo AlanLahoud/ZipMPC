@@ -29,7 +29,7 @@ def parse_arguments():
     parser.add_argument('--p_sigma_manual', type=float, default=8.0)
     parser.add_argument('--track_name', type=str, default='TEST_TRACK')
 
-    parser.add_argument('--v_max', type=float, default=2.0)
+    parser.add_argument('--v_max', type=float, default=1.8)
     parser.add_argument('--delta_max', type=float, default=0.4)
 
     return parser.parse_args()
@@ -78,7 +78,7 @@ l_r = 0.05
 l_f = l_r  
 
 #discretization
-dt = 0.020
+dt = 0.03
 
 ND=5
 
@@ -88,8 +88,7 @@ if dyn_model=='kin':
     epochs = 20
 
 elif dyn_model=='pac':
-    l_r = 0.038 
-    l_f = 0.052  
+    delta_max = 0.50
     lr = 1e-4
     BS = 80
     epochs = 40
@@ -116,7 +115,6 @@ k_curve = 25.
 
 
 # Maximum v and a
-#v_max=1.8
 v_max = args.v_max
 a_max = 1.0
 
@@ -377,20 +375,7 @@ for ep in range(epochs):
 
         model.train()
 
-        #x0_1 = utils_car.sample_init(BS//2, true_dx).float()
-        #x0_2 = utils_car.sample_init_traj_dist(BS//2, true_dx, x_star, 20).float()
-
-        #x0 = torch.vstack((x0_1, x0_2))
-
         x0= utils_car.sample_init(BS, true_dx).float()
-        
-        #if dyn_model == 'kin':
-        #    x0= utils_car.sample_init(BS, true_dx).float()
-
-        #else:
-        #    x0 = utils_car.sample_init_traj_dist(BS, true_dx, x_star, 20).float()
-
-        #x0 = utils_car.sample_init_traj_dist(BS, true_dx, x_star, 20).float()
             
         curv = utils.get_curve_hor_from_x(x0, track_coord, NL, v_max, dt)
         inp = torch.hstack((x0[:,idx_to_NN], curv))
@@ -469,8 +454,6 @@ for ep in range(epochs):
 
 
         if it%its_per_epoch==its_per_epoch-1:
-            #d_pen = true_dx.penalty_d(pred_x[:, :, 1].detach())
-            #v_pen = true_dx.penalty_v(pred_x[:, :, 3].detach())
             if dyn_model == 'kin':
                 print('V max: ', pred_x[:, :, 3].detach().max().item())
             else:
@@ -531,16 +514,6 @@ for ep in range(epochs):
                       round(0.1*loss_delta_val.item(), 5),
                       round(loss_val.item(), 5))
                 
-                #if loss_val <= loss_val_best:
-                #    counter_term = 0
-                #    loss_val_best = loss_val
-                #    torch.save(model.state_dict(), f'./saved_models/model_{str_model}.pkl')
-
-                #else:
-                #    counter_term = counter_term + 1
-                #    if counter_term>=4:
-                #        sys.exit()
-
 
 
             # L A P   P E R F O R M A N C E    (E V A L U A T I O N)
