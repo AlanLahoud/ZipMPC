@@ -1,11 +1,11 @@
 # Reduce Horizon MPC
 
-This repository contains scripts for training and evaluating neural networks combined with Model Predictive Control (MPC) to reduce the MPC horizon length.
+This repository contains scripts for training and evaluating neural networks combined with Model Predictive Control (MPC) to reduce the MPC horizon length. The code represents the experimental part of our paper "ZipMPC: Compressed Context-Dependent MPC Cost via Imitation Learning". 
 
 ## Files and Descriptions
 
 ### `reduce_horizon_mpc.py`
-This is the main file used to train and save the learned neural networks.
+This is the main file used to train and save the learned neural networks for our proposed method, ZipMPC.
 
 **Main Arguments:**
 1. `dyn`: Choose between `"kin"` and `"pac"` for the dynamic car model.
