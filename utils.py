@@ -1,3 +1,7 @@
+#Copyright (c) 2025 ETH Zurich, Institute for Dynamics Systems and Control , 
+#and Örebro University (AASS), Rahel Rickenbach, Alan Lahoud, Erik Schaffernicht, 
+#Melanie N. Zeilinger Johannes A. Stork. No rights reserved.
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
