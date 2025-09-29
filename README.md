@@ -1,4 +1,4 @@
-# Reduce Horizon MPC
+# ZipMPC
 
 This repository contains scripts for training and evaluating neural networks combined with Model Predictive Control (MPC) to reduce the MPC horizon length. The code represents the experimental part of our paper "ZipMPC: Compressed Context-Dependent MPC Cost via Imitation Learning". 
 
